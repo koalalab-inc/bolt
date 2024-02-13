@@ -1,18 +1,34 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Bolt'
+description: 'Bolt - Transparnt egress gateway for build environments'
+author: 'Koalalab-inc'
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
-    required: true
-    default: '1000'
+  mode:
+    description: 'Mode of operation - audit or block'
+    required: false
+    default: 'audit'
+  allow_http:
+    description: 'Allow HTTP traffic'
+    required: false
+    default: false
+  default_policy:  
+    description: 'Default policy for egress traffic - allow-all or block-all'
+    required: false
+    default: 'block-all'
+  egress_rules:
+    description: 'Egress rules'
+    required: false
+    default: |
+      - name: 'Allow ifconfig.me'
+        action: 'allow'
+        domain: 'ifconfig.me'
 
 # Define your outputs here.
 outputs:
-  time:
-    description: 'Your output description here'
+  result:
+    description: 'Result of the action'
+    required: false
 
 runs:
   using: node20
