@@ -26,9 +26,8 @@ inputs:
 
 # Define your outputs here.
 outputs:
-  result:
-    description: 'Result of the action'
-    required: false
+  egress_report:
+    description: 'Egress report'
 
 runs:
   using: node20
