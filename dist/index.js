@@ -3971,8 +3971,8 @@ Restart=always
 Environment="BOLT_MODE=${mode}"
 Environment="BOLT_ALLOW_HTTP=${allow_http}"
 Environment="BOLT_DEFAULT_POLICY=${default_policy}"
-StandardOutput=file:/home/mitmproxyuser/mitmproxy.log
-StandardError=file:/home/mitmproxyuser/mitmproxy-error.log
+StandardOutput=file:/home/mitmproxyuser/bolt.log
+StandardError=file:/home/mitmproxyuser/bolt-error.log
 
 
 [Install]
@@ -4221,7 +4221,7 @@ const { exec } = __nccwpck_require__(1514)
 const { wait } = __nccwpck_require__(1312)
 const { createInterceptDotPy } = __nccwpck_require__(2685)
 const { boltService } = __nccwpck_require__(5147)
-var spawn = (__nccwpck_require__(2081).spawn);
+var cp = __nccwpck_require__(2081);
 const fs = __nccwpck_require__(7147)
 
 /**
@@ -4278,14 +4278,14 @@ async function run() {
 
     fs.writeFileSync('bolt.service', await boltService(mode, allow_http, default_policy))
 
-    await exec('sudo touch /home/mitmproxyuser/mitmproxy.log')
-    await exec('sudo touch /home/mitmproxyuser/mitmproxy-error.log')
-    await exec('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/mitmproxy.log /home/mitmproxyuser/mitmproxy-error.log')
-    await exec('sudo cp bolt.service /etc/systemd/system/')
-    await exec('sudo chown root:root /etc/systemd/system/bolt.service')
-    await exec('sudo systemctl daemon-reload')
-    await exec('sudo systemctl restart bolt')
-    await exec('sudo systemctl status bolt')
+    cp.execSync('sudo touch /home/mitmproxyuser/bolt.log')
+    cp.execSync('sudo touch /home/mitmproxyuser/bolt-error.log')
+    cp.execSync('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/bolt.log /home/mitmproxyuser/bolt-error.log')
+    cp.execSync('sudo cp bolt.service /etc/systemd/system/')
+    cp.execSync('sudo chown root:root /etc/systemd/system/bolt.service')
+    cp.execSync('sudo systemctl daemon-reload')
+    cp.execSync('sudo systemctl restart bolt')
+    cp.execSync('sudo systemctl status bolt')
 
 
     // const runBoltCommand = `sudo -u mitmproxyuser -H bash -c "BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &"`
@@ -4360,8 +4360,8 @@ const core = __nccwpck_require__(2186)
 const { exec } = __nccwpck_require__(1514)
 const fs = __nccwpck_require__(7147)
 
+
 async function generateTestResults() {
-    await exec('sudo systemctl status bolt')
     // Specify the path to your file
     exec('sudo cp /home/mitmproxyuser/output.log output.log')
     exec('sudo chown -R $USER:$USER output.log')
@@ -4412,13 +4412,17 @@ function getUniqueBy(arr, keys) {
 }
 
 async function summary() {
-  const results = await generateTestResults()
-  const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
+    await exec('sudo systemctl status bolt')
+    await exec('cat /home/mitmproxyuser/bolt.log')
+    await exec('cat /home/mitmproxyuser/bolt-error.log')
+    await exec('sudo systemctl status bolt')
+    const results = await generateTestResults()
+    const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
     result => [
-      result.domain,
-      result.scheme,
-      result.rule_name,
-      actionIcon(result.action)
+        result.domain,
+        result.scheme,
+        result.rule_name,
+        actionIcon(result.action)
     ]
   )
 

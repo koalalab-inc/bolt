@@ -2,8 +2,8 @@ const core = require('@actions/core')
 const { exec } = require('@actions/exec')
 const fs = require('fs')
 
+
 async function generateTestResults() {
-    await exec('sudo systemctl status bolt')
     // Specify the path to your file
     exec('sudo cp /home/mitmproxyuser/output.log output.log')
     exec('sudo chown -R $USER:$USER output.log')
@@ -54,13 +54,17 @@ function getUniqueBy(arr, keys) {
 }
 
 async function summary() {
-  const results = await generateTestResults()
-  const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
+    await exec('sudo systemctl status bolt')
+    await exec('cat /home/mitmproxyuser/bolt.log')
+    await exec('cat /home/mitmproxyuser/bolt-error.log')
+    await exec('sudo systemctl status bolt')
+    const results = await generateTestResults()
+    const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
     result => [
-      result.domain,
-      result.scheme,
-      result.rule_name,
-      actionIcon(result.action)
+        result.domain,
+        result.scheme,
+        result.rule_name,
+        actionIcon(result.action)
     ]
   )
 

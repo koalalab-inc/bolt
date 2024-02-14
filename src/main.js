@@ -4,7 +4,7 @@ const { exec } = require('@actions/exec')
 const { wait } = require('./wait')
 const { createInterceptDotPy } = require('./intercept')
 const { boltService } = require('./bolt_service')
-var spawn = require('child_process').spawn;
+var cp = require('child_process');
 const fs = require('fs')
 
 /**
@@ -61,14 +61,14 @@ async function run() {
 
     fs.writeFileSync('bolt.service', await boltService(mode, allow_http, default_policy))
 
-    await exec('sudo touch /home/mitmproxyuser/mitmproxy.log')
-    await exec('sudo touch /home/mitmproxyuser/mitmproxy-error.log')
-    await exec('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/mitmproxy.log /home/mitmproxyuser/mitmproxy-error.log')
-    await exec('sudo cp bolt.service /etc/systemd/system/')
-    await exec('sudo chown root:root /etc/systemd/system/bolt.service')
-    await exec('sudo systemctl daemon-reload')
-    await exec('sudo systemctl restart bolt')
-    await exec('sudo systemctl status bolt')
+    cp.execSync('sudo touch /home/mitmproxyuser/bolt.log')
+    cp.execSync('sudo touch /home/mitmproxyuser/bolt-error.log')
+    cp.execSync('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/bolt.log /home/mitmproxyuser/bolt-error.log')
+    cp.execSync('sudo cp bolt.service /etc/systemd/system/')
+    cp.execSync('sudo chown root:root /etc/systemd/system/bolt.service')
+    cp.execSync('sudo systemctl daemon-reload')
+    cp.execSync('sudo systemctl restart bolt')
+    cp.execSync('sudo systemctl status bolt')
 
 
     // const runBoltCommand = `sudo -u mitmproxyuser -H bash -c "BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &"`

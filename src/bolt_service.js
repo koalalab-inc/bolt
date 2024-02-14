@@ -13,8 +13,8 @@ Restart=always
 Environment="BOLT_MODE=${mode}"
 Environment="BOLT_ALLOW_HTTP=${allow_http}"
 Environment="BOLT_DEFAULT_POLICY=${default_policy}"
-StandardOutput=file:/home/mitmproxyuser/mitmproxy.log
-StandardError=file:/home/mitmproxyuser/mitmproxy-error.log
+StandardOutput=file:/home/mitmproxyuser/bolt.log
+StandardError=file:/home/mitmproxyuser/bolt-error.log
 
 
 [Install]
