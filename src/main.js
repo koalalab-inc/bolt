@@ -3,6 +3,7 @@ const io = require('@actions/io')
 const { exec } = require('@actions/exec')
 const { wait } = require('./wait')
 const { createInterceptDotPy } = require('./intercept')
+const { boltService } = require('./bolt_service')
 var spawn = require('child_process').spawn;
 const fs = require('fs')
 
@@ -39,7 +40,7 @@ async function run() {
     const mitmConfig = 'dump_destination: "/home/mitmproxyuser/output.log"'
     fs.writeFileSync('config.yaml', mitmConfig)
     fs.writeFileSync('egress_rules.yaml', core.getInput('egress_rules'))
-    createInterceptDotPy()
+    await createInterceptDotPy()
 
     const createBoltConfigCommand = 'sudo -u mitmproxyuser -H bash -c "mkdir -p /home/mitmproxyuser/.mitmproxy"'
     await exec(createBoltConfigCommand)
@@ -58,29 +59,41 @@ async function run() {
     await exec('sudo cp egress_rules.yaml /home/mitmproxyuser/')
     await exec('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/egress_rules.yaml')
 
+    fs.writeFileSync('bolt.service', await boltService(mode, allow_http, default_policy))
+
+    await exec('sudo cp bolt.service /etc/systemd/system/')
+    await exec('sudo chown root:root /etc/systemd/system/bolt.service')
+    await exec('sudo systemctl daemon-reload')
+    await exec('sudo systemctl restart bolt')
+    await exec('sudo systemctl status bolt')
+
+
     // const runBoltCommand = `sudo -u mitmproxyuser -H bash -c "BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &"`
 
-    const boltCommand = 'sudo';
-    const boltArgs = [
-      '-u', 'mitmproxyuser',
-      '-H',
-      'bash', '-c',
-      `BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &`
-    ];
-    // core.info(runBoltCommand)
-    const cp = spawn(boltCommand, boltArgs, {detached: true});
+    // const boltCommand = 'sudo';
+    // const boltArgs = [
+    //   '-u', 'mitmproxyuser',
+    //   '-H',
+    //   'bash', '-c',
+    //   `BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &`
+    // ];
+    // // core.info(runBoltCommand)
+    // const cp = spawn(boltCommand, boltArgs, {detached: true});
 
-    cp.stdout.on('data', (data) => {
-      core.info(`stdout: ${data}`);
-    });
+    // cp.stdout.on('data', (data) => {
+    //   core.info(`stdout: ${data}`);
+    // });
     
-    cp.stderr.on('data', (data) => {
-      core.error(`stderr: ${data}`);
-    });
+    // cp.stderr.on('data', (data) => {
+    //   core.error(`stderr: ${data}`);
+    // });
     
-    cp.on('close', (code) => {
-      core.info(`child process exited with code ${code}`);
-    }); 
+    // cp.on('close', (code) => {
+    //   core.info(`child process exited with code ${code}`);
+    // }); 
+
+    
+
 
     core.info('Waiting for bolt to start...')
     const ms = 5000
