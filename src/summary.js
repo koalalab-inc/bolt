@@ -33,7 +33,7 @@ async function generateTestResults(boltUser) {
     }
 }
 
-function actionIcon(action) {
+function actionString(action) {
     switch (action) {
         case 'block':
             return 'Unknown Domain'
