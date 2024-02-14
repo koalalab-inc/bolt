@@ -4354,45 +4354,46 @@ const core = __nccwpck_require__(2186)
 const { exec } = __nccwpck_require__(1514)
 const fs = __nccwpck_require__(7147)
 
-function generateTestResults() {
-  // Specify the path to your file
-  exec('sudo cp /home/mitmproxyuser/output.log output.log')
-  exec('sudo chown -R $USER:$USER output.log')
-  const filePath = 'output.log'
+async function generateTestResults() {
+    await exec('sudo systemctl status bolt')
+    // Specify the path to your file
+    exec('sudo cp /home/mitmproxyuser/output.log output.log')
+    exec('sudo chown -R $USER:$USER output.log')
+    const filePath = 'output.log'
 
-  try {
-    // Read the entire file synchronously and split it into an array of lines
-    const fileContent = fs.readFileSync(filePath, 'utf-8')
-    const lines = fileContent.split('\n')
+    try {
+        // Read the entire file synchronously and split it into an array of lines
+        const fileContent = fs.readFileSync(filePath, 'utf-8')
+        const lines = fileContent.split('\n')
 
-    // Initialize an empty array to store JSON objects
-    const jsonArray = []
+        // Initialize an empty array to store JSON objects
+        const jsonArray = []
 
     // Iterate through each line and parse it as JSON
     for (const line of lines) {
-      try {
-        const jsonObject = JSON.parse(line)
-        jsonArray.push(jsonObject)
-      } catch (error) {
-        console.error(`Error parsing JSON on line: ${line}`)
-      }
+        try {
+            const jsonObject = JSON.parse(line)
+            jsonArray.push(jsonObject)
+        } catch (error) {
+            console.error(`Error parsing JSON on line: ${line}`)
+        }
     }
 
     return jsonArray
-  } catch (error) {
-    console.error(`Error reading file: ${error.message}`)
-  }
+    } catch (error) {
+        console.error(`Error reading file: ${error.message}`)
+    }
 }
 
 function actionIcon(action) {
-  switch (action) {
-    case 'block':
-      return '❌'
-    case 'allow':
-      return '✅'
-    default:
-      return '❔'
-  }
+    switch (action) {
+        case 'block':
+            return '❌'
+        case 'allow':
+            return '✅'
+        default:
+            return '❔'
+    }
 }
 
 function getUniqueBy(arr, keys) {
@@ -4405,7 +4406,7 @@ function getUniqueBy(arr, keys) {
 }
 
 async function summary() {
-  const results = generateTestResults()
+  const results = await generateTestResults()
   const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
     result => [
       result.domain,
