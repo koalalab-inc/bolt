@@ -80,6 +80,7 @@ async function run() {
     
     core.startGroup('run-bolt')
     core.info('Starting bolt...')
+    await exec("sudo cat /etc/systemd/system/bolt.service")
     await exec('sudo systemctl start bolt')
 
     core.info('Waiting for bolt to start...')
