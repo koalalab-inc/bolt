@@ -4229,6 +4229,11 @@ async function run() {
     const createBoltConfigCommand = 'sudo -u mitmproxyuser -H bash -c "mkdir -p /home/mitmproxyuser/.mitmproxy"'
     await exec(createBoltConfigCommand)
 
+    await exec('ls -lah')
+    await exec('sudo ls  -lah')
+    await exec('sudo ls  -lah /home/mitmproxyuser')
+    await exec('sudo ls  -lah /home/mitmproxyuser/.mitmproxy')
+
     await exec('sudo cp config.yaml /home/mitmproxyuser/.mitmproxy/ && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/.mitmproxy/config.yaml')
 
     await exec('sudo cp intercept.py /home/mitmproxyuser/ && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/intercept.py')
