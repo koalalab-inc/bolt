@@ -4244,9 +4244,17 @@ async function run() {
     await exec('sudo cp egress_rules.yaml /home/mitmproxyuser/')
     await exec('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/egress_rules.yaml')
 
-    const runBoltCommand = `sudo -u mitmproxyuser -H bash -c "BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &"`
-    core.info(runBoltCommand)
-    spawn(runBoltCommand, {
+    // const runBoltCommand = `sudo -u mitmproxyuser -H bash -c "BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &"`
+
+    const boltCommand = 'sudo';
+    const boltArgs = [
+      '-u', 'mitmproxyuser',
+      '-H',
+      'bash', '-c',
+      `BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &`
+    ];
+    // core.info(runBoltCommand)
+    spawn(boltCommand, boltArgs , {
       detached: true
     });
 
