@@ -3971,6 +3971,9 @@ Restart=always
 Environment="BOLT_MODE=${mode}"
 Environment="BOLT_ALLOW_HTTP=${allow_http}"
 Environment="BOLT_DEFAULT_POLICY=${default_policy}"
+StandardOutput=file:/home/mitmproxyuser/mitmproxy.log
+StandardError=file:/home/mitmproxyuser/mitmproxy-error.log
+
 
 [Install]
 WantedBy=multi-user.target
@@ -4275,6 +4278,9 @@ async function run() {
 
     fs.writeFileSync('bolt.service', await boltService(mode, allow_http, default_policy))
 
+    await exec('sudo touch /home/mitmproxyuser/mitmproxy.log')
+    await exec('sudo touch /home/mitmproxyuser/mitmproxy-error.log')
+    await exec('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/mitmproxy.log /home/mitmproxyuser/mitmproxy-error.log')
     await exec('sudo cp bolt.service /etc/systemd/system/')
     await exec('sudo chown root:root /etc/systemd/system/bolt.service')
     await exec('sudo systemctl daemon-reload')

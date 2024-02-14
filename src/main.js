@@ -61,6 +61,9 @@ async function run() {
 
     fs.writeFileSync('bolt.service', await boltService(mode, allow_http, default_policy))
 
+    await exec('sudo touch /home/mitmproxyuser/mitmproxy.log')
+    await exec('sudo touch /home/mitmproxyuser/mitmproxy-error.log')
+    await exec('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/mitmproxy.log /home/mitmproxyuser/mitmproxy-error.log')
     await exec('sudo cp bolt.service /etc/systemd/system/')
     await exec('sudo chown root:root /etc/systemd/system/bolt.service')
     await exec('sudo systemctl daemon-reload')
