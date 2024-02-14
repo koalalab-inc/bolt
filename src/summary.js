@@ -54,9 +54,6 @@ function getUniqueBy(arr, keys) {
 }
 
 async function summary() {
-
-    await exec('sudo cat /home/bolt/bolt.log')
-    await exec('sudo cat /home/bolt/bolt-error.log')
     const boltUser = core.getState('boltUser')
     const mode = core.getInput('mode')
     const allow_http = core.getInput('allow_http')

@@ -33,7 +33,7 @@ async function run() {
     core.info("Reading inputs... done")
 
     core.info('Installing mitmproxy...')
-    await exec(`sudo -u ${boltUser} -H bash -c "cd ~ && pip install --user ${boltUser} --quiet"`)
+    await exec(`sudo -u ${boltUser} -H bash -c "cd ~ && pip install  --user mitmproxy --quiet"`)
     core.info('Installing mitmproxy... done')
 
     core.info('Create bolt output file...')
@@ -80,8 +80,6 @@ async function run() {
     
     core.startGroup('run-bolt')
     core.info('Starting bolt...')
-    await exec("sudo cat /etc/systemd/system/bolt.service")
-    await exec(`/home/${boltUser}/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/${boltUser}/intercept.py`)
     await exec('sudo systemctl start bolt')
 
     core.info('Waiting for bolt to start...')

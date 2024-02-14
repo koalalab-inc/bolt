@@ -218,6 +218,4 @@ addons = [Interceptor()]  # pylint: disable=invalid-name
   fs.writeFileSync('intercept.py', interceptDotPy)
 }
 
-createInterceptDotPy("bolt")
-
 module.exports = { createInterceptDotPy }
