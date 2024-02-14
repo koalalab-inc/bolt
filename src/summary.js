@@ -72,7 +72,6 @@ async function summary() {
 
     const results = await generateTestResults(boltUser)
 
-    results = results || []
     const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
     result => [
         result.domain,
