@@ -24,7 +24,7 @@ async function run() {
 
     core.startGroup('install-mitmproxy')
     core.info('Installing mitmproxy...')
-    await exec("sudo -u mitmproxyuser -H bash -c 'cd ~ && pip install --user mitmproxy --quiet'")
+    await exec('sudo -u mitmproxyuser -H bash -c "cd ~ && pip install --user mitmproxy --quiet"')
     core.info('Installing mitmproxy... done')
     core.endGroup('install-mitmproxy')
 
