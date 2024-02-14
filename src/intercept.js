@@ -164,7 +164,7 @@ class Interceptor:
 
     def wildcard_to_regex(self, wildcard_domain):
         regex_pattern = re.escape(wildcard_domain)  # Escape special characters
-        regex_pattern = regex_pattern.replace(r'\*', '.*')  # Replace wildcard with regex equivalent
+        regex_pattern = regex_pattern.replace(r'\\*', '.*')  # Replace wildcard with regex equivalent
         regex_pattern =  '^' + regex_pattern + '$'  # Ensure the pattern matches the entire string
         return re.compile(regex_pattern)
 
@@ -291,5 +291,7 @@ addons = [Interceptor()]  # pylint: disable=invalid-name
 `
   fs.writeFileSync('intercept.py', interceptDotPy)
 }
+
+createInterceptDotPy('mitmproxyuser')
 
 module.exports = { createInterceptDotPy }
