@@ -19,6 +19,55 @@ import ruamel.yaml
 
 FILE_WORKERS = 5
 
+default_egress_rules_yaml = """
+- name: 'Reqd by Github Action - Needed for essential operations'
+  domain: 'github.com'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for essential operations'
+  domain: 'api.github.com'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for essential operations'
+  domain: '*.actions.githubusercontent.com'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for downloading actions'
+  domain: 'codeload.github.com'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for uploading/downloading job summaries, logs, workflow artifacts, and caches'
+  domain: 'results-receiver.actions.githubusercontent.com'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for uploading/downloading job summaries, logs, workflow artifacts, and caches'
+  domain: '*.blob.core.windows.net'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for runner version updates'
+  domain: 'objects.githubusercontent.com'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for runner version updates'
+  domain: 'objects-origin.githubusercontent.com'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for runner version updates'
+  domain: 'github-releases.githubusercontent.com'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for runner version updates'
+  domain: 'github-registry-files.githubusercontent.com'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for retrieving OIDC tokens'
+  domain: '*.actions.githubusercontent.com'
+  action: 'allow'
+- name : 'Reqd by Github Action - Needed for downloading or publishing packages or containers to GitHub Packages'
+  domain: '*.pkg.github.com'
+  action: 'allow'
+- name : 'Reqd by Github Action - Needed for downloading or publishing packages or containers to GitHub Packages'
+  domain: 'ghcr.io'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for Git Large File Storage'
+  domain: 'github-cloud.githubusercontent.com'
+  action: 'allow'
+- name: 'Reqd by Github Action - Needed for Git Large File Storage'
+  domain: 'github-cloud.s3.amazonaws.com'
+  action: 'allow'
+"""
+
+
 class Interceptor:
     def __init__(self):
         self.outfile = None
@@ -33,7 +82,9 @@ class Interceptor:
         with open('/home/${boltUser}/egress_rules.yaml', 'r') as file:
             yaml = ruamel.yaml.YAML(typ="safe", pure=True)
             self.egress_rules = yaml.load(file)
-
+            default_egress_rules = yaml.load(default_egress_rules_yaml)
+            self.egress_rules = self.egress_rules + default_egress_rules
+        
     def done(self):
         self.queue.join()
         if self.outfile:
