@@ -4254,9 +4254,19 @@ async function run() {
       `BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &`
     ];
     // core.info(runBoltCommand)
-    spawn(boltCommand, boltArgs , {
-      detached: true
+    const cp = spawn(boltCommand, boltArgs);
+
+    cp.stdout.on('data', (data) => {
+      core.info(`stdout: ${data}`);
     });
+    
+    cp.stderr.on('data', (data) => {
+      core.error(`stderr: ${data}`);
+    });
+    
+    cp.on('close', (code) => {
+      core.info(`child process exited with code ${code}`);
+    }); 
 
     core.info('Waiting for bolt to start...')
     const ms = 5000
