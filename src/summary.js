@@ -36,7 +36,7 @@ async function generateTestResults(boltUser) {
 function actionIcon(action) {
     switch (action) {
         case 'block':
-            return '❌'
+            return 'Unknown Domain'
         case 'allow':
             return '✅'
         default:
@@ -68,22 +68,13 @@ async function summary() {
     
 
     const results = await generateTestResults(boltUser)
-    const colorizedDomain = (result) => {
-      const domain = result.domain;
-      const defaultPolicyRuleName = `Default Policy - ${default_policy}`;
-      if (result.rule_name === defaultPolicyRuleName  && result.action === 'block') {
-        return `<span style="color:red">${domain}</span>`
-      } else if (result.action === 'allow') {
-        return `<span style="color:green">${domain}</span>`
-      }
-      return domain
-    }
 
     const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
     result => [
-        colorizedDomain(result),
+        result.domain,
         result.scheme,
         result.rule_name,
+        actionString(result.action),
     ]
   )
 
@@ -104,6 +95,7 @@ async function summary() {
       { data: 'Domain', header: true },
       { data: 'Scheme', header: true },
       { data: 'Rule', header: true },
+      { data: 'Action', header: true },
     ],
     ...uniqueResults
   ]
@@ -130,6 +122,7 @@ async function summary() {
     .addHeading('Egress rules', 3)
     .addCodeBlock(egress_rules_yaml, 'yaml')
     .addHeading('Egress Traffic', 3)
+    .addQuote("Note:: Running in Audit mode. Unverified domains will be blocked in Active mode.")
     .addTable(table)
     .addLink(
       'View detailed analysis of this run on Koalalab!',

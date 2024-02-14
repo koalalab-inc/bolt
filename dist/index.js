@@ -4008,50 +4008,73 @@ import ruamel.yaml
 FILE_WORKERS = 5
 
 default_egress_rules_yaml = """
-- name: 'Reqd by Github Action - Needed for essential operations'
+- name: 'Reqd by Github Action'
+  description: 'Needed for essential operations'
   domain: 'github.com'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for essential operations'
+- name: 'Reqd by Github Action'
+  description: 'Needed for essential operations'
   domain: 'api.github.com'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for essential operations'
+- name: 'Reqd by Github Action'
+  description: 'Needed for essential operations'
   domain: '*.actions.githubusercontent.com'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for downloading actions'
+- name: 'Reqd by Github Action'
+  description: 'Needed for downloading actions'
   domain: 'codeload.github.com'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for uploading/downloading job summaries, logs, workflow artifacts, and caches'
+- name: 'Reqd by Github Action'
+  description: 'Needed for uploading/downloading job summaries, logs, workflow artifacts, and caches'
   domain: 'results-receiver.actions.githubusercontent.com'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for uploading/downloading job summaries, logs, workflow artifacts, and caches'
+- name: 'Reqd by Github Action'
+  description: 'Needed for uploading/downloading job summaries, logs, workflow artifacts, and caches'
   domain: '*.blob.core.windows.net'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for runner version updates'
+- name: 'Reqd by Github Action'
+  description: 'Needed for runner version updates'
   domain: 'objects.githubusercontent.com'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for runner version updates'
+- name: 'Reqd by Github Action'
+  description: 'Needed for runner version updates'
   domain: 'objects-origin.githubusercontent.com'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for runner version updates'
+- name: 'Reqd by Github Action'
+  description: 'Needed for runner version updates'
   domain: 'github-releases.githubusercontent.com'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for runner version updates'
+- name: 'Reqd by Github Action'
+  description: 'Needed for runner version updates'
   domain: 'github-registry-files.githubusercontent.com'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for retrieving OIDC tokens'
+- name: 'Reqd by Github Action'
+  description: 'Needed for retrieving OIDC tokens'
   domain: '*.actions.githubusercontent.com'
   action: 'allow'
-- name : 'Reqd by Github Action - Needed for downloading or publishing packages or containers to GitHub Packages'
+- name : 'Reqd by Github Action'
+  description: 'Needed for downloading or publishing packages or containers to GitHub Packages'
   domain: '*.pkg.github.com'
   action: 'allow'
-- name : 'Reqd by Github Action - Needed for downloading or publishing packages or containers to GitHub Packages'
+- name : 'Reqd by Github Action'
+  description: 'Needed for downloading or publishing packages or containers to GitHub Packages'
   domain: 'ghcr.io'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for Git Large File Storage'
+- name: 'Reqd by Github Action'
+  description: 'Needed for Git Large File Storage'
   domain: 'github-cloud.githubusercontent.com'
   action: 'allow'
-- name: 'Reqd by Github Action - Needed for Git Large File Storage'
+- name: 'Reqd by Github Action'
+  description: 'Needed for Git Large File Storage'
   domain: 'github-cloud.s3.amazonaws.com'
+  action: 'allow'
+- name: 'Reqd by NPM install'
+  description: 'Needed for NPM install'
+  domain: 'registry.npmjs.org'
+  action: 'allow'
+- name: 'Reqd for instance metadata'
+  description: 'Needed for instance metadata'
+  domain: '169.254.169.254'
   action: 'allow'
 """
 
@@ -4430,7 +4453,7 @@ async function generateTestResults(boltUser) {
 function actionIcon(action) {
     switch (action) {
         case 'block':
-            return '❌'
+            return 'Unknown Domain'
         case 'allow':
             return '✅'
         default:
@@ -4462,22 +4485,13 @@ async function summary() {
     
 
     const results = await generateTestResults(boltUser)
-    const colorizedDomain = (result) => {
-      const domain = result.domain;
-      const defaultPolicyRuleName = `Default Policy - ${default_policy}`;
-      if (result.rule_name === defaultPolicyRuleName  && result.action === 'block') {
-        return `<span style="color:red">${domain}</span>`
-      } else if (result.action === 'allow') {
-        return `<span style="color:green">${domain}</span>`
-      }
-      return domain
-    }
 
     const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
     result => [
-        colorizedDomain(result),
+        result.domain,
         result.scheme,
         result.rule_name,
+        actionString(result.action),
     ]
   )
 
@@ -4498,6 +4512,7 @@ async function summary() {
       { data: 'Domain', header: true },
       { data: 'Scheme', header: true },
       { data: 'Rule', header: true },
+      { data: 'Action', header: true },
     ],
     ...uniqueResults
   ]
@@ -4524,6 +4539,7 @@ async function summary() {
     .addHeading('Egress rules', 3)
     .addCodeBlock(egress_rules_yaml, 'yaml')
     .addHeading('Egress Traffic', 3)
+    .addQuote("Note:: Running in Audit mode. Unverified domains will be blocked in Active mode.")
     .addTable(table)
     .addLink(
       'View detailed analysis of this run on Koalalab!',
