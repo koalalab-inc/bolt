@@ -31,9 +31,8 @@ async function run() {
     core.startGroup('run-bolt')
 
     core.info('Starting bolt...')
-    const createBoltOutputFileCommand = `sudo -u mitmproxyuser -H bash -c \
-    'touch /home/mitmproxyuser/output.log'
-    `
+    const createBoltOutputFileCommand = 'sudo -u mitmproxyuser -H bash -c "touch /home/mitmproxyuser/output.log'
+  
     await exec(createBoltOutputFileCommand)
 
     const mitmConfig = 'dump_destination: "/home/mitmproxyuser/output.log"'
@@ -41,20 +40,14 @@ async function run() {
     fs.writeFileSync('egress_rules.yaml', core.getInput('egress_rules'))
     createInterceptDotPy()
 
-    const createBoltConfigCommand = `sudo -u mitmproxyuser -H bash -c 'mkdir -p /home/mitmproxyuser/.mitmproxy'`
+    const createBoltConfigCommand = 'sudo -u mitmproxyuser -H bash -c "mkdir -p /home/mitmproxyuser/.mitmproxy"'
     await exec(createBoltConfigCommand)
 
-    await exec(
-      'sudo cp config.yaml /home/mitmproxyuser/.mitmproxy/config.yaml && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/.mitmproxy/config.yaml'
-    )
+    await exec('sudo cp config.yaml /home/mitmproxyuser/.mitmproxy/config.yaml && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/.mitmproxy/config.yaml')
 
-    await exec(
-      'sudo cp intercept.py /home/mitmproxyuser/intercept.py && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/intercept.py'
-    )
+    await exec('sudo cp intercept.py /home/mitmproxyuser/intercept.py && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/intercept.py')
 
-    await exec(
-      'sudo cp egress_rules.yaml /home/mitmproxyuser/egress_rules && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/egress_rules'
-    )
+    await exec('sudo cp egress_rules.yaml /home/mitmproxyuser/egress_rules && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/egress_rules')
 
     const runBoltCommand = `sudo -u mitmproxyuser -H bash -c 'BOLT_MODE=${{ mode }} BOLT_ALLOW_HTTP=${{ allow_http }} BOLT_DEFAULT_POLICY=${{ default_policy }} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s .github/actions/bolt/intercept.py &'`
     await exec(runBoltCommand)
