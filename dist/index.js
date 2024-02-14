@@ -4284,8 +4284,7 @@ async function run() {
     cp.execSync('sudo cp bolt.service /etc/systemd/system/')
     cp.execSync('sudo chown root:root /etc/systemd/system/bolt.service')
     cp.execSync('sudo systemctl daemon-reload')
-    cp.execSync('sudo systemctl restart bolt')
-    cp.execSync('sudo systemctl status bolt')
+    cp.execSync('sudo systemctl start bolt')
 
 
     // const runBoltCommand = `sudo -u mitmproxyuser -H bash -c "BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &"`
@@ -4320,6 +4319,9 @@ async function run() {
     core.info(`Waiting ${ms} milliseconds ...`)
     await wait(ms)
     core.info('Starting bolt... done')
+
+
+    cp.execSync('sudo systemctl status bolt')
 
     core.endGroup('run-bolt')
 
@@ -4412,9 +4414,8 @@ function getUniqueBy(arr, keys) {
 }
 
 async function summary() {
-    await exec('sudo systemctl status bolt')
-    await exec('cat /home/mitmproxyuser/bolt.log')
-    await exec('cat /home/mitmproxyuser/bolt-error.log')
+    await exec('sudo cat /home/mitmproxyuser/bolt.log')
+    await exec('sudo cat /home/mitmproxyuser/bolt-error.log')
     await exec('sudo systemctl status bolt')
     const results = await generateTestResults()
     const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(

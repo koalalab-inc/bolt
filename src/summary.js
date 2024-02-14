@@ -54,9 +54,8 @@ function getUniqueBy(arr, keys) {
 }
 
 async function summary() {
-    await exec('sudo systemctl status bolt')
-    await exec('cat /home/mitmproxyuser/bolt.log')
-    await exec('cat /home/mitmproxyuser/bolt-error.log')
+    await exec('sudo cat /home/mitmproxyuser/bolt.log')
+    await exec('sudo cat /home/mitmproxyuser/bolt-error.log')
     await exec('sudo systemctl status bolt')
     const results = await generateTestResults()
     const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
