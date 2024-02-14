@@ -65,7 +65,7 @@ class Interceptor:
 
         if self.outfile:
             self.lock.acquire()
-            self.outfile.write("json.dumps(frame) + "\\n")
+            self.outfile.write(json.dumps(frame) + "\\n")
             self.outfile.flush()
             self.lock.release()
 
