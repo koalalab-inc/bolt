@@ -5,13 +5,15 @@ const { run } = require('./main')
 const { summary } = require('./summary')
 const core = require('@actions/core')
 
-const flag = !!core.getState('isPost')
-
-core.info(`isPost: ${core.getState('isPost')}`)
+const isPost = core.getState('isPost')
+const flag = isPost === 'true'
 
 if (flag) {
-  // Post
-  summary()
+    // Post
+    summary()
 } else {
-  run()
+    if (!isPost) {
+        core.saveState('isPost', 'true')
+    }
+    run()
 }
