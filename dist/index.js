@@ -4237,9 +4237,11 @@ async function run() {
     await exec('sudo cp config.yaml /home/mitmproxyuser/.mitmproxy/') 
     await exec('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/.mitmproxy/config.yaml')
 
-    await exec('sudo cp intercept.py /home/mitmproxyuser/ && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/intercept.py')
+    await exec('sudo cp intercept.py /home/mitmproxyuser/')
+    await exec('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/intercept.py')
 
-    await exec('sudo cp egress_rules.yaml /home/mitmproxyuser/ && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/egress_rules.yaml')
+    await exec('sudo cp egress_rules.yaml /home/mitmproxyuser/')
+    await exec('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/egress_rules.yaml')
 
     const runBoltCommand = `sudo -u mitmproxyuser -H bash -c 'BOLT_MODE=${{ mode }} BOLT_ALLOW_HTTP=${{ allow_http }} BOLT_DEFAULT_POLICY=${{ default_policy }} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s .github/actions/bolt/intercept.py &'`
     await exec(runBoltCommand)
