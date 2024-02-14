@@ -4189,6 +4189,7 @@ const io = __nccwpck_require__(436)
 const { exec } = __nccwpck_require__(514)
 const { wait } = __nccwpck_require__(312)
 const { createInterceptDotPy } = __nccwpck_require__(96)
+var spawn = (__nccwpck_require__(81).spawn);
 const fs = __nccwpck_require__(147)
 
 /**
@@ -4245,7 +4246,9 @@ async function run() {
 
     const runBoltCommand = `sudo -u mitmproxyuser -H bash -c "BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s .github/actions/bolt/intercept.py &"`
     core.info(runBoltCommand)
-    await exec(runBoltCommand)
+    spawn(runBoltCommand, {
+      detached: true
+    });
 
     core.info('Waiting for bolt to start...')
     const ms = 5000
