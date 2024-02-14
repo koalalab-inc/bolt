@@ -5,8 +5,8 @@ const fs = require('fs')
 
 async function generateTestResults() {
     // Specify the path to your file
-    exec('sudo cp /home/mitmproxyuser/output.log output.log')
-    exec('sudo chown -R $USER:$USER output.log')
+    await exec('sudo cp /home/mitmproxyuser/output.log output.log')
+    await exec('sudo chown -R $USER:$USER output.log')
     const filePath = 'output.log'
 
     try {
@@ -30,6 +30,7 @@ async function generateTestResults() {
     return jsonArray
     } catch (error) {
         console.error(`Error reading file: ${error.message}`)
+        return []
     }
 }
 
@@ -54,9 +55,6 @@ function getUniqueBy(arr, keys) {
 }
 
 async function summary() {
-    await exec('sudo cat /home/mitmproxyuser/bolt.log')
-    await exec('sudo cat /home/mitmproxyuser/bolt-error.log')
-    await exec('sudo systemctl status bolt')
     const results = await generateTestResults()
     const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
     result => [
