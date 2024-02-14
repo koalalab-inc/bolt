@@ -17,14 +17,14 @@ function generateTestResults() {
     const jsonArray = []
 
     // Iterate through each line and parse it as JSON
-    lines.forEach(line => {
+    for (const line of lines) {
       try {
         const jsonObject = JSON.parse(line)
         jsonArray.push(jsonObject)
       } catch (error) {
         console.error(`Error parsing JSON on line: ${line}`)
       }
-    })
+    }
 
     return jsonArray
   } catch (error) {

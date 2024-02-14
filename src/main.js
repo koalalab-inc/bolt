@@ -3,6 +3,7 @@ const io = require('@actions/io')
 const { exec } = require('@actions/exec')
 const { wait } = require('./wait')
 const { createInterceptDotPy } = require('./intercept')
+const fs = require('fs')
 
 /**
  * The main function for the action.
@@ -10,76 +11,80 @@ const { createInterceptDotPy } = require('./intercept')
  */
 async function run() {
   try {
-    core.startGroup("setup")
-    core.info("Creating mitmproxy user...")
+    core.startGroup('setup')
+    core.info('Creating mitmproxy user...')
     exec('sudo useradd --create-home mitmproxyuser')
-    core.info("Creating mitmproxy user... done")
+    core.info('Creating mitmproxy user... done')
 
     const mode = core.getInput('mode')
     const allow_http = core.getInput('allow_http')
     const default_policy = core.getInput('default_policy')
     const egress_rules_yaml = core.getInput('egress_rules')
-    core.endGroup("setup")
+    core.endGroup('setup')
 
+    core.startGroup('install-mitmproxy')
+    core.info('Installing mitmproxy...')
+    exec(
+      "sudo -u mitmproxyuser -H bash -c 'cd ~ && pip install --user mitmproxy --quiet'"
+    )
+    core.info('Installing mitmproxy... done')
+    core.endGroup('install-mitmproxy')
 
-    core.startGroup("install-mitmproxy")
-    core.info("Installing mitmproxy...")
-    exec("sudo -u mitmproxyuser -H bash -c 'cd ~ && pip install --user mitmproxy --quiet'")
-    core.info("Installing mitmproxy... done")
-    core.endGroup("install-mitmproxy")
+    core.startGroup('run-bolt')
 
-
-    core.startGroup("run-bolt")
-
-    core.info("Starting bolt...")
+    core.info('Starting bolt...')
     const createBoltOutputFileCommand = `sudo -u mitmproxyuser -H bash -c \
     'touch /home/mitmproxyuser/output.log'
     `
     exec(createBoltOutputFileCommand)
 
-    const createBolConfigCommand = `sudo -u mitmproxyuser -H bash -c \
-      'mkdir -p /home/mitmproxyuser/.mitmproxy && \
-      echo "dump_destination: \"/home/mitmproxyuser/output.log\"" > ~/.mitmproxy/config.yaml' 
-    `
-    exec(createBolConfigCommand)    
-    
-    fs.writeFileSync('egress_rules.yaml', core.getInput('egress_rules'));
-
+    const mitmConfig = 'dump_destination: "/home/mitmproxyuser/output.log"'
+    fs.writeFileSync('config.yaml', mitmConfig)
+    fs.writeFileSync('egress_rules.yaml', core.getInput('egress_rules'))
     createInterceptDotPy()
 
-    exec('sudo cp intercept.py /home/mitmproxyuser/intercept.py && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/intercept.py')
-    exec('sudo cp egress_rules.yaml /home/mitmproxyuser/egress_rules && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/egress_rules')
+    const createBoltConfigCommand = `sudo -u mitmproxyuser -H bash -c 'mkdir -p /home/mitmproxyuser/.mitmproxy'`
+    exec(createBoltConfigCommand)
 
-    const runBoltCommand =`sudo -u mitmproxyuser -H bash -c \
-      'BOLT_MODE=${{mode}} \
-        BOLT_ALLOW_HTTP=${{allow_http}} \
-        $BOLT_DEFAULT_POLICY=${{default_policy}} \ 
-        $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false \
-        -s .github/actions/bolt/intercept.py &'
-    `
+    exec(
+      'sudo cp config.yaml /home/mitmproxyuser/.mitmproxy/config.yaml && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/.mitmproxy/config.yaml'
+    )
+
+    exec(
+      'sudo cp intercept.py /home/mitmproxyuser/intercept.py && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/intercept.py'
+    )
+    exec(
+      'sudo cp egress_rules.yaml /home/mitmproxyuser/egress_rules && sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/egress_rules'
+    )
+
+    const runBoltCommand = `sudo -u mitmproxyuser -H bash -c 'BOLT_MODE=${{ mode }} BOLT_ALLOW_HTTP=${{ allow_http }} BOLT_DEFAULT_POLICY=${{ default_policy }} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s .github/actions/bolt/intercept.py &'`
     exec(runBoltCommand)
 
-    core.info("Waiting for bolt to start...")
+    core.info('Waiting for bolt to start...')
     const ms = 5000
     core.info(`Waiting ${ms} milliseconds ...`)
     await wait(ms)
-    core.info("Starting bolt... done")
+    core.info('Starting bolt... done')
 
-    core.endGroup("run-bolt")
+    core.endGroup('run-bolt')
 
-
-    core.startGroup("setup-iptables-redirection")
-    exec("sudo sysctl -w net.ipv4.ip_forward=1")
-    exec("sudo sysctl -w net.ipv6.conf.all.forwarding=1")
-    exec("sudo sysctl -w net.ipv4.conf.all.send_redirects=0")
-    exec("sudo iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 80 -j REDIRECT --to-port 8080")
-    exec("sudo iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 443 -j REDIRECT --to-port 8080")
-    exec("sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 80 -j REDIRECT --to-port 8080")
-    exec("sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 443 -j REDIRECT --to-port 8080")
-    core.endGroup("setup-iptables-redirection")
-
-
-
+    core.startGroup('setup-iptables-redirection')
+    exec('sudo sysctl -w net.ipv4.ip_forward=1')
+    exec('sudo sysctl -w net.ipv6.conf.all.forwarding=1')
+    exec('sudo sysctl -w net.ipv4.conf.all.send_redirects=0')
+    exec(
+      'sudo iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 80 -j REDIRECT --to-port 8080'
+    )
+    exec(
+      'sudo iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 443 -j REDIRECT --to-port 8080'
+    )
+    exec(
+      'sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 80 -j REDIRECT --to-port 8080'
+    )
+    exec(
+      'sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 443 -j REDIRECT --to-port 8080'
+    )
+    core.endGroup('setup-iptables-redirection')
   } catch (error) {
     // Fail the workflow run if an error occurs
     core.setFailed(error.message)

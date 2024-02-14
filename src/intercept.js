@@ -1,7 +1,7 @@
-const fs = require('fs');
+const fs = require('fs')
 
 async function createInterceptDotPy() {
-    const interceptDotPy = `
+  const interceptDotPy = `
 import json
 import logging
 from queue import Queue
@@ -215,9 +215,7 @@ class Interceptor:
 
 addons = [Interceptor()]  # pylint: disable=invalid-name
 `
-    fs.writeFileSync('intercept.py', interceptDotPy);
+  fs.writeFileSync('intercept.py', interceptDotPy)
 }
-
-createInterceptDotPy()
 
 module.exports = { createInterceptDotPy }
