@@ -4411,13 +4411,22 @@ async function summary() {
     
 
     const results = await generateTestResults(boltUser)
+    const colorizedDomain = (result) => {
+      const domain = result.domain;
+      const defaultPolicyRuleName = `Default Policy - ${default_policy}`;
+      if (result.rule_name === defaultPolicyRuleName  && result.action === 'block') {
+        return `<span style="color:red">${domain}</span>`
+      } else if (result.action === 'allow') {
+        return `<span style="color:green">${domain}</span>`
+      }
+      return domain
+    }
 
     const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
     result => [
-        result.domain,
+        colorizedDomain(result),
         result.scheme,
         result.rule_name,
-        actionIcon(result.action)
     ]
   )
 
@@ -4438,7 +4447,6 @@ async function summary() {
       { data: 'Domain', header: true },
       { data: 'Scheme', header: true },
       { data: 'Rule', header: true },
-      { data: 'Action', header: true }
     ],
     ...uniqueResults
   ]
