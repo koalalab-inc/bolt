@@ -6,7 +6,10 @@ const fs = require('fs')
 async function generateTestResults() {
     // Specify the path to your file
     await exec('sudo cp /home/mitmproxyuser/output.log output.log')
-    await exec('sudo chown -R $USER:$USER output.log')
+
+    await exec('whoami')
+
+    await exec('sudo chown -R runner:docker output.log')
     const filePath = 'output.log'
 
     try {
