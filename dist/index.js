@@ -4243,7 +4243,7 @@ async function run() {
     await exec('sudo cp egress_rules.yaml /home/mitmproxyuser/')
     await exec('sudo chown mitmproxyuser:mitmproxyuser /home/mitmproxyuser/egress_rules.yaml')
 
-    const runBoltCommand = `sudo -u mitmproxyuser -H bash -c 'BOLT_MODE=${{ mode }} BOLT_ALLOW_HTTP=${{ allow_http }} BOLT_DEFAULT_POLICY=${{ default_policy }} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s .github/actions/bolt/intercept.py &'`
+    const runBoltCommand = 'sudo -u mitmproxyuser -H bash -c "BOLT_MODE=${{ mode }} BOLT_ALLOW_HTTP=${{ allow_http }} BOLT_DEFAULT_POLICY=${{ default_policy }} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s .github/actions/bolt/intercept.py &"'
     await exec(runBoltCommand)
 
     core.info('Waiting for bolt to start...')
@@ -4566,6 +4566,8 @@ const { summary } = __nccwpck_require__(259)
 const core = __nccwpck_require__(186)
 
 const flag = !!core.getState('isPost')
+
+core.info(`isPost: ${core.getState('isPost')}`)
 
 if (flag) {
   // Post

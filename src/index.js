@@ -7,6 +7,8 @@ const core = require('@actions/core')
 
 const flag = !!core.getState('isPost')
 
+core.info(`isPost: ${core.getState('isPost')}`)
+
 if (flag) {
   // Post
   summary()
