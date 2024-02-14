@@ -1,7 +1,7 @@
 const core = require('@actions/core')
 const { exec } = require('@actions/exec')
 const fs = require('fs')
-
+const YAML = require('yaml')
 
 async function generateTestResults(boltUser) {
     const filePath = 'output.log'

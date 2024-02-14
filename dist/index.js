@@ -4267,7 +4267,7 @@ async function run() {
     core.info('Create bolt egress_rules.yaml...')
     fs.writeFileSync('egress_rules.yaml', egress_rules_yaml)
     await exec(`sudo cp egress_rules.yaml /home/${boltUser}/`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/mitmproxyuser/egress_rules.yaml`)
+    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`)
     core.info('Create bolt egress_rules.yaml... done')
 
     core.info('Create intercept module...')
@@ -4344,7 +4344,7 @@ module.exports = {
 const core = __nccwpck_require__(2186)
 const { exec } = __nccwpck_require__(1514)
 const fs = __nccwpck_require__(7147)
-
+const YAML = __nccwpck_require__(4083)
 
 async function generateTestResults(boltUser) {
     const filePath = 'output.log'

@@ -51,7 +51,7 @@ async function run() {
     core.info('Create bolt egress_rules.yaml...')
     fs.writeFileSync('egress_rules.yaml', egress_rules_yaml)
     await exec(`sudo cp egress_rules.yaml /home/${boltUser}/`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/mitmproxyuser/egress_rules.yaml`)
+    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`)
     core.info('Create bolt egress_rules.yaml... done')
 
     core.info('Create intercept module...')
