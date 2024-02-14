@@ -5,7 +5,6 @@ const { createInterceptDotPy } = require('./intercept')
 const { boltService } = require('./bolt_service')
 const YAML = require('yaml')
 const fs = require('fs')
-const { Verify } = require('crypto')
 
 /**
  * The main function for the action.

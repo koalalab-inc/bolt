@@ -4221,7 +4221,6 @@ const { createInterceptDotPy } = __nccwpck_require__(2685)
 const { boltService } = __nccwpck_require__(5147)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
-const { Verify } = __nccwpck_require__(6113)
 
 /**
  * The main function for the action.
@@ -13084,7 +13083,7 @@ var __webpack_exports__ = {};
  * The entrypoint for the action.
  */
 const { run } = __nccwpck_require__(1713)
-const { summary } = (__nccwpck_require__(7259)["default"])
+const { summary } = __nccwpck_require__(7259)
 const core = __nccwpck_require__(2186)
 
 const isPost = core.getState('isPost')
