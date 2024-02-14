@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-async function createInterceptDotPy() {
+async function createInterceptDotPy(boltUser) {
   const interceptDotPy = `
 import json
 import logging
@@ -30,7 +30,7 @@ class Interceptor:
         self.egress_rules = None
         self.mode = 'audit'
         self.default_policy = 'block-all'
-        with open('/home/mitmproxyuser/egress_rules.yaml', 'r') as file:
+        with open('/home/${boltUser}/egress_rules.yaml', 'r') as file:
             yaml = ruamel.yaml.YAML(typ="safe", pure=True)
             self.egress_rules = yaml.load(file)
 
