@@ -4565,12 +4565,13 @@ const { run } = __nccwpck_require__(713)
 const { summary } = __nccwpck_require__(259)
 const core = __nccwpck_require__(186)
 
-if (!!core.getState('isPost') === true) {
-  run()
-}
-// Post
-else {
+const flag = !!core.getState('isPost')
+
+if (flag) {
+  // Post
   summary()
+} else {
+  run()
 }
 
 })();
