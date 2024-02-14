@@ -68,7 +68,7 @@ async function run() {
       `BOLT_MODE=${mode} BOLT_ALLOW_HTTP=${ allow_http} BOLT_DEFAULT_POLICY=${default_policy} $HOME/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/mitmproxyuser/intercept.py &`
     ];
     // core.info(runBoltCommand)
-    const cp = spawn(boltCommand, boltArgs);
+    const cp = spawn(boltCommand, boltArgs, {detached: true});
 
     cp.stdout.on('data', (data) => {
       core.info(`stdout: ${data}`);
