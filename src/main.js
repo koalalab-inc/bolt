@@ -37,34 +37,21 @@ async function run() {
 
     benchmark('create-bolt-user')
 
-    core.startGroup('download-or-restore-cache')
+    core.startGroup('download-executable')
     const mitmPackageName = 'mitmproxy'
     const mitmPackageVersion = '10.2.2'
     const extractDir = "home/runner/bolt"
-    const cacheKey = `${mitmPackageName}-${mitmPackageVersion}-${extractDir}`
-    await exec(`mkdir -p ${extractDir}`)
-    core.info('Restoring cache...')
-    const returnedKey = await cache.restoreCache([extractDir], cacheKey)
-    if (returnedKey === cacheKey) {
-      core.info(`Cache hit: ${cacheKey}`)
-    } else {
-      core.info(`Cache miss: ${cacheKey}`)
-      core.info('Downloading mitmproxy...')
-      const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
-      await exec(`wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
-      await exec(`tar -xzf ${filename} -C ${extractDir}`)
-      await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
-      core.info('Downloading mitmproxy... done')
-      core.info('Saving to Cache...')
-      await cache.saveCache([extractDir], cacheKey)
-      core.info('Saving to Cache... done')
-    }
+    core.info('Downloading mitmproxy...')
+    const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
+    await exec(`wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
+    await exec(`tar -xzf ${filename} -C ${extractDir}`)
+    await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
+    core.info('Downloading mitmproxy... done')
     await exec(`sudo cp ${extractDir}/mitmdump /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
-    core.info('Installing mitmproxy... done')
-    core.endGroup('download-or-restore-cache')
+    core.endGroup('ddownload-executable')
 
-    benchmark('download-or-restore-cache')
+    benchmark('download-executable')
     
     core.startGroup('setup-bolt')    
     core.info("Reading inputs...")
