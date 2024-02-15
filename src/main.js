@@ -34,28 +34,22 @@ async function run() {
     core.info("Reading inputs... done")
     
     core.info('Installing mitmproxy...')
-    // const { exitCode, stdout, stderr } = await getExecOutput(`sudo -u ${boltUser} pip cache dir`,[], {silent: true})
-    // const pidDir = exitCode === 0 ? stdout.trim() : undefined
-    // if (exitCode !== 0) {
-    //   throw new Error(`Failed to get pid cache dir: ${stderr}`)
-    // }
 
     const mitmPackageName = 'mitmproxy'
     const mitmPackageVersion = '10.2.2'
     const extractDir = "~/bolt"
-    const cacheKey = `${mitmPackageName}-${mitmPackageVersion}-${pidDir}`
+    const cacheKey = `${mitmPackageName}-${mitmPackageVersion}-${extractDir}`
     const returnedKey = await cache.restoreCache([extractDir], cacheKey)
     if (returnedKey === cacheKey) {
       core.info(`Cache hit: ${cacheKey}`)
     } else {
       core.info(`Cache miss: ${cacheKey}`)
-      // await exec(`sudo -u ${boltUser} -H bash -c "pip install --user ${mitmPackageName}==${mitmPackageVersion} --quiet"`)
       const filename = `${mitmPackageName}-${mitmPackageVersion}-linux.tar.gz`
       await exec(`wget https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
       await exec(`mkdir -p ${extractDir}`)
       await exec(`tar -xzf ${filename} -C ${extractDir}`)
       await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
-      await cache.saveCache([pidDir], cacheKey)
+      await cache.saveCache([extractDir], cacheKey)
     }
     await exec(`sudo cp ${extractDir}/mitmdump /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
