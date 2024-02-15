@@ -59415,24 +59415,26 @@ const { boltService } = __nccwpck_require__(5147)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
 
+let startTime = Date.now();
+
+function benchmark(featureName) {
+  const endTime = Date.now();
+  core.info(`Time Elapsed in ${featureName}: ${Math.ceil((endTime - startTime)/1000)}s`)
+  startTime = endTime;
+}
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
   try {
-    let startTime = Date.now();
+    startTime = Date.now();
     core.info(`Start time: ${startTime}`)
 
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
 
-    await exec('ls -lah')
-
-    let endTime = Date.now();
-    core.info(`Time Elapsed in saving state: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
-    
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
     await exec(`sudo useradd ${boltUser}`)
@@ -59441,12 +59443,38 @@ async function run() {
     core.info('Creating bolt user... done')
     core.endGroup('create-bolt-user')
 
-    endTime = Date.now();
-    core.info(`Time Elapsed in creating boltUser: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
+    benchmark('create-bolt-user')
+
+    core.startGroup('download-or-restore-cache')
+    const mitmPackageName = 'mitmproxy'
+    const mitmPackageVersion = '10.2.2'
+    const extractDir = "home/runner/bolt"
+    const cacheKey = `${mitmPackageName}-${mitmPackageVersion}-${extractDir}`
+    core.info('Restoring cache...')
+    const returnedKey = await cache.restoreCache([extractDir], cacheKey)
+    if (returnedKey === cacheKey) {
+      core.info(`Cache hit: ${cacheKey}`)
+    } else {
+      core.info(`Cache miss: ${cacheKey}`)
+      core.info('Downloading mitmproxy...')
+      const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
+      await exec(`wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
+      await exec(`mkdir -p ${extractDir}`)
+      await exec(`tar -xzf ${filename} -C ${extractDir}`)
+      await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
+      core.info('Downloading mitmproxy... done')
+      core.info('Saving to Cache...')
+      await cache.saveCache([extractDir], cacheKey)
+      core.info('Saving to Cache... done')
+    }
+    await exec(`sudo cp ${extractDir}/mitmdump /home/${boltUser}/`)
+    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
+    core.info('Installing mitmproxy... done')
+    core.endGroup('download-or-restore-cache')
+
+    benchmark('download-or-restore-cache')
     
-    core.startGroup('setup-bolt')
-    
+    core.startGroup('setup-bolt')    
     core.info("Reading inputs...")
     const mode = core.getInput('mode')
     const allow_http = core.getInput('allow_http')
@@ -59456,43 +59484,9 @@ async function run() {
     YAML.parse(egress_rules_yaml)
     core.info("Reading inputs... done")
 
-    endTime = Date.now();
-    core.info(`Time Elapsed in reading inputs: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
-    
-    core.info('Installing mitmproxy...')
-
-    const mitmPackageName = 'mitmproxy'
-    const mitmPackageVersion = '10.2.2'
-    const extractDir = "home/runner/bolt"
-    const cacheKey = `${mitmPackageName}-${mitmPackageVersion}-${extractDir}`
-    const returnedKey = await cache.restoreCache([extractDir], cacheKey)
-    if (returnedKey === cacheKey) {
-      core.info(`Cache hit: ${cacheKey}`)
-    } else {
-      core.info(`Cache miss: ${cacheKey}`)
-      const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
-      await exec(`wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
-      await exec(`mkdir -p ${extractDir}`)
-      await exec(`tar -xzf ${filename} -C ${extractDir}`)
-      await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
-      await cache.saveCache([extractDir], cacheKey)
-    }
-    await exec(`sudo cp ${extractDir}/mitmdump /home/${boltUser}/`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
-    core.info('Installing mitmproxy... done')
-
-    endTime = Date.now();
-    core.info(`Time Elapsed in installing MITMProxy: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
-
     core.info('Create bolt output file...')
     await exec(`sudo -u ${boltUser} -H bash -c "touch /home/${boltUser}/output.log`)
     core.info('Create bolt output file... done')
-
-    endTime = Date.now();
-    core.info(`Time Elapsed in setting bolt output file: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
 
     core.info('Create bolt config...')
     const boltConfig = `dump_destination: "/home/${boltUser}/output.log"`
@@ -59502,29 +59496,17 @@ async function run() {
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/.mitmproxy/config.yaml`)
     core.info('Create bolt config... done')
 
-    endTime = Date.now();
-    core.info(`Time Elapsed in configuring bolt: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
-
     core.info('Create bolt egress_rules.yaml...')
     fs.writeFileSync('egress_rules.yaml', egress_rules_yaml)
     await exec(`sudo cp egress_rules.yaml /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`)
     core.info('Create bolt egress_rules.yaml... done')
 
-    endTime = Date.now();
-    core.info(`Time Elapsed in configuring egress_rules.yaml: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
-
     core.info('Create intercept module...')
     await createInterceptDotPy(boltUser)
     await exec(`sudo cp intercept.py /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
     core.info('Create intercept done...')
-
-    endTime = Date.now();
-    core.info(`Time Elapsed in creating intercept module: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
     
     core.info('Create bolt service log files...')
     const logFile = `/home/${boltUser}/bolt.log`;
@@ -59534,10 +59516,6 @@ async function run() {
     await exec(`sudo chown ${boltUser}:${boltUser} ${logFile} ${errorLogFile}`)
     core.info('Create bolt service log files... done')
 
-    endTime = Date.now();
-    core.info(`Time Elapsed in creating Bolt service log files: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
-
     core.info('Create bolt service...')
     const boltServiceConfig = await boltService(boltUser, mode, allow_http, default_policy, logFile, errorLogFile)
     fs.writeFileSync('bolt.service', boltServiceConfig)
@@ -59545,30 +59523,21 @@ async function run() {
     await exec('sudo chown root:root /etc/systemd/system/bolt.service')
     await exec('sudo systemctl daemon-reload')
     core.info('Create bolt service... done')
-
-    endTime = Date.now();
-    core.info(`Time Elapsed in creating Bolt Service: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
-    
     core.endGroup('setup-bolt')
+
+    benchmark('configure-bolt')
     
     core.startGroup('run-bolt')
     core.info('Starting bolt...')
     await exec('sudo systemctl start bolt')
-
     core.info('Waiting for bolt to start...')
-    const ms = 5000
-    core.info(`Waiting ${ms} milliseconds ...`)
+    const ms = 1000
     await wait(ms)
     await exec('sudo systemctl status bolt')
     core.info('Starting bolt... done')
-
-    endTime = Date.now();
-    core.info(`Time Elapsed in starting MITMProxy: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
-
     core.endGroup('run-bolt')
-
+    
+    benchmark('start-bolt')
 
     core.startGroup('setup-iptables-redirection')
     await exec('sudo sysctl -w net.ipv4.ip_forward=1')
@@ -59588,9 +59557,7 @@ async function run() {
     )
     core.endGroup('setup-iptables-redirection')
 
-    endTime = Date.now();
-    core.info(`Time Elapsed in IPTableRedirection: ${Math.ceil((endTime - startTime)/1000)}s`)
-    startTime = endTime;
+    benchmark('setup-iptables-redirection')
 
   } catch (error) {
     // Fail the workflow run if an error occurs
