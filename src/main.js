@@ -34,9 +34,7 @@ async function run() {
     core.info("Reading inputs... done")
 
     core.info('Installing mitmproxy...')
-    await exec('pip cache dir')
-    await exec(`sudo -u ${boltUser} pid cache dir`)
-    const { exitCode, stdout, stderr } = await getExecOutput(`sudo -u ${boltUser} pid cache dir`,[], {silent: true})
+    const { exitCode, stdout, stderr } = await getExecOutput(`sudo -u ${boltUser} pip cache dir`,[], {silent: true})
     const pidDir = exitCode === 0 ? stdout.trim() : undefined
     if (exitCode !== 0) {
       throw new Error(`Failed to get pid cache dir: ${stderr}`)
