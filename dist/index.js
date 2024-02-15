@@ -59449,6 +59449,7 @@ async function run() {
     const mitmPackageName = 'mitmproxy'
     const mitmPackageVersion = '10.2.2'
     const extractDir = "home/runner/bolt"
+    await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
     const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
     await exec(`wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
