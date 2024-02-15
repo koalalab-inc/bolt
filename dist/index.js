@@ -59445,7 +59445,7 @@ async function run() {
 
     const mitmPackageName = 'mitmproxy'
     const mitmPackageVersion = '10.2.2'
-    const extractDir = "~/bolt"
+    const extractDir = "home/runner/bolt"
     const cacheKey = `${mitmPackageName}-${mitmPackageVersion}-${extractDir}`
     const returnedKey = await cache.restoreCache([extractDir], cacheKey)
     if (returnedKey === cacheKey) {
@@ -59453,7 +59453,7 @@ async function run() {
     } else {
       core.info(`Cache miss: ${cacheKey}`)
       const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
-      await exec(`wget https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
+      await exec(`wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
       await exec(`mkdir -p ${extractDir}`)
       await exec(`tar -xzf ${filename} -C ${extractDir}`)
       await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
