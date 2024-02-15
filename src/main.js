@@ -15,16 +15,21 @@ async function run() {
   try {
     let startTime = Date.now();
     core.info(`Start time: ${startTime}`)
+
+    const boltUser = 'bolt'
+    core.saveState('boltUser', boltUser)
+
+    let endTime = Date.now();
+    core.info(`Time Elapsed in saving state: ${Math.ceil((endTime - startTime)/1000)}s`)
+    startTime = endTime;
     
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
-    const boltUser = 'bolt'
-    core.saveState('boltUser', boltUser)
     await exec(`sudo useradd --create-home ${boltUser}`)
     core.info('Creating bolt user... done')
     core.endGroup('create-bolt-user')
 
-    let endTime = Date.now();
+    endTime = Date.now();
     core.info(`Time Elapsed in creating boltUser: ${Math.ceil((endTime - startTime)/1000)}s`)
     startTime = endTime;
     
