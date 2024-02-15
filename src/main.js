@@ -1,5 +1,6 @@
 const core = require('@actions/core')
-const { exec } = require('@actions/exec')
+const { exec, getExecOutput } = require('@actions/exec')
+const cache = require('@actions/cache');
 const { wait } = require('./wait')
 const { createInterceptDotPy } = require('./intercept')
 const { boltService } = require('./bolt_service')
@@ -33,7 +34,23 @@ async function run() {
     core.info("Reading inputs... done")
 
     core.info('Installing mitmproxy...')
-    await exec(`sudo -u ${boltUser} -H bash -c "cd ~ && pip install  --user mitmproxy --quiet"`)
+    const { exitCode, stdout, stderr } = await getExecOutput(`sudo -u ${boltUser} pid cache dir`,[], {silent: true})
+    const pidDir = exitCode === 0 ? stdout.trim() : undefined
+    if (exitCode == 0) {
+      throw new Error(`Failed to get pid cache dir: ${stderr}`)
+    }
+
+    const mitmPackageName = 'mitmproxy'
+    const mitmPackageVersion = '10.2.2'
+    const cacheKey = `${mitmPackageName}-${mitmPackageVersion}-${pidDir}`
+    const returnedKey = await cache.restoreCache([pidDir], cacheKey)
+    if (returnedKey === cacheKey) {
+      core.info(`Cache hit: ${cacheKey}`)
+    } else {
+      core.info(`Cache miss: ${cacheKey}`)
+      await exec(`sudo -u ${boltUser} -H bash -c "pip install --user ${mitmPackageName}==${mitmPackageVersion} --quiet"`)
+      await cache.saveCache([pidDir], cacheKey)
+    }
     core.info('Installing mitmproxy... done')
 
     core.info('Create bolt output file...')
