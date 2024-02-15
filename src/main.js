@@ -44,7 +44,7 @@ async function run() {
       core.info(`Cache hit: ${cacheKey}`)
     } else {
       core.info(`Cache miss: ${cacheKey}`)
-      const filename = `${mitmPackageName}-${mitmPackageVersion}-linux.tar.gz`
+      const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
       await exec(`wget https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
       await exec(`mkdir -p ${extractDir}`)
       await exec(`tar -xzf ${filename} -C ${extractDir}`)
