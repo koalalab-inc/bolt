@@ -1,10 +1,19 @@
 const core = require('@actions/core')
 const { exec } = require('@actions/exec')
+const cache = require('@actions/cache');
 const { wait } = require('./wait')
 const { createInterceptDotPy } = require('./intercept')
 const { boltService } = require('./bolt_service')
 const YAML = require('yaml')
 const fs = require('fs')
+
+let startTime = Date.now();
+
+function benchmark(featureName) {
+  const endTime = Date.now();
+  core.info(`Time Elapsed in ${featureName}: ${Math.ceil((endTime - startTime)/1000)}s`)
+  startTime = endTime;
+}
 
 /**
  * The main function for the action.
@@ -12,17 +21,40 @@ const fs = require('fs')
  */
 async function run() {
   try {
-    core.startGroup('create-bolt-user')
-    core.info('Creating bolt user...')
+    startTime = Date.now();
+    core.info(`Start time: ${startTime}`)
+
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
-    await exec(`sudo useradd --create-home ${boltUser}`)
+
+    core.startGroup('create-bolt-user')
+    core.info('Creating bolt user...')
+    await exec(`sudo useradd ${boltUser}`)
+    await exec(`sudo mkdir -p /home/${boltUser}`)
+    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}`)
     core.info('Creating bolt user... done')
     core.endGroup('create-bolt-user')
 
+    benchmark('create-bolt-user')
+
+    core.startGroup('download-executable')
+    const mitmPackageName = 'mitmproxy'
+    const mitmPackageVersion = '10.2.2'
+    const extractDir = "home/runner/bolt"
+    await exec(`mkdir -p ${extractDir}`)
+    core.info('Downloading mitmproxy...')
+    const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
+    await exec(`wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
+    await exec(`tar -xzf ${filename} -C ${extractDir}`)
+    await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
+    core.info('Downloading mitmproxy... done')
+    await exec(`sudo cp ${extractDir}/mitmdump /home/${boltUser}/`)
+    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
+    core.endGroup('ddownload-executable')
+
+    benchmark('download-executable')
     
-    core.startGroup('setup-bolt')
-    
+    core.startGroup('setup-bolt')    
     core.info("Reading inputs...")
     const mode = core.getInput('mode')
     const allow_http = core.getInput('allow_http')
@@ -31,10 +63,6 @@ async function run() {
     //Verify that egress_rules_yaml is valid YAML
     YAML.parse(egress_rules_yaml)
     core.info("Reading inputs... done")
-
-    core.info('Installing mitmproxy...')
-    await exec(`sudo -u ${boltUser} -H bash -c "cd ~ && pip install  --user mitmproxy --quiet"`)
-    core.info('Installing mitmproxy... done')
 
     core.info('Create bolt output file...')
     await exec(`sudo -u ${boltUser} -H bash -c "touch /home/${boltUser}/output.log`)
@@ -75,22 +103,21 @@ async function run() {
     await exec('sudo chown root:root /etc/systemd/system/bolt.service')
     await exec('sudo systemctl daemon-reload')
     core.info('Create bolt service... done')
-    
     core.endGroup('setup-bolt')
+
+    benchmark('configure-bolt')
     
     core.startGroup('run-bolt')
     core.info('Starting bolt...')
     await exec('sudo systemctl start bolt')
-
     core.info('Waiting for bolt to start...')
-    const ms = 5000
-    core.info(`Waiting ${ms} milliseconds ...`)
+    const ms = 1000
     await wait(ms)
     await exec('sudo systemctl status bolt')
     core.info('Starting bolt... done')
-
     core.endGroup('run-bolt')
-
+    
+    benchmark('start-bolt')
 
     core.startGroup('setup-iptables-redirection')
     await exec('sudo sysctl -w net.ipv4.ip_forward=1')
@@ -109,6 +136,9 @@ async function run() {
       `sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 443 -j REDIRECT --to-port 8080`
     )
     core.endGroup('setup-iptables-redirection')
+
+    benchmark('setup-iptables-redirection')
+
   } catch (error) {
     // Fail the workflow run if an error occurs
     core.setFailed(error.message)

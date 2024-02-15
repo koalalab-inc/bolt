@@ -8,7 +8,7 @@ After=network.target
 Type=simple
 User=${boltUser}
 Group=${boltUser}
-ExecStart=/home/${boltUser}/.local/bin/mitmdump --mode transparent --showhost --set block_global=false -s /home/${boltUser}/intercept.py
+ExecStart=/home/${boltUser}/mitmdump --mode transparent --showhost --set block_global=false -s /home/${boltUser}/intercept.py
 Restart=always
 Environment="BOLT_MODE=${mode}"
 Environment="BOLT_ALLOW_HTTP=${allow_http}"
