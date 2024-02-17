@@ -1,5 +1,12 @@
-async function boltService(boltUser, mode, allow_http, default_policy, logFile, errorLogFile) {
-    return `
+async function boltService(
+  boltUser,
+  mode,
+  allow_http,
+  default_policy,
+  logFile,
+  errorLogFile
+) {
+  return `
 [Unit]
 Description=bolt
 After=network.target
@@ -18,7 +25,7 @@ StandardError=file:${errorLogFile}
 
 [Install]
 WantedBy=multi-user.target
-    `
+`
 }
 
 module.exports = { boltService }

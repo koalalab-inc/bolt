@@ -59072,8 +59072,15 @@ module.exports.implForWrapper = function (wrapper) {
 /***/ 5147:
 /***/ ((module) => {
 
-async function boltService(boltUser, mode, allow_http, default_policy, logFile, errorLogFile) {
-    return `
+async function boltService(
+  boltUser,
+  mode,
+  allow_http,
+  default_policy,
+  logFile,
+  errorLogFile
+) {
+  return `
 [Unit]
 Description=bolt
 After=network.target
@@ -59092,10 +59099,11 @@ StandardError=file:${errorLogFile}
 
 [Install]
 WantedBy=multi-user.target
-    `
+`
 }
 
 module.exports = { boltService }
+
 
 /***/ }),
 
@@ -59408,19 +59416,21 @@ module.exports = { createInterceptDotPy }
 
 const core = __nccwpck_require__(2186)
 const { exec } = __nccwpck_require__(1514)
-const cache = __nccwpck_require__(7799);
+const cache = __nccwpck_require__(7799)
 const { wait } = __nccwpck_require__(1312)
 const { createInterceptDotPy } = __nccwpck_require__(2685)
 const { boltService } = __nccwpck_require__(5147)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
 
-let startTime = Date.now();
+let startTime = Date.now()
 
 function benchmark(featureName) {
-  const endTime = Date.now();
-  core.info(`Time Elapsed in ${featureName}: ${Math.ceil((endTime - startTime)/1000)}s`)
-  startTime = endTime;
+  const endTime = Date.now()
+  core.info(
+    `Time Elapsed in ${featureName}: ${Math.ceil((endTime - startTime) / 1000)}s`
+  )
+  startTime = endTime
 }
 
 /**
@@ -59429,7 +59439,7 @@ function benchmark(featureName) {
  */
 async function run() {
   try {
-    startTime = Date.now();
+    startTime = Date.now()
     core.info(`Start time: ${startTime}`)
 
     const boltUser = 'bolt'
@@ -59448,11 +59458,13 @@ async function run() {
     core.startGroup('download-executable')
     const mitmPackageName = 'mitmproxy'
     const mitmPackageVersion = '10.2.2'
-    const extractDir = "home/runner/bolt"
+    const extractDir = 'home/runner/bolt'
     await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
     const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
-    await exec(`wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
+    await exec(
+      `wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`
+    )
     await exec(`tar -xzf ${filename} -C ${extractDir}`)
     await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
     core.info('Downloading mitmproxy... done')
@@ -59461,51 +59473,68 @@ async function run() {
     core.endGroup('ddownload-executable')
 
     benchmark('download-executable')
-    
-    core.startGroup('setup-bolt')    
-    core.info("Reading inputs...")
+
+    core.startGroup('setup-bolt')
+    core.info('Reading inputs...')
     const mode = core.getInput('mode')
     const allow_http = core.getInput('allow_http')
     const default_policy = core.getInput('default_policy')
     const egress_rules_yaml = core.getInput('egress_rules')
     //Verify that egress_rules_yaml is valid YAML
     YAML.parse(egress_rules_yaml)
-    core.info("Reading inputs... done")
+    core.info('Reading inputs... done')
 
     core.info('Create bolt output file...')
-    await exec(`sudo -u ${boltUser} -H bash -c "touch /home/${boltUser}/output.log`)
+    await exec(
+      `sudo -u ${boltUser} -H bash -c "touch /home/${boltUser}/output.log`
+    )
     core.info('Create bolt output file... done')
 
     core.info('Create bolt config...')
     const boltConfig = `dump_destination: "/home/${boltUser}/output.log"`
     fs.writeFileSync('config.yaml', boltConfig)
-    await exec(`sudo -u ${boltUser} -H bash -c "mkdir -p /home/${boltUser}/.mitmproxy"`)
-    await exec(`sudo cp config.yaml /home/${boltUser}/.mitmproxy/`) 
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/.mitmproxy/config.yaml`)
+    await exec(
+      `sudo -u ${boltUser} -H bash -c "mkdir -p /home/${boltUser}/.mitmproxy"`
+    )
+    await exec(`sudo cp config.yaml /home/${boltUser}/.mitmproxy/`)
+    await exec(
+      `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/.mitmproxy/config.yaml`
+    )
     core.info('Create bolt config... done')
 
     core.info('Create bolt egress_rules.yaml...')
     fs.writeFileSync('egress_rules.yaml', egress_rules_yaml)
     await exec(`sudo cp egress_rules.yaml /home/${boltUser}/`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`)
+    await exec(
+      `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`
+    )
     core.info('Create bolt egress_rules.yaml... done')
 
     core.info('Create intercept module...')
     await createInterceptDotPy(boltUser)
     await exec(`sudo cp intercept.py /home/${boltUser}/`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
+    await exec(
+      `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`
+    )
     core.info('Create intercept done...')
-    
+
     core.info('Create bolt service log files...')
-    const logFile = `/home/${boltUser}/bolt.log`;
-    const errorLogFile = `/home/${boltUser}/bolt-error.log`;
+    const logFile = `/home/${boltUser}/bolt.log`
+    const errorLogFile = `/home/${boltUser}/bolt-error.log`
     await exec(`sudo touch ${logFile}`)
     await exec(`sudo touch ${errorLogFile}`)
     await exec(`sudo chown ${boltUser}:${boltUser} ${logFile} ${errorLogFile}`)
     core.info('Create bolt service log files... done')
 
     core.info('Create bolt service...')
-    const boltServiceConfig = await boltService(boltUser, mode, allow_http, default_policy, logFile, errorLogFile)
+    const boltServiceConfig = await boltService(
+      boltUser,
+      mode,
+      allow_http,
+      default_policy,
+      logFile,
+      errorLogFile
+    )
     fs.writeFileSync('bolt.service', boltServiceConfig)
     await exec('sudo cp bolt.service /etc/systemd/system/')
     await exec('sudo chown root:root /etc/systemd/system/bolt.service')
@@ -59514,7 +59543,7 @@ async function run() {
     core.endGroup('setup-bolt')
 
     benchmark('configure-bolt')
-    
+
     core.startGroup('run-bolt')
     core.info('Starting bolt...')
     await exec('sudo systemctl start bolt')
@@ -59524,7 +59553,7 @@ async function run() {
     await exec('sudo systemctl status bolt')
     core.info('Starting bolt... done')
     core.endGroup('run-bolt')
-    
+
     benchmark('start-bolt')
 
     core.startGroup('setup-iptables-redirection')
@@ -59546,7 +59575,6 @@ async function run() {
     core.endGroup('setup-iptables-redirection')
 
     benchmark('setup-iptables-redirection')
-
   } catch (error) {
     // Fail the workflow run if an error occurs
     core.setFailed(error.message)
@@ -59569,44 +59597,44 @@ const fs = __nccwpck_require__(7147)
 const YAML = __nccwpck_require__(4083)
 
 async function generateTestResults(boltUser) {
-    const filePath = 'output.log'
-    await exec(`sudo cp /home/${boltUser}/${filePath} output.log`)
-    await exec(`sudo chown -R runner:docker ${filePath}`)
+  const filePath = 'output.log'
+  await exec(`sudo cp /home/${boltUser}/${filePath} output.log`)
+  await exec(`sudo chown -R runner:docker ${filePath}`)
 
-    try {
-        // Read the entire file synchronously and split it into an array of lines
-        const fileContent = fs.readFileSync(filePath, 'utf-8')
-        const lines = fileContent.split('\n')
+  try {
+    // Read the entire file synchronously and split it into an array of lines
+    const fileContent = fs.readFileSync(filePath, 'utf-8')
+    const lines = fileContent.split('\n')
 
-        // Initialize an empty array to store JSON objects
-        const jsonArray = []
+    // Initialize an empty array to store JSON objects
+    const jsonArray = []
 
     // Iterate through each line and parse it as JSON
     for (const line of lines) {
-        try {
-            const jsonObject = JSON.parse(line)
-            jsonArray.push(jsonObject)
-        } catch (error) {
-            console.error(`Error parsing JSON on line: ${line}`)
-        }
+      try {
+        const jsonObject = JSON.parse(line)
+        jsonArray.push(jsonObject)
+      } catch (error) {
+        console.error(`Error parsing JSON on line: ${line}`)
+      }
     }
 
     return jsonArray
-    } catch (error) {
-        console.error(`Error reading file: ${error.message}`)
-        return []
-    }
+  } catch (error) {
+    console.error(`Error reading file: ${error.message}`)
+    return []
+  }
 }
 
 function actionString(action) {
-    switch (action) {
-        case 'block':
-            return 'Unknown Domain'
-        case 'allow':
-            return '✅'
-        default:
-            return '❔'
-    }
+  switch (action) {
+    case 'block':
+      return 'Unknown Domain'
+    case 'allow':
+      return '✅'
+    default:
+      return '❔'
+  }
 }
 
 function getUniqueBy(arr, keys) {
@@ -59619,40 +59647,39 @@ function getUniqueBy(arr, keys) {
 }
 
 async function summary() {
-    const boltUser = core.getState('boltUser')
-    const mode = core.getInput('mode')
-    const allow_http = core.getInput('allow_http')
-    const default_policy = core.getInput('default_policy')
-    const egress_rules_yaml = core.getInput('egress_rules')
-    //Verify that egress_rules_yaml is valid YAML
-    try {
-      YAML.parse(egress_rules_yaml)
-    } catch (error) {
-      core.info(`Invalid YAML: ${error.message}`)
-    }
-    
+  const boltUser = core.getState('boltUser')
+  const mode = core.getInput('mode')
+  const allow_http = core.getInput('allow_http')
+  const default_policy = core.getInput('default_policy')
+  const egress_rules_yaml = core.getInput('egress_rules')
+  //Verify that egress_rules_yaml is valid YAML
+  try {
+    YAML.parse(egress_rules_yaml)
+  } catch (error) {
+    core.info(`Invalid YAML: ${error.message}`)
+  }
 
-    const results = await generateTestResults(boltUser)
+  const results = await generateTestResults(boltUser)
 
-    const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
+  const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
     result => [
-        result.domain,
-        result.scheme,
-        result.rule_name,
-        actionString(result.action),
+      result.domain,
+      result.scheme,
+      result.rule_name,
+      actionString(result.action)
     ]
   )
 
   const configMap = {
-    mode: mode,
-    allow_http: allow_http,
-    default_policy: default_policy
+    mode,
+    allow_http,
+    default_policy
   }
 
   const configTable = [
     ['Mode', mode],
     ['Allow HTTP', allow_http],
-    ['Default Policy', default_policy],
+    ['Default Policy', default_policy]
   ]
 
   const table = [
@@ -59660,7 +59687,7 @@ async function summary() {
       { data: 'Domain', header: true },
       { data: 'Scheme', header: true },
       { data: 'Rule', header: true },
-      { data: 'Action', header: true },
+      { data: 'Action', header: true }
     ],
     ...uniqueResults
   ]
@@ -59687,7 +59714,9 @@ async function summary() {
     .addHeading('Egress rules', 3)
     .addCodeBlock(egress_rules_yaml, 'yaml')
     .addHeading('Egress Traffic', 3)
-    .addQuote("Note:: Running in Audit mode. Unverified domains will be blocked in Active mode.")
+    .addQuote(
+      `Note:: Running in Audit mode. Unverified domains will be blocked in Active mode.`
+    )
     .addTable(table)
     .addLink(
       'View detailed analysis of this run on Koalalab!',
