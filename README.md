@@ -6,7 +6,9 @@
 
 Bolt is a transparent egress gateway that can be used to control the egress traffic from Github hosted runners. It is packaged as a Github Action, which means you can easily add it to your workflows and start controlling the egress traffic from your pipelines.
 
->Supports both public and private repositories
+> [!NOTE]
+> 
+> Supports both public and private repositories
 
 # Contents
 - [Why?](#why)
@@ -104,5 +106,7 @@ You can start using Bolt by adding the `koalalab-inc/bolt` action as the first s
     domain: 'ifconfig.me'
   ```
   ###### Egress Traffic
-  > Note:: Running in Audit mode. Unverified domains will be blocked in Active mode.
+  > [!NOTE]
+  >
+  > Running in Audit mode. Unverified domains will be blocked in Active mode.
   <table><tr><th>Domain</th><th>Scheme</th><th>Rule</th><th>Action</th></tr><tr><td>github.com</td><td>https</td><td>Reqd by Github Action</td><td>✅</td></tr><tr><td>packages.microsoft.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>results-receiver.actions.githubusercontent.com</td><td>https</td><td>Reqd by Github Action</td><td>✅</td></tr><tr><td>ppa.launchpadcontent.net</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>esm.ubuntu.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>azure.archive.ubuntu.com</td><td>http</td><td>allow_http is False</td><td>Unknown Domain</td></tr><tr><td>www.google.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>ifconfig.me</td><td>https</td><td>Allow ifconfig.me</td><td>✅</td></tr><tr><td>pipelinesghubeus6.actions.githubusercontent.com</td><td>https</td><td>Reqd by Github Action</td><td>✅</td></tr></table>
