@@ -1,205 +1,106 @@
-# Create a JavaScript Action
+![Bolt](assets/imgs/bolt-header-light.png#gh-light-mode-only)
+![Bolt](assets/imgs/bolt-header-dark.png#gh-dark-mode-only)
+# Transparent Egress Gateway for GitHub hosted runners.
 
-[![GitHub Super-Linter](https://github.com/actions/javascript-action/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
-![CI](https://github.com/actions/javascript-action/actions/workflows/ci.yml/badge.svg)
-
-Use this template to bootstrap the creation of a JavaScript action. :rocket:
-
-This template includes compilation support, tests, a validation workflow,
-publishing, and versioning guidance.
-
-If you are new, there's also a simpler introduction in the
-[Hello world JavaScript action repository](https://github.com/actions/hello-world-javascript-action).
-
-## Create Your Own Action
-
-To create your own action, you can use this repository as a template! Just
-follow the below instructions:
-
-1. Click the **Use this template** button at the top of the repository
-1. Select **Create a new repository**
-1. Select an owner and name for your new repository
-1. Click **Create repository**
-1. Clone your new repository
-
-> [!IMPORTANT]
->
-> Make sure to remove or update the [`CODEOWNERS`](./CODEOWNERS) file! For
-> details on how to use this file, see
-> [About code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
-
-## Initial Setup
-
-After you've cloned the repository to your local machine or codespace, you'll
-need to perform some initial setup steps before you can develop your action.
+Bolt is a transparent egress gateway that can be used to control the egress traffic from GitHub hosted runners. It is packaged as a GitHub Action, which means you can easily add it to your workflows and start controlling the egress traffic from your pipelines.
 
 > [!NOTE]
->
-> You'll need to have a reasonably modern version of
-> [Node.js](https://nodejs.org) handy. If you are using a version manager like
-> [`nodenv`](https://github.com/nodenv/nodenv) or
-> [`nvm`](https://github.com/nvm-sh/nvm), you can run `nodenv install` in the
-> root of your repository to install the version specified in
-> [`package.json`](./package.json). Otherwise, 20.x or later should work!
+> 
+> Supports both public and private repositories
 
-1. :hammer_and_wrench: Install the dependencies
 
-   ```bash
-   npm install
-   ```
+## Why?
 
-1. :building_construction: Package the JavaScript for distribution
+Complex CI/CD environments are under increasing threat due to increase in software supply chain attacks. Modern CI/CDs (GitHub CI) allow third-party code in highly privledged CI environment.
 
-   ```bash
-   npm run bundle
-   ```
-
-1. :white_check_mark: Run the tests
-
-   ```bash
-   $ npm test
-
-   PASS  ./index.test.js
-     ✓ throws invalid number (3ms)
-     ✓ wait 500 ms (504ms)
-     ✓ test runs (95ms)
-
-   ...
-   ```
-
-## Update the Action Metadata
-
-The [`action.yml`](action.yml) file defines metadata about your action, such as
-input(s) and output(s). For details about this file, see
-[Metadata syntax for GitHub Actions](https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions).
-
-When you copy this repository, update `action.yml` with the name, description,
-inputs, and outputs for your action.
-
-## Update the Action Code
-
-The [`src/`](./src/) directory is the heart of your action! This contains the
-source code that will be run when your action is invoked. You can replace the
-contents of this directory with your own code.
-
-There are a few things to keep in mind when writing your action code:
-
-- Most GitHub Actions toolkit and CI/CD operations are processed asynchronously.
-  In `main.js`, you will see that the action is run in an `async` function.
-
-  ```javascript
-  const core = require('@actions/core')
-  //...
-
-  async function run() {
-    try {
-      //...
-    } catch (error) {
-      core.setFailed(error.message)
-    }
-  }
-  ```
-
-  For more information about the GitHub Actions toolkit, see the
-  [documentation](https://github.com/actions/toolkit/blob/master/README.md).
-
-So, what are you waiting for? Go ahead and start customizing your action!
-
-1. Create a new branch
-
-   ```bash
-   git checkout -b releases/v1
-   ```
-
-1. Replace the contents of `src/` with your action code
-1. Add tests to `__tests__/` for your source code
-1. Format, test, and build the action
-
-   ```bash
-   npm run all
-   ```
-
-   > [!WARNING]
-   >
-   > This step is important! It will run [`ncc`](https://github.com/vercel/ncc)
-   > to build the final JavaScript action code with all dependencies included.
-   > If you do not run this step, your action will not work correctly when it is
-   > used in a workflow. This step also includes the `--license` option for
-   > `ncc`, which will create a license file for all of the production node
-   > modules used in your project.
-
-1. Commit your changes
-
-   ```bash
-   git add .
-   git commit -m "My first action is ready!"
-   ```
-
-1. Push them to your repository
-
-   ```bash
-   git push -u origin releases/v1
-   ```
-
-1. Create a pull request and get feedback on your action
-1. Merge the pull request into the `main` branch
-
-Your action is now published! :rocket:
-
-For information about versioning your action, see
-[Versioning](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-in the GitHub Actions toolkit.
-
-## Validate the Action
-
-You can now validate the action by referencing it in a workflow file. For
-example, [`ci.yml`](./.github/workflows/ci.yml) demonstrates how to reference an
-action in the same repository.
-
-```yaml
-steps:
-  - name: Checkout
-    id: checkout
-    uses: actions/checkout@v3
-
-  - name: Test Local Action
-    id: test-action
-    uses: ./
-    with:
-      milliseconds: 1000
-
-  - name: Print Output
-    id: output
-    run: echo "${{ steps.test-action.outputs.time }}"
-```
-
-For example workflow runs, check out the
-[Actions tab](https://github.com/actions/javascript-action/actions)! :rocket:
+GitHub hosted runners are a great way to run your CI/CD pipelines. However, they are not without their limitations. One of the most notable limitations is the lack of egress control. This means that any code running on a GitHub hosted runner can make requests to any external service. This can be a security risk, especially when running untrusted code.
 
 ## Usage
-
-After testing, you can create version tag(s) that developers can use to
-reference different stable versions of your action. For more information, see
-[Versioning](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-in the GitHub Actions toolkit.
-
-To include the action in a workflow in another repository, you can use the
-`uses` syntax with the `@` symbol to reference a specific branch, tag, or commit
-hash.
+You can start using Bolt by adding the `koalalab-inc/bolt` action as the first step in the jobs you want to monitor. The action will install and start the Bolt service on the runner. Checkout the configuration options and defaults [here](#Configure).
 
 ```yaml
-steps:
-  - name: Checkout
-    id: checkout
-    uses: actions/checkout@v4
-
-  - name: Run my Action
-    id: run-action
-    uses: actions/javascript-action@v1 # Commit with the `v1` tag
-    with:
-      milliseconds: 1000
-
-  - name: Print Output
-    id: output
-    run: echo "${{ steps.run-action.outputs.time }}"
+  - name: Setup Bolt
+    uses: koalalab-inc/bolt@v1
 ```
+
+![bolt-usage-before-after.png](assets/imgs/bolt-usage-before-after.png)
+
+## Configure
+You can configuree the Bolt action using inputs. Here is an example of how to configure the action.
+
+```yaml
+  - name: Setup Bolt
+    uses: koalalab-inc/bolt@v1
+    with:
+      mode: 'audit'
+      default_policy: 'block-all'
+      allow-http: 'false'
+      egress_rules: |
+        - name: 'Allow GitHub subdomains'
+          destination: '*.github.com'
+          action: 'allow'
+```
+| Option | Description  |
+---------------------------------|---------------------------------
+| `mode` | Configure the mode of operation for the Bolt gateway. It can be `audit` or `active`. Default: `audit` |
+| `default_policy` | It can be either `block-all` or `allow-all`. Default: `block-all` |
+| `allow-http` | Whether to allow non-secure HTTP requests or not. Default: `false`
+| `egress_rules` | A list of custom egress rules to be applied. Default: `[]`.
+
+## Custom Egress Policy
+You can define custom egress rules to control the egress traffic from your pipelines. Here is an example of how to define custom egress rules.
+
+In `audit` mode, the Bolt gateway will log the egress traffic as per the defined rules. In `active` mode, the Bolt gateway will enforce the defined rules.
+
+Egress rule options:
+| Option | Description  |
+---------------------------------|---------------------------------
+| `name` | A name for the rule |
+| `destination` | The destination domain or IP address. `*` wilcard is supported in destination. |
+| `action` | The action to be taken. It can be `allow` or `block` |
+
+It is an ordered list of rules. The first rule that matches the destination will be applied.
+
+
+```yaml
+  - name: Setup Bolt
+    uses: koalalab-inc/bolt@v1
+    with:
+      mode: 'audit'
+      default_policy: 'block-all'
+      allow-http: 'false'
+      egress_rules: |
+        - name: 'Allow GitHub subdomains'
+          destination: '*.github.com'
+          action: 'allow'
+        - name: 'Block api subdomain'
+          destination: 'api.example.com'
+          action: 'block'
+        - name: 'Allow other subdomains'
+          destination: '*.example.com'
+          action: 'allow'
+```
+
+## Report
+Once the job is over, bolt will add a egress traffic report to the job summary. The report will show the egress traffic and the rules that were applied. A sample report is shown below.
+
+### Egress Report - powered by Bolt
+#### Bolt Configuration
+
+|Option | Value |
+|---|---|
+| Mode | audit |
+| Default Policy | block-all |
+| Allow HTTP | false |
+
+#### Custom Egress Rules
+```yaml
+- name: 'Allow ifconfig.me'
+  action: 'allow'
+  domain: 'ifconfig.me'
+```
+#### Egress Traffic
+> [!NOTE]
+>
+> Running in Audit mode. Unverified domains will be blocked in Active mode.
+<table><tr><th>Domain</th><th>Scheme</th><th>Rule</th><th>Action</th></tr><tr><td>github.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr><tr><td>packages.microsoft.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>results-receiver.actions.githubusercontent.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr><tr><td>ppa.launchpadcontent.net</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>esm.ubuntu.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>azure.archive.ubuntu.com</td><td>http</td><td>allow_http is False</td><td>Unknown Domain</td></tr><tr><td>www.google.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>ifconfig.me</td><td>https</td><td>Allow ifconfig.me</td><td>✅</td></tr><tr><td>pipelinesghubeus6.actions.githubusercontent.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr></table>

@@ -1,18 +1,19 @@
 const core = require('@actions/core')
 const { exec } = require('@actions/exec')
-const cache = require('@actions/cache');
 const { wait } = require('./wait')
 const { createInterceptDotPy } = require('./intercept')
 const { boltService } = require('./bolt_service')
 const YAML = require('yaml')
 const fs = require('fs')
 
-let startTime = Date.now();
+let startTime = Date.now()
 
 function benchmark(featureName) {
-  const endTime = Date.now();
-  core.info(`Time Elapsed in ${featureName}: ${Math.ceil((endTime - startTime)/1000)}s`)
-  startTime = endTime;
+  const endTime = Date.now()
+  core.info(
+    `Time Elapsed in ${featureName}: ${Math.ceil((endTime - startTime) / 1000)}s`
+  )
+  startTime = endTime
 }
 
 /**
@@ -21,7 +22,7 @@ function benchmark(featureName) {
  */
 async function run() {
   try {
-    startTime = Date.now();
+    startTime = Date.now()
     core.info(`Start time: ${startTime}`)
 
     const boltUser = 'bolt'
@@ -40,11 +41,13 @@ async function run() {
     core.startGroup('download-executable')
     const mitmPackageName = 'mitmproxy'
     const mitmPackageVersion = '10.2.2'
-    const extractDir = "home/runner/bolt"
+    const extractDir = 'home/runner/bolt'
     await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
     const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
-    await exec(`wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`)
+    await exec(
+      `wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`
+    )
     await exec(`tar -xzf ${filename} -C ${extractDir}`)
     await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
     core.info('Downloading mitmproxy... done')
@@ -53,51 +56,69 @@ async function run() {
     core.endGroup('ddownload-executable')
 
     benchmark('download-executable')
-    
-    core.startGroup('setup-bolt')    
-    core.info("Reading inputs...")
+
+    core.startGroup('setup-bolt')
+    core.info('Reading inputs...')
     const mode = core.getInput('mode')
-    const allow_http = core.getInput('allow_http')
-    const default_policy = core.getInput('default_policy')
-    const egress_rules_yaml = core.getInput('egress_rules')
-    //Verify that egress_rules_yaml is valid YAML
-    YAML.parse(egress_rules_yaml)
-    core.info("Reading inputs... done")
+    const allowHTTP = core.getInput('allow_http')
+    const defaultPolicy = core.getInput('default_policy')
+    const egressRulesYAML = core.getInput('egress_rules')
+
+    // Verify that egress_rules_yaml is valid YAML
+    YAML.parse(egressRulesYAML)
+    core.info('Reading inputs... done')
 
     core.info('Create bolt output file...')
-    await exec(`sudo -u ${boltUser} -H bash -c "touch /home/${boltUser}/output.log`)
+    await exec(
+      `sudo -u ${boltUser} -H bash -c "touch /home/${boltUser}/output.log`
+    )
     core.info('Create bolt output file... done')
 
     core.info('Create bolt config...')
     const boltConfig = `dump_destination: "/home/${boltUser}/output.log"`
     fs.writeFileSync('config.yaml', boltConfig)
-    await exec(`sudo -u ${boltUser} -H bash -c "mkdir -p /home/${boltUser}/.mitmproxy"`)
-    await exec(`sudo cp config.yaml /home/${boltUser}/.mitmproxy/`) 
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/.mitmproxy/config.yaml`)
+    await exec(
+      `sudo -u ${boltUser} -H bash -c "mkdir -p /home/${boltUser}/.mitmproxy"`
+    )
+    await exec(`sudo cp config.yaml /home/${boltUser}/.mitmproxy/`)
+    await exec(
+      `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/.mitmproxy/config.yaml`
+    )
     core.info('Create bolt config... done')
 
     core.info('Create bolt egress_rules.yaml...')
-    fs.writeFileSync('egress_rules.yaml', egress_rules_yaml)
+    fs.writeFileSync('egress_rules.yaml', egressRulesYAML)
     await exec(`sudo cp egress_rules.yaml /home/${boltUser}/`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`)
+    await exec(
+      `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`
+    )
     core.info('Create bolt egress_rules.yaml... done')
 
     core.info('Create intercept module...')
     await createInterceptDotPy(boltUser)
     await exec(`sudo cp intercept.py /home/${boltUser}/`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
+    await exec(
+      `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`
+    )
     core.info('Create intercept done...')
-    
+
     core.info('Create bolt service log files...')
-    const logFile = `/home/${boltUser}/bolt.log`;
-    const errorLogFile = `/home/${boltUser}/bolt-error.log`;
+    const logFile = `/home/${boltUser}/bolt.log`
+    const errorLogFile = `/home/${boltUser}/bolt-error.log`
     await exec(`sudo touch ${logFile}`)
     await exec(`sudo touch ${errorLogFile}`)
     await exec(`sudo chown ${boltUser}:${boltUser} ${logFile} ${errorLogFile}`)
     core.info('Create bolt service log files... done')
 
     core.info('Create bolt service...')
-    const boltServiceConfig = await boltService(boltUser, mode, allow_http, default_policy, logFile, errorLogFile)
+    const boltServiceConfig = await boltService(
+      boltUser,
+      mode,
+      allowHTTP,
+      defaultPolicy,
+      logFile,
+      errorLogFile
+    )
     fs.writeFileSync('bolt.service', boltServiceConfig)
     await exec('sudo cp bolt.service /etc/systemd/system/')
     await exec('sudo chown root:root /etc/systemd/system/bolt.service')
@@ -106,7 +127,7 @@ async function run() {
     core.endGroup('setup-bolt')
 
     benchmark('configure-bolt')
-    
+
     core.startGroup('run-bolt')
     core.info('Starting bolt...')
     await exec('sudo systemctl start bolt')
@@ -116,7 +137,7 @@ async function run() {
     await exec('sudo systemctl status bolt')
     core.info('Starting bolt... done')
     core.endGroup('run-bolt')
-    
+
     benchmark('start-bolt')
 
     core.startGroup('setup-iptables-redirection')
@@ -138,7 +159,6 @@ async function run() {
     core.endGroup('setup-iptables-redirection')
 
     benchmark('setup-iptables-redirection')
-
   } catch (error) {
     // Fail the workflow run if an error occurs
     core.setFailed(error.message)

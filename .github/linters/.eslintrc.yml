@@ -46,5 +46,7 @@ rules:
     'no-console': 'off',
     'no-unused-vars': 'off',
     'prettier/prettier': 'error',
-    'semi': 'off'
+    'semi': 'off',
+    'space-before-function-paren': 0,
+    "filenames/match-regex": 'off'
   }
