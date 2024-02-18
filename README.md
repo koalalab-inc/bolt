@@ -1,8 +1,6 @@
 ![Bolt](assets/imgs/bolt-header-light.png#gh-light-mode-only)
 ![Bolt](assets/imgs/bolt-header-dark.png#gh-dark-mode-only)
-# Transparent Egress Gateway for Github hosted runners.
-
-*Transparent Egress Gateway for GitHub hosted runners packaged as a GitHub Action.*
+# Transparent Egress Gateway for GitHub hosted runners.
 
 Bolt is a transparent egress gateway that can be used to control the egress traffic from GitHub hosted runners. It is packaged as a GitHub Action, which means you can easily add it to your workflows and start controlling the egress traffic from your pipelines.
 
@@ -13,9 +11,9 @@ Bolt is a transparent egress gateway that can be used to control the egress traf
 
 ## Why?
 
-Complex CI/CD environments are under increasing threat due to increase in software supply chain attacks. Modern CI/CDs (especiall github CI) allow 3rd party code in highly privledged CI environment.
+Complex CI/CD environments are under increasing threat due to increase in software supply chain attacks. Modern CI/CDs (GitHub CI) allow third-party code in highly privledged CI environment.
 
-Github hosted runners are a great way to run your CI/CD pipelines. However, they are not without their limitations. One of the most notable limitations is the lack of egress control. This means that any code running on a Github hosted runner can make requests to any external service. This can be a security risk, especially when running untrusted code.
+GitHub hosted runners are a great way to run your CI/CD pipelines. However, they are not without their limitations. One of the most notable limitations is the lack of egress control. This means that any code running on a GitHub hosted runner can make requests to any external service. This can be a security risk, especially when running untrusted code.
 
 ## Usage
 You can start using Bolt by adding the `koalalab-inc/bolt` action as the first step in the jobs you want to monitor. The action will install and start the Bolt service on the runner. Checkout the configuration options and defaults [here](#Configure).
@@ -38,7 +36,7 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
       default_policy: 'block-all'
       allow-http: 'false'
       egress_rules: |
-        - name: 'Allow Github subdomains'
+        - name: 'Allow GitHub subdomains'
           destination: '*.github.com'
           action: 'allow'
 ```
@@ -72,7 +70,7 @@ It is an ordered list of rules. The first rule that matches the destination will
       default_policy: 'block-all'
       allow-http: 'false'
       egress_rules: |
-        - name: 'Allow Github subdomains'
+        - name: 'Allow GitHub subdomains'
           destination: '*.github.com'
           action: 'allow'
         - name: 'Block api subdomain'
@@ -105,4 +103,4 @@ Once the job is over, bolt will add a egress traffic report to the job summary. 
 > [!NOTE]
 >
 > Running in Audit mode. Unverified domains will be blocked in Active mode.
-<table><tr><th>Domain</th><th>Scheme</th><th>Rule</th><th>Action</th></tr><tr><td>github.com</td><td>https</td><td>Reqd by Github Action</td><td>✅</td></tr><tr><td>packages.microsoft.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>results-receiver.actions.githubusercontent.com</td><td>https</td><td>Reqd by Github Action</td><td>✅</td></tr><tr><td>ppa.launchpadcontent.net</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>esm.ubuntu.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>azure.archive.ubuntu.com</td><td>http</td><td>allow_http is False</td><td>Unknown Domain</td></tr><tr><td>www.google.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>ifconfig.me</td><td>https</td><td>Allow ifconfig.me</td><td>✅</td></tr><tr><td>pipelinesghubeus6.actions.githubusercontent.com</td><td>https</td><td>Reqd by Github Action</td><td>✅</td></tr></table>
+<table><tr><th>Domain</th><th>Scheme</th><th>Rule</th><th>Action</th></tr><tr><td>github.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr><tr><td>packages.microsoft.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>results-receiver.actions.githubusercontent.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr><tr><td>ppa.launchpadcontent.net</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>esm.ubuntu.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>azure.archive.ubuntu.com</td><td>http</td><td>allow_http is False</td><td>Unknown Domain</td></tr><tr><td>www.google.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>ifconfig.me</td><td>https</td><td>Allow ifconfig.me</td><td>✅</td></tr><tr><td>pipelinesghubeus6.actions.githubusercontent.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr></table>
