@@ -1,6 +1,5 @@
 const core = require('@actions/core')
 const { exec } = require('@actions/exec')
-const cache = require('@actions/cache')
 const { wait } = require('./wait')
 const { createInterceptDotPy } = require('./intercept')
 const { boltService } = require('./bolt_service')
@@ -61,11 +60,12 @@ async function run() {
     core.startGroup('setup-bolt')
     core.info('Reading inputs...')
     const mode = core.getInput('mode')
-    const allow_http = core.getInput('allow_http')
-    const default_policy = core.getInput('default_policy')
-    const egress_rules_yaml = core.getInput('egress_rules')
-    //Verify that egress_rules_yaml is valid YAML
-    YAML.parse(egress_rules_yaml)
+    const allowHTTP = core.getInput('allow_http')
+    const defaultPolicy = core.getInput('default_policy')
+    const egressRulesYAML = core.getInput('egress_rules')
+
+    // Verify that egress_rules_yaml is valid YAML
+    YAML.parse(egressRulesYAML)
     core.info('Reading inputs... done')
 
     core.info('Create bolt output file...')
@@ -87,7 +87,7 @@ async function run() {
     core.info('Create bolt config... done')
 
     core.info('Create bolt egress_rules.yaml...')
-    fs.writeFileSync('egress_rules.yaml', egress_rules_yaml)
+    fs.writeFileSync('egress_rules.yaml', egressRulesYAML)
     await exec(`sudo cp egress_rules.yaml /home/${boltUser}/`)
     await exec(
       `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`
@@ -114,8 +114,8 @@ async function run() {
     const boltServiceConfig = await boltService(
       boltUser,
       mode,
-      allow_http,
-      default_policy,
+      allowHTTP,
+      defaultPolicy,
       logFile,
       errorLogFile
     )

@@ -2,8 +2,9 @@
 ![Bolt](assets/imgs/bolt-header-dark.png#gh-dark-mode-only)
 # Transparent Egress Gateway for Github hosted runners.
 
+*Transparent Egress Gateway for GitHub hosted runners packaged as a GitHub Action.*
 
-Bolt is a transparent egress gateway that can be used to control the egress traffic from Github hosted runners. It is packaged as a Github Action, which means you can easily add it to your workflows and start controlling the egress traffic from your pipelines.
+Bolt is a transparent egress gateway that can be used to control the egress traffic from GitHub hosted runners. It is packaged as a GitHub Action, which means you can easily add it to your workflows and start controlling the egress traffic from your pipelines.
 
 > [!NOTE]
 > 
@@ -14,7 +15,7 @@ Bolt is a transparent egress gateway that can be used to control the egress traf
 
 Complex CI/CD environments are under increasing threat due to increase in software supply chain attacks. Modern CI/CDs (especiall github CI) allow 3rd party code in highly privledged CI environment.
 
-Github hosted runners are a great way to run your CI/CD pipelines. However, they are not without their limitations. One of the most notable limitations is the lack of egress ----control. This means that any code running on a Github hosted runner can make requests to any external service. This can be a security risk, especially when running untrusted code.
+Github hosted runners are a great way to run your CI/CD pipelines. However, they are not without their limitations. One of the most notable limitations is the lack of egress control. This means that any code running on a Github hosted runner can make requests to any external service. This can be a security risk, especially when running untrusted code.
 
 ## Usage
 You can start using Bolt by adding the `koalalab-inc/bolt` action as the first step in the jobs you want to monitor. The action will install and start the Bolt service on the runner. Checkout the configuration options and defaults [here](#Configure).

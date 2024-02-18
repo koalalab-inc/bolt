@@ -1,8 +1,8 @@
 async function boltService(
   boltUser,
   mode,
-  allow_http,
-  default_policy,
+  allowHTTP,
+  defaultPolicy,
   logFile,
   errorLogFile
 ) {
@@ -18,8 +18,8 @@ Group=${boltUser}
 ExecStart=/home/${boltUser}/mitmdump --mode transparent --showhost --set block_global=false -s /home/${boltUser}/intercept.py
 Restart=always
 Environment="BOLT_MODE=${mode}"
-Environment="BOLT_ALLOW_HTTP=${allow_http}"
-Environment="BOLT_DEFAULT_POLICY=${default_policy}"
+Environment="BOLT_ALLOW_HTTP=${allowHTTP}"
+Environment="BOLT_DEFAULT_POLICY=${defaultPolicy}"
 StandardOutput=file:${logFile}
 StandardError=file:${errorLogFile}
 

@@ -56,12 +56,12 @@ function getUniqueBy(arr, keys) {
 async function summary() {
   const boltUser = core.getState('boltUser')
   const mode = core.getInput('mode')
-  const allow_http = core.getInput('allow_http')
-  const default_policy = core.getInput('default_policy')
-  const egress_rules_yaml = core.getInput('egress_rules')
-  //Verify that egress_rules_yaml is valid YAML
+  const allowHTTP = core.getInput('allow_http')
+  const defaultPolicy = core.getInput('default_policy')
+  const egressRulesYAML = core.getInput('egress_rules')
+  // Verify that egress_rules_yaml is valid YAML
   try {
-    YAML.parse(egress_rules_yaml)
+    YAML.parse(egressRulesYAML)
   } catch (error) {
     core.info(`Invalid YAML: ${error.message}`)
   }
@@ -79,14 +79,14 @@ async function summary() {
 
   const configMap = {
     mode,
-    allow_http,
-    default_policy
+    allowHTTP,
+    defaultPolicy
   }
 
   const configTable = [
     ['Mode', mode],
-    ['Allow HTTP', allow_http],
-    ['Default Policy', default_policy]
+    ['Allow HTTP', allowHTTP],
+    ['Default Policy', defaultPolicy]
   ]
 
   const table = [
@@ -103,9 +103,9 @@ async function summary() {
   core.info(JSON.stringify(configMap))
   core.info('<<<Koalalab-inc-bolt-config')
   try {
-    const egress_rules = YAML.parse(egress_rules_yaml)
+    const egressRules = YAML.parse(egressRulesYAML)
     core.info('Koalalab-inc-bolt-egress-config>>>')
-    core.info(JSON.stringify(egress_rules))
+    core.info(JSON.stringify(egressRules))
     core.info('<<<Koalalab-inc-bolt-egress-config')
   } catch (error) {
     core.info(`Invalid YAML: ${error.message}`)
@@ -119,10 +119,10 @@ async function summary() {
     .addHeading('Bolt Configuration', 3)
     .addTable(configTable)
     .addHeading('Egress rules', 3)
-    .addCodeBlock(egress_rules_yaml, 'yaml')
+    .addCodeBlock(egressRulesYAML, 'yaml')
     .addHeading('Egress Traffic', 3)
     .addQuote(
-      `Note:: Running in Audit mode. Unverified domains will be blocked in Active mode.`
+      'Note:: Running in Audit mode. Unverified domains will be blocked in Active mode.'
     )
     .addTable(table)
     .addLink(
