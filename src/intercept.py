@@ -161,10 +161,10 @@ class Interceptor:
 
     def configure(self, _):
         dump_destination = ctx.options.dump_destination
-        with open(dump_destination, "a") as dump_file:
-            self.outfile = dump_file
-            self.lock = Lock()
-            logging.info("Writing all data frames to %s", dump_destination)
+        # pylint: disable=consider-using-with
+        self.outfile = open(dump_destination, "a")
+        self.lock = Lock()
+        logging.info("Writing all data frames to %s", dump_destination)
 
         for _ in range(FILE_WORKERS):
             t = Thread(target=self.worker)
