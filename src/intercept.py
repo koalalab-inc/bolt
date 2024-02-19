@@ -1,7 +1,4 @@
-const fs = require('fs')
 
-async function createInterceptDotPy(boltUser) {
-  const interceptDotPy = `
 import json
 import logging
 from queue import Queue
@@ -90,7 +87,6 @@ default_egress_rules_yaml = """
   action: 'allow'
 """
 
-
 class Interceptor:
     def __init__(self):
         self.outfile = None
@@ -102,7 +98,7 @@ class Interceptor:
         self.egress_rules = None
         self.mode = 'audit'
         self.default_policy = 'block-all'
-        with open('/home/${boltUser}/egress_rules.yaml', 'r') as file:
+        with open('/home/bolt/egress_rules.yaml', 'r') as file:
             yaml = ruamel.yaml.YAML(typ="safe", pure=True)
             self.egress_rules = yaml.load(file)
             default_egress_rules = yaml.load(default_egress_rules_yaml)
@@ -139,7 +135,7 @@ class Interceptor:
 
         if self.outfile:
             self.lock.acquire()
-            self.outfile.write(json.dumps(frame) + "\\n")
+            self.outfile.write(json.dumps(frame) + "\n")
             self.outfile.flush()
             self.lock.release()
 
@@ -164,7 +160,7 @@ class Interceptor:
 
     def wildcard_to_regex(self, wildcard_domain):
         regex_pattern = re.escape(wildcard_domain)  # Escape special characters
-        regex_pattern = regex_pattern.replace(r'\\*', '.*')  # Replace wildcard with regex equivalent
+        regex_pattern = regex_pattern.replace(r'\*', '.*')  # Replace wildcard with regex equivalent
         regex_pattern =  '^' + regex_pattern + '$'  # Ensure the pattern matches the entire string
         return re.compile(regex_pattern)
 
@@ -288,10 +284,3 @@ class Interceptor:
         self.queue.put(event)
 
 addons = [Interceptor()]  # pylint: disable=invalid-name
-`
-  fs.writeFileSync('intercept.py', interceptDotPy)
-}
-
-createInterceptDotPy('mitmproxyuser')
-
-module.exports = { createInterceptDotPy }

@@ -1,7 +1,6 @@
 const core = require('@actions/core')
 const { exec } = require('@actions/exec')
 const { wait } = require('./wait')
-const { createInterceptDotPy } = require('./intercept')
 const { boltService } = require('./bolt_service')
 const YAML = require('yaml')
 const fs = require('fs')
@@ -93,14 +92,6 @@ async function run() {
       `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`
     )
     core.info('Create bolt egress_rules.yaml... done')
-
-    core.info('Create intercept module...')
-    await createInterceptDotPy(boltUser)
-    await exec(`sudo cp intercept.py /home/${boltUser}/`)
-    await exec(
-      `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`
-    )
-    core.info('Create intercept done...')
 
     core.info('Create bolt service log files...')
     const logFile = `/home/${boltUser}/bolt.log`
