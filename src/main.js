@@ -43,7 +43,7 @@ async function run() {
     // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
     const releaseVersion = 'v0.6'
-    const filename = `${releaseName}-linux-x86_64.tar.gz`
+    const filename = `${releaseName}-${releaseVersion}-linux-x86_64.tar.gz`
     // Sample URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.6/bolt-v0.6-linux-x86_64.tar.gz
     await exec(
       `wget --quiet https://github.com/koalalab-inc/bolt/releases/download/${releaseVersion}/${filename}`

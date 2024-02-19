@@ -16,7 +16,7 @@ jobs:
       arch: x86_64
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Fetch MITM-Proxy
         run: |
           mkdir -p mitmproxy
@@ -41,6 +41,5 @@ jobs:
           body: |
             **Changes:**
             ${{ steps.changelog.outputs.changelog }}
-            
           token: ${{ secrets.GITHUB_TOKEN }}
 
