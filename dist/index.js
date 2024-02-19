@@ -26003,6 +26003,7 @@ async function run() {
     startTime = Date.now()
     core.info(`Start time: ${startTime}`)
 
+    // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
 
@@ -26021,7 +26022,7 @@ async function run() {
     // const extractDir = 'home/runner/bolt'
     // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
-    const releaseVersion = 'v0.7.0'
+    const releaseVersion = 'v1.0.0'
     const filename = `${releaseName}-${releaseVersion}-linux-x86_64.tar.gz`
     // Sample URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     await exec(
@@ -26217,9 +26218,9 @@ async function summary() {
 
   const results = await generateTestResults(boltUser)
 
-  const uniqueResults = getUniqueBy(results, ['domain', 'scheme']).map(
+  const uniqueResults = getUniqueBy(results, ['destination', 'scheme']).map(
     result => [
-      result.domain,
+      result.destination,
       result.scheme,
       result.rule_name,
       actionString(result.action)
@@ -26240,7 +26241,7 @@ async function summary() {
 
   const table = [
     [
-      { data: 'Domain', header: true },
+      { data: 'Destination', header: true },
       { data: 'Scheme', header: true },
       { data: 'Rule', header: true },
       { data: 'Action', header: true }
@@ -26271,7 +26272,7 @@ async function summary() {
     .addCodeBlock(egressRulesYAML, 'yaml')
     .addHeading('Egress Traffic', 3)
     .addQuote(
-      'Note:: Running in Audit mode. Unverified domains will be blocked in Active mode.'
+      'Note:: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
     )
     .addTable(table)
     .addLink(

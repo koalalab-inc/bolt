@@ -24,6 +24,7 @@ async function run() {
     startTime = Date.now()
     core.info(`Start time: ${startTime}`)
 
+    // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
 
@@ -42,7 +43,7 @@ async function run() {
     // const extractDir = 'home/runner/bolt'
     // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
-    const releaseVersion = 'v0.7.0'
+    const releaseVersion = 'v1.0.0'
     const filename = `${releaseName}-${releaseVersion}-linux-x86_64.tar.gz`
     // Sample URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     await exec(
