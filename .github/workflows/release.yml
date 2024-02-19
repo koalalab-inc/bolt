@@ -1,0 +1,45 @@
+name: release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      tag: ${{ github.ref_name }}
+      os: linux
+      arch: x86_64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Fetch MITM-Proxy
+        run: |
+          mkdir -p mitmproxy
+          wget https://downloads.mitmproxy.org/10.2.2/mitmproxy-10.2.2-${{ env.os }}-${{ env.arch }}.tar.gz --quiet
+          tar -xzf mitmproxy-10.2.2-${{ env.os }}-${{ env.arch }}.tar.gz -C mitmproxy
+          mkdir -p bolt
+          cp mitmproxy/mitmdump bolt/mitmdump
+          cp src/intercept.py bolt/intercept.py
+          tar -czf bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz bolt
+          rm -rf mitmproxy bolt
+          rm mitmproxy-10.2.2-linux-x86_64.tar.gz
+      - name: Changelog
+        uses: Bullrich/generate-release-changelog@2.0.2
+        id: changelog
+        env:
+            REPO: ${{ github.repository }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+          tag_name: ${{ env.tag }}
+          body: |
+            **Changes:**
+            ${{ steps.changelog.outputs.changelog }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+

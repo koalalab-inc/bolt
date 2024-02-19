@@ -28,7 +28,7 @@
     "ci-test": "jest",
     "format:write": "prettier --write **/*.js",
     "format:check": "prettier --check **/*.js",
-    "p": "prettier -c src/main.js",
+    "local-lint": "docker run --rm -e RUN_LOCAL=true --env-file \"./super-linter.env\" -v \"$PWD\":/tmp/lint github/super-linter:v5 --fix",
     "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
     "package": "ncc build src/index.js --license licenses.txt",
     "package:watch": "npm run package -- --watch",

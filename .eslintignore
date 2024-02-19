@@ -2,5 +2,6 @@ lib/
 dist/
 node_modules/
 coverage/
-src/intercept.js
+src/intercept.py
+super-linter.env
 src/main.js

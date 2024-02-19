@@ -1,25 +1,25 @@
-const fs = require('fs')
+"""
+Intercept.py
 
-async function createInterceptDotPy(boltUser) {
-  const interceptDotPy = `
+This script is used to intercept the traffic and log the
+requests to a file. It also blocks the requests based on
+the rules defined in the egress_rules.yaml file.
+"""
+
 import json
 import logging
-from queue import Queue
 import re
-from threading import Lock
-from threading import Thread
 import time
-from OpenSSL import SSL
-import os
-
-from mitmproxy import ctx
+from queue import Queue
+from threading import Lock, Thread
 
 import ruamel.yaml
-
+from mitmproxy import ctx
+from OpenSSL import SSL
 
 FILE_WORKERS = 5
 
-default_egress_rules_yaml = """
+DEFAULT_EGRESS_RULES_YAML = """
 - name: 'Reqd by Github Action'
   description: 'Needed for essential operations'
   domain: 'github.com'
@@ -37,11 +37,13 @@ default_egress_rules_yaml = """
   domain: 'codeload.github.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
-  description: 'Needed for uploading/downloading job summaries, logs, workflow artifacts, and caches'
+  description: 'Needed for uploading/downloading job \
+summaries, logs, workflow artifacts, and caches'
   domain: 'results-receiver.actions.githubusercontent.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
-  description: 'Needed for uploading/downloading job summaries, logs, workflow artifacts, and caches'
+  description: 'Needed for uploading/downloading job \
+summaries, logs, workflow artifacts, and caches'
   domain: '*.blob.core.windows.net'
   action: 'allow'
 - name: 'Reqd by Github Action'
@@ -65,11 +67,13 @@ default_egress_rules_yaml = """
   domain: '*.actions.githubusercontent.com'
   action: 'allow'
 - name : 'Reqd by Github Action'
-  description: 'Needed for downloading or publishing packages or containers to GitHub Packages'
+  description: 'Needed for downloading or publishing \
+packages or containers to GitHub Packages'
   domain: '*.pkg.github.com'
   action: 'allow'
 - name : 'Reqd by Github Action'
-  description: 'Needed for downloading or publishing packages or containers to GitHub Packages'
+  description: 'Needed for downloading or publishing \
+packages or containers to GitHub Packages'
   domain: 'ghcr.io'
   action: 'allow'
 - name: 'Reqd by Github Action'
@@ -91,7 +95,9 @@ default_egress_rules_yaml = """
 """
 
 
+# pylint: disable=missing-class-docstring,missing-function-docstring,unspecified-encoding
 class Interceptor:
+    # pylint: disable=too-many-instance-attributes
     def __init__(self):
         self.outfile = None
         self.encode = None
@@ -100,14 +106,14 @@ class Interceptor:
         self.auth = None
         self.queue = Queue()
         self.egress_rules = None
-        self.mode = 'audit'
-        self.default_policy = 'block-all'
-        with open('/home/${boltUser}/egress_rules.yaml', 'r') as file:
+        self.mode = "audit"
+        self.default_policy = "block-all"
+        with open("/home/bolt/egress_rules.yaml", "r") as file:
             yaml = ruamel.yaml.YAML(typ="safe", pure=True)
             self.egress_rules = yaml.load(file)
-            default_egress_rules = yaml.load(default_egress_rules_yaml)
+            default_egress_rules = yaml.load(DEFAULT_EGRESS_RULES_YAML)
             self.egress_rules = self.egress_rules + default_egress_rules
-        
+
     def done(self):
         self.queue.join()
         if self.outfile:
@@ -120,9 +126,9 @@ class Interceptor:
                 cls.convert_to_strings(key): cls.convert_to_strings(value)
                 for key, value in obj.items()
             }
-        elif isinstance(obj, list) or isinstance(obj, tuple):
+        if isinstance(obj, (list, tuple)):
             return [cls.convert_to_strings(element) for element in obj]
-        elif isinstance(obj, bytes):
+        if isinstance(obj, bytes):
             return str(obj)[2:-1]
         return obj
 
@@ -134,12 +140,13 @@ class Interceptor:
 
     def dump(self, frame):
         frame["mode"] = self.mode
-        frame["timestamp"] = time.strftime('%X %x %Z')
+        frame["timestamp"] = time.strftime("%X %x %Z")
         frame = self.convert_to_strings(frame)
 
         if self.outfile:
+            # pylint: disable=consider-using-with
             self.lock.acquire()
-            self.outfile.write(json.dumps(frame) + "\\n")
+            self.outfile.write(json.dumps(frame) + "\n")
             self.outfile.flush()
             self.lock.release()
 
@@ -153,19 +160,24 @@ class Interceptor:
         )
 
     def configure(self, _):
-        self.outfile = open(ctx.options.dump_destination, "a")
-        self.lock = Lock()
-        logging.info("Writing all data frames to %s" % ctx.options.dump_destination)
+        dump_destination = ctx.options.dump_destination
+        with open(dump_destination, "a") as dump_file:
+            self.outfile = dump_file
+            self.lock = Lock()
+            logging.info("Writing all data frames to %s", dump_destination)
 
-        for i in range(FILE_WORKERS):
+        for _ in range(FILE_WORKERS):
             t = Thread(target=self.worker)
             t.daemon = True
             t.start()
 
     def wildcard_to_regex(self, wildcard_domain):
-        regex_pattern = re.escape(wildcard_domain)  # Escape special characters
-        regex_pattern = regex_pattern.replace(r'\\*', '.*')  # Replace wildcard with regex equivalent
-        regex_pattern =  '^' + regex_pattern + '$'  # Ensure the pattern matches the entire string
+        # Escape special characters
+        regex_pattern = re.escape(wildcard_domain)
+        # Replace wildcard with regex equivalent
+        regex_pattern = regex_pattern.replace(r"\*", ".*")
+        # Ensure the pattern matches the entire string
+        regex_pattern = "^" + regex_pattern + "$"
         return re.compile(regex_pattern)
 
     def tls_clienthello(self, data):
@@ -174,23 +186,29 @@ class Interceptor:
         matched_rules = []
 
         for rule in self.egress_rules:
-            domain_pattern = self.wildcard_to_regex(rule['domain'])
+            domain_pattern = self.wildcard_to_regex(rule["domain"])
             domain = data.client_hello.sni
             if domain_pattern.match(domain) is not None:
                 matched_rules.append(rule)
 
-
         data.context.matched_rules = matched_rules
 
-        has_paths = len(matched_rules) > 0 and 'paths' in matched_rules[0]
-        
+        has_paths = len(matched_rules) > 0 and "paths" in matched_rules[0]
+
         if has_paths:
             return
 
         applied_rule = matched_rules[0] if len(matched_rules) > 0 else None
-        applied_rule_name = applied_rule.get("name", "Name not configured") if applied_rule is not None else f"Default Policy - {default_policy}"
 
-        block = applied_rule["action"] == "block" if applied_rule is not None else default_policy == 'block-all'
+        if applied_rule is not None:
+            applied_rule_name = applied_rule.get("name", "Name not configured")
+        else:
+            applied_rule_name = f"Default Policy - {default_policy}"
+
+        if applied_rule is not None:
+            block = applied_rule["action"] == "block"
+        else:
+            block = default_policy == "block-all"
 
         if block:
             event = {
@@ -219,8 +237,9 @@ class Interceptor:
         action = data.context.action
         if action == "block" and self.mode != "audit":
             data.ssl_conn = SSL.Connection(SSL.Context(SSL.SSLv23_METHOD))
-            data.conn.error = f'TLS Handshake failed'
+            data.conn.error = "TLS Handshake failed"
 
+    # pylint: disable=too-many-branches,too-many-locals
     def request(self, flow):
         allow_http = False
         default_policy = self.default_policy
@@ -231,49 +250,51 @@ class Interceptor:
         scheme = flow.request.scheme
         request_path = flow.request.path
 
-
         if (not allow_http) and scheme == "http":
             event = {
                 "action": "block",
                 "domain": domain,
                 "scheme": "http",
-                "rule_name": "allow_http is False"
+                "rule_name": "allow_http is False",
             }
             self.queue.put(event)
             if self.mode != "audit":
                 flow.kill()
             return
-        
-        block = default_policy == 'block-all'
-        breakFlag =  False
+
+        block = default_policy == "block-all"
+        break_flag = False
         applied_rule = None
 
         for rule in self.egress_rules:
-            domain_pattern = self.wildcard_to_regex(rule['domain'])
+            domain_pattern = self.wildcard_to_regex(rule["domain"])
             if domain_pattern.match(domain) is not None:
-                paths = rule.get('paths', [])
-                if  len(paths) == 0:
-                    block = rule['action'] == 'block'
+                paths = rule.get("paths", [])
+                if len(paths) == 0:
+                    block = rule["action"] == "block"
                     applied_rule = rule
                     break
                 for path in paths:
                     path_regex = self.wildcard_to_regex(path)
                     if path_regex.match(request_path) is not None:
-                        block = rule['action'] == 'block'
+                        block = rule["action"] == "block"
                         applied_rule = rule
-                        breakFlag = True
+                        break_flag = True
                         break
-                if breakFlag:
+                if break_flag:
                     break
 
-        applied_rule_name = applied_rule.get("name", "Name not configured") if applied_rule is not None else f"Default Policy - {default_policy}"
+        if applied_rule is not None:
+            applied_rule_name = applied_rule.get("name", "Name not configured")
+        else:
+            applied_rule_name = f"Default Policy - {default_policy}"
 
         if block:
             event = {
                 "action": "block",
                 "domain": domain,
                 "scheme": scheme,
-                "rule_name": applied_rule_name
+                "rule_name": applied_rule_name,
             }
             if self.mode != "audit":
                 flow.kill()
@@ -282,16 +303,10 @@ class Interceptor:
                 "action": "allow",
                 "domain": domain,
                 "scheme": scheme,
-                "rule_name": applied_rule_name
+                "rule_name": applied_rule_name,
             }
 
         self.queue.put(event)
 
+
 addons = [Interceptor()]  # pylint: disable=invalid-name
-`
-  fs.writeFileSync('intercept.py', interceptDotPy)
-}
-
-createInterceptDotPy('mitmproxyuser')
-
-module.exports = { createInterceptDotPy }

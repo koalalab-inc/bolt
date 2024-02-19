@@ -1,7 +1,6 @@
 const core = require('@actions/core')
 const { exec } = require('@actions/exec')
 const { wait } = require('./wait')
-const { createInterceptDotPy } = require('./intercept')
 const { boltService } = require('./bolt_service')
 const YAML = require('yaml')
 const fs = require('fs')
@@ -39,20 +38,22 @@ async function run() {
     benchmark('create-bolt-user')
 
     core.startGroup('download-executable')
-    const mitmPackageName = 'mitmproxy'
-    const mitmPackageVersion = '10.2.2'
-    const extractDir = 'home/runner/bolt'
-    await exec(`mkdir -p ${extractDir}`)
+    const releaseName = 'bolt'
+    // const extractDir = 'home/runner/bolt'
+    // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
-    const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
+    const releaseVersion = 'v0.7'
+    const filename = `${releaseName}-${releaseVersion}-linux-x86_64.tar.gz`
+    // Sample URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7/bolt-v0.7-linux-x86_64.tar.gz
     await exec(
-      `wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`
+      `wget --quiet https://github.com/koalalab-inc/bolt/releases/download/${releaseVersion}/${filename}`
     )
-    await exec(`tar -xzf ${filename} -C ${extractDir}`)
-    await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
     core.info('Downloading mitmproxy... done')
-    await exec(`sudo cp ${extractDir}/mitmdump /home/${boltUser}/`)
+    await exec(`tar -xzf ${filename}`)
+    await exec(`sudo cp bolt/mitmdump /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
+    await exec(`sudo cp bolt/intercept.py /home/${boltUser}/`)
+    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
     core.endGroup('ddownload-executable')
 
     benchmark('download-executable')
@@ -93,14 +94,6 @@ async function run() {
       `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`
     )
     core.info('Create bolt egress_rules.yaml... done')
-
-    core.info('Create intercept module...')
-    await createInterceptDotPy(boltUser)
-    await exec(`sudo cp intercept.py /home/${boltUser}/`)
-    await exec(
-      `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`
-    )
-    core.info('Create intercept done...')
 
     core.info('Create bolt service log files...')
     const logFile = `/home/${boltUser}/bolt.log`
