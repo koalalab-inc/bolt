@@ -26031,7 +26031,7 @@ async function run() {
     await exec(`tar -xzf ${filename}`)
     await exec(`sudo cp bolt/mitmdump /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
-    await exec(`sudo cp intercept.py /home/${boltUser}/`)
+    await exec(`sudo cp bolt/intercept.py /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
     core.endGroup('ddownload-executable')
 
