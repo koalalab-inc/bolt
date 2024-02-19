@@ -19,7 +19,7 @@ inputs:
   egress_rules:
     description: 'Egress rules'
     required: false
-    default: []
+    default: '[]'
 
 # Define your outputs here.
 outputs:
