@@ -38,20 +38,22 @@ async function run() {
     benchmark('create-bolt-user')
 
     core.startGroup('download-executable')
-    const mitmPackageName = 'mitmproxy'
-    const mitmPackageVersion = '10.2.2'
-    const extractDir = 'home/runner/bolt'
-    await exec(`mkdir -p ${extractDir}`)
+    const releaseName = 'bolt'
+    // const extractDir = 'home/runner/bolt'
+    // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
-    const filename = `${mitmPackageName}-${mitmPackageVersion}-linux-x86_64.tar.gz`
+    const releaseVersion = 'v0.6'
+    const filename = `${releaseName}-linux-x86_64.tar.gz`
+    // Sample URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.6/bolt-v0.6-linux-x86_64.tar.gz
     await exec(
-      `wget --quiet https://downloads.mitmproxy.org/${mitmPackageVersion}/${filename}`
+      `wget --quiet https://github.com/koalalab-inc/bolt/releases/download/${releaseVersion}/${filename}`
     )
-    await exec(`tar -xzf ${filename} -C ${extractDir}`)
-    await exec(`rm ${extractDir}/mitmproxy ${extractDir}/mitmweb`)
     core.info('Downloading mitmproxy... done')
-    await exec(`sudo cp ${extractDir}/mitmdump /home/${boltUser}/`)
+    await exec(`tar -xzf ${filename}`)
+    await exec(`sudo cp bolt/mitmdump /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
+    await exec(`sudo cp intercept.py /home/${boltUser}/`)
+    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
     core.endGroup('ddownload-executable')
 
     benchmark('download-executable')

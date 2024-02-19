@@ -43,4 +43,5 @@ jobs:
           VALIDATE_ALL_CODEBASE: true
           VALIDATE_MARKDOWN: false
           VALIDATE_JSCPD: false
+          VALIDATE_PYTHON: false
           

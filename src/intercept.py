@@ -1,4 +1,8 @@
-
+"""
+Intercept.py
+This script is used to intercept the traffic and log the requests to a file.
+It also blocks the requests based on the rules defined in the egress_rules.yaml file.
+"""
 import json
 import logging
 from queue import Queue
@@ -7,7 +11,6 @@ from threading import Lock
 from threading import Thread
 import time
 from OpenSSL import SSL
-import os
 
 from mitmproxy import ctx
 
@@ -103,7 +106,7 @@ class Interceptor:
             self.egress_rules = yaml.load(file)
             default_egress_rules = yaml.load(default_egress_rules_yaml)
             self.egress_rules = self.egress_rules + default_egress_rules
-        
+
     def done(self):
         self.queue.join()
         if self.outfile:
@@ -179,14 +182,21 @@ class Interceptor:
         data.context.matched_rules = matched_rules
 
         has_paths = len(matched_rules) > 0 and 'paths' in matched_rules[0]
-        
+
         if has_paths:
             return
 
         applied_rule = matched_rules[0] if len(matched_rules) > 0 else None
-        applied_rule_name = applied_rule.get("name", "Name not configured") if applied_rule is not None else f"Default Policy - {default_policy}"
 
-        block = applied_rule["action"] == "block" if applied_rule is not None else default_policy == 'block-all'
+        if applied_rule is not None:
+            applied_rule_name = applied_rule.get("name", "Name not configured")
+        else:
+            applied_rule_name = f"Default Policy - {default_policy}"
+
+        if applied_rule is not None:
+            block = applied_rule["action"] == "block"
+        else:
+            block = default_policy == 'block-all'
 
         if block:
             event = {
@@ -215,7 +225,7 @@ class Interceptor:
         action = data.context.action
         if action == "block" and self.mode != "audit":
             data.ssl_conn = SSL.Connection(SSL.Context(SSL.SSLv23_METHOD))
-            data.conn.error = f'TLS Handshake failed'
+            data.conn.error = 'TLS Handshake failed'
 
     def request(self, flow):
         allow_http = False
@@ -239,7 +249,7 @@ class Interceptor:
             if self.mode != "audit":
                 flow.kill()
             return
-        
+
         block = default_policy == 'block-all'
         breakFlag =  False
         applied_rule = None
@@ -262,7 +272,10 @@ class Interceptor:
                 if breakFlag:
                     break
 
-        applied_rule_name = applied_rule.get("name", "Name not configured") if applied_rule is not None else f"Default Policy - {default_policy}"
+        if applied_rule is not None:
+            applied_rule_name = applied_rule.get("name", "Name not configured")
+        else:
+            applied_rule_name = f"Default Policy - {default_policy}"
 
         if block:
             event = {
