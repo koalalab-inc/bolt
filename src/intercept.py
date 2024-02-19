@@ -6,6 +6,7 @@ requests to a file. It also blocks the requests based on
 the rules defined in the egress_rules.yaml file.
 """
 
+import os
 import json
 import logging
 import re
@@ -22,75 +23,75 @@ FILE_WORKERS = 5
 DEFAULT_EGRESS_RULES_YAML = """
 - name: 'Reqd by Github Action'
   description: 'Needed for essential operations'
-  domain: 'github.com'
+  destination: 'github.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for essential operations'
-  domain: 'api.github.com'
+  destination: 'api.github.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for essential operations'
-  domain: '*.actions.githubusercontent.com'
+  destination: '*.actions.githubusercontent.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for downloading actions'
-  domain: 'codeload.github.com'
+  destination: 'codeload.github.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for uploading/downloading job \
 summaries, logs, workflow artifacts, and caches'
-  domain: 'results-receiver.actions.githubusercontent.com'
+  destination: 'results-receiver.actions.githubusercontent.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for uploading/downloading job \
 summaries, logs, workflow artifacts, and caches'
-  domain: '*.blob.core.windows.net'
+  destination: '*.blob.core.windows.net'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for runner version updates'
-  domain: 'objects.githubusercontent.com'
+  destination: 'objects.githubusercontent.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for runner version updates'
-  domain: 'objects-origin.githubusercontent.com'
+  destination: 'objects-origin.githubusercontent.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for runner version updates'
-  domain: 'github-releases.githubusercontent.com'
+  destination: 'github-releases.githubusercontent.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for runner version updates'
-  domain: 'github-registry-files.githubusercontent.com'
+  destination: 'github-registry-files.githubusercontent.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for retrieving OIDC tokens'
-  domain: '*.actions.githubusercontent.com'
+  destination: '*.actions.githubusercontent.com'
   action: 'allow'
 - name : 'Reqd by Github Action'
   description: 'Needed for downloading or publishing \
 packages or containers to GitHub Packages'
-  domain: '*.pkg.github.com'
+  destination: '*.pkg.github.com'
   action: 'allow'
 - name : 'Reqd by Github Action'
   description: 'Needed for downloading or publishing \
 packages or containers to GitHub Packages'
-  domain: 'ghcr.io'
+  destination: 'ghcr.io'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for Git Large File Storage'
-  domain: 'github-cloud.githubusercontent.com'
+  destination: 'github-cloud.githubusercontent.com'
   action: 'allow'
 - name: 'Reqd by Github Action'
   description: 'Needed for Git Large File Storage'
-  domain: 'github-cloud.s3.amazonaws.com'
+  destination: 'github-cloud.s3.amazonaws.com'
   action: 'allow'
 - name: 'Reqd by NPM install'
   description: 'Needed for NPM install'
-  domain: 'registry.npmjs.org'
+  destination: 'registry.npmjs.org'
   action: 'allow'
 - name: 'Reqd for instance metadata'
   description: 'Needed for instance metadata'
-  domain: '169.254.169.254'
+  destination: '169.254.169.254'
   action: 'allow'
 """
 
@@ -106,8 +107,9 @@ class Interceptor:
         self.auth = None
         self.queue = Queue()
         self.egress_rules = None
-        self.mode = "audit"
-        self.default_policy = "block-all"
+        self.mode = os.environ.get("BOLT_MODE", "audit")
+        self.default_policy = os.environ.get("BOLT_DEFAULT_POLICY", "block-all")
+        self.allow_http = os.environ.get("BOLT_ALLOW_HTTP", False)
         with open("/home/bolt/egress_rules.yaml", "r") as file:
             yaml = ruamel.yaml.YAML(typ="safe", pure=True)
             self.egress_rules = yaml.load(file)
@@ -171,9 +173,9 @@ class Interceptor:
             t.daemon = True
             t.start()
 
-    def wildcard_to_regex(self, wildcard_domain):
+    def wildcard_to_regex(self, wildcard_destination):
         # Escape special characters
-        regex_pattern = re.escape(wildcard_domain)
+        regex_pattern = re.escape(wildcard_destination)
         # Replace wildcard with regex equivalent
         regex_pattern = regex_pattern.replace(r"\*", ".*")
         # Ensure the pattern matches the entire string
@@ -186,9 +188,9 @@ class Interceptor:
         matched_rules = []
 
         for rule in self.egress_rules:
-            domain_pattern = self.wildcard_to_regex(rule["domain"])
-            domain = data.client_hello.sni
-            if domain_pattern.match(domain) is not None:
+            destination_pattern = self.wildcard_to_regex(rule["destination"])
+            destination = data.client_hello.sni
+            if destination_pattern.match(destination) is not None:
                 matched_rules.append(rule)
 
         data.context.matched_rules = matched_rules
@@ -213,7 +215,7 @@ class Interceptor:
         if block:
             event = {
                 "action": "block",
-                "domain": domain,
+                "destination": destination,
                 "scheme": "https",
                 "rule_name": applied_rule_name,
             }
@@ -223,7 +225,7 @@ class Interceptor:
         else:
             event = {
                 "action": "allow",
-                "domain": domain,
+                "destination": destination,
                 "scheme": "https",
                 "rule_name": applied_rule_name,
             }
@@ -241,19 +243,19 @@ class Interceptor:
 
     # pylint: disable=too-many-branches,too-many-locals
     def request(self, flow):
-        allow_http = False
+        allow_http = self.allow_http
         default_policy = self.default_policy
 
         sni = flow.client_conn.sni
         host = flow.request.pretty_host
-        domain = sni if sni is not None else host
+        destination = sni if sni is not None else host
         scheme = flow.request.scheme
         request_path = flow.request.path
 
         if (not allow_http) and scheme == "http":
             event = {
                 "action": "block",
-                "domain": domain,
+                "destination": destination,
                 "scheme": "http",
                 "rule_name": "allow_http is False",
             }
@@ -267,9 +269,11 @@ class Interceptor:
         applied_rule = None
 
         for rule in self.egress_rules:
-            domain_pattern = self.wildcard_to_regex(rule["domain"])
-            if domain_pattern.match(domain) is not None:
+            destination_pattern = self.wildcard_to_regex(rule["destination"])
+            if destination_pattern.match(destination) is not None:
                 paths = rule.get("paths", [])
+                # Disable path based rules for now.
+                paths = []
                 if len(paths) == 0:
                     block = rule["action"] == "block"
                     applied_rule = rule
@@ -292,7 +296,7 @@ class Interceptor:
         if block:
             event = {
                 "action": "block",
-                "domain": domain,
+                "destination": destination,
                 "scheme": scheme,
                 "rule_name": applied_rule_name,
             }
@@ -301,7 +305,7 @@ class Interceptor:
         else:
             event = {
                 "action": "allow",
-                "domain": domain,
+                "destination": destination,
                 "scheme": scheme,
                 "rule_name": applied_rule_name,
             }

@@ -24,6 +24,7 @@ async function run() {
     startTime = Date.now()
     core.info(`Start time: ${startTime}`)
 
+    // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
 

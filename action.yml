@@ -19,10 +19,7 @@ inputs:
   egress_rules:
     description: 'Egress rules'
     required: false
-    default: |
-      - name: 'Allow ifconfig.me'
-        action: 'allow'
-        domain: 'ifconfig.me'
+    default: []
 
 # Define your outputs here.
 outputs:
