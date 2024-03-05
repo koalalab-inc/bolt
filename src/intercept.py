@@ -14,6 +14,7 @@ import time
 from queue import Queue
 from threading import Lock, Thread
 
+# pylint: disable=import-error
 import ruamel.yaml
 from mitmproxy import ctx
 from OpenSSL import SSL
