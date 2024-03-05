@@ -4,4 +4,3 @@ node_modules/
 coverage/
 src/intercept.py
 super-linter.env
-src/main.js
