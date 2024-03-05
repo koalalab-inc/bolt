@@ -6,9 +6,9 @@ requests to a file. It also blocks the requests based on
 the rules defined in the egress_rules.yaml file.
 """
 
-import os
 import json
 import logging
+import os
 import re
 import time
 from queue import Queue
