@@ -36,7 +36,7 @@ async function generateTestResults(boltUser) {
 function actionString(action) {
   switch (action) {
     case 'block':
-      return 'Unknown Domain'
+      return 'Unknown Destination'
     case 'allow':
       return '✅'
     default:

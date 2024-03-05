@@ -36,7 +36,7 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
       default_policy: 'block-all'
       allow-http: 'false'
       egress_rules: |
-        - name: 'Allow GitHub subdomains'
+        - name: 'Allow GitHub subs'
           destination: '*.github.com'
           action: 'allow'
 ```
@@ -97,10 +97,10 @@ Once the job is over, bolt will add a egress traffic report to the job summary. 
 ```yaml
 - name: 'Allow ifconfig.me'
   action: 'allow'
-  domain: 'ifconfig.me'
+  destinatiom: 'ifconfig.me'
 ```
 #### Egress Traffic
 > [!NOTE]
 >
-> Running in Audit mode. Unverified domains will be blocked in Active mode.
-<table><tr><th>Domain</th><th>Scheme</th><th>Rule</th><th>Action</th></tr><tr><td>github.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr><tr><td>packages.microsoft.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>results-receiver.actions.githubusercontent.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr><tr><td>ppa.launchpadcontent.net</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>esm.ubuntu.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>azure.archive.ubuntu.com</td><td>http</td><td>allow_http is False</td><td>Unknown Domain</td></tr><tr><td>www.google.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Domain</td></tr><tr><td>ifconfig.me</td><td>https</td><td>Allow ifconfig.me</td><td>✅</td></tr><tr><td>pipelinesghubeus6.actions.githubusercontent.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr></table>
+> Running in Audit mode. Unverified destinations will be blocked in Active mode.
+<table><tr><th>Destination</th><th>Scheme</th><th>Rule</th><th>Action</th></tr><tr><td>github.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr><tr><td>packages.microsoft.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Destination</td></tr><tr><td>results-receiver.actions.githubusercontent.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr><tr><td>ppa.launchpadcontent.net</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Destination</td></tr><tr><td>esm.ubuntu.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Destination</td></tr><tr><td>azure.archive.ubuntu.com</td><td>http</td><td>allow_http is False</td><td>Unknown Destination</td></tr><tr><td>www.google.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Destination</td></tr><tr><td>ifconfig.me</td><td>https</td><td>Allow ifconfig.me</td><td>✅</td></tr><tr><td>pipelinesghubeus6.actions.githubusercontent.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr></table>
