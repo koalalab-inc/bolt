@@ -1,7 +1,9 @@
-name: 'Bolt'
+name: 'Bolt by Koalalab'
 description: 'Bolt - Transparnt egress gateway for build environments'
 author: 'Koalalab-inc'
-
+branding:
+  color: 'black'
+  icon: 'zap'
 # Define your inputs here.
 inputs:
   mode:
