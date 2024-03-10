@@ -46,9 +46,24 @@ async function run() {
     const releaseVersion = 'v1.0.0'
     const filename = `${releaseName}-${releaseVersion}-linux-x86_64.tar.gz`
     // Sample URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
-    await exec(
-      `wget --quiet https://github.com/koalalab-inc/bolt/releases/download/${releaseVersion}/${filename}`
+    let referrer = ''
+    try {
+      const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
+      const workflowName = process.env.GITHUB_WORKFLOW.replace(/\//g, "|"); // e.g. CI
+      const jobName = process.env.GITHUB_JOB; // e.g. build
+      referrer = `github.com/${repoName}/${workflowName}/${jobName}`
+    } catch (error) {
+      core.info('Error getting referrer')
+    }
+    const primaryDownloadExitCode = await exec(
+      `wget --quiet --header 'Referrer: ${referrer}' https://api-do-blr.koalalab.com/bolt/package/${releaseVersion}/${filename}`
     )
+    if (primaryDownloadExitCode !== 0) {
+      core.info('Primary download failed, trying backup...')
+      await exec(
+        `wget --quiet https://github.com/koalalab-inc/bolt/releases/download/${releaseVersion}/${filename}`
+      )
+    }
     core.info('Downloading mitmproxy... done')
     await exec(`tar -xzf ${filename}`)
     await exec(`sudo cp bolt/mitmdump /home/${boltUser}/`)
