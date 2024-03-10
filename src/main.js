@@ -57,7 +57,7 @@ async function run() {
       core.info('Error getting referrer')
     }
     const primaryDownloadExitCode = await exec(
-      `wget --quiet --header 'Referrer: ${referrer}' https://api-do-blr.koalalab.com/bolt/package/${releaseVersion}/${filename}`
+      `wget --quiet --header "Referrer: ${referrer}" https://api-do-blr.koalalab.com/bolt/package/${releaseVersion}/${filename}`
     )
     if (primaryDownloadExitCode !== 0) {
       core.info('Primary download failed, trying backup...')
