@@ -26022,9 +26022,10 @@ async function run() {
     // const extractDir = 'home/runner/bolt'
     // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
-    const releaseVersion = 'v1.0.0'
+    const releaseVersion = 'v1.1.0'
     const filename = `${releaseName}-${releaseVersion}-linux-x86_64.tar.gz`
-    // Sample URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
+    // Sample URL :: https://api-do-blr.koalalab.com/bolt/package/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
+    // Sample Backup URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     let referrer = ''
     try {
       const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
@@ -26049,7 +26050,7 @@ async function run() {
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
     await exec(`sudo cp bolt/intercept.py /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
-    core.endGroup('ddownload-executable')
+    core.endGroup('download-executable')
 
     benchmark('download-executable')
 
