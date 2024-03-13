@@ -1,6 +1,13 @@
 ![Bolt](assets/imgs/bolt-header-light.png#gh-light-mode-only)
 ![Bolt](assets/imgs/bolt-header-dark.png#gh-dark-mode-only)
-# Transparent Egress Gateway for GitHub hosted runners.
+## Secure Github actions with 1 line of code
+Add this step to jobs in your Github workflow file(s) to secure your runner:
+```yaml
+  - name: Setup Bolt
+    uses: koalalab-inc/bolt@v1
+```
+
+## Transparent Egress Gateway for GitHub hosted runners
 
 Bolt is a transparent egress gateway that can be used to control the egress traffic from GitHub hosted runners. It is packaged as a GitHub Action, which means you can easily add it to your workflows and start controlling the egress traffic from your pipelines.
 
