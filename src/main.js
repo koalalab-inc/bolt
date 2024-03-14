@@ -35,13 +35,14 @@ async function run() {
     core.info('Creating bolt user...')
     const isLinux = platform === 'linux'
     const isMacOS = platform === 'darwin'
+    const homeDir = isLinux ? `/home/${boltUser}` : `/Users/${boltUser}`
     if (isLinux) {
       await exec(`sudo useradd ${boltUser}`)
+      await exec(`sudo mkdir -p ${homeDir}`)
+      await exec(`sudo chown ${boltUser}:${boltUser} ${homeDir}`)
     } else if (isMacOS) {
       await exec(`sudo sysadminctl -addUser ${boltUser}`)
     }
-    await exec(`sudo mkdir -p /home/${boltUser}`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}`)
 
     core.info('Creating bolt user... done')
     core.endGroup('create-bolt-user')
@@ -79,13 +80,13 @@ async function run() {
     core.info('Downloading mitmproxy... done')
     await exec(`tar -xzf ${filename}`)
     if (isLinux) {
-      await exec(`sudo cp bolt/mitmdump /home/${boltUser}/`)
-      await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
+      await exec(`sudo cp bolt/mitmdump ${homeDir}`)
+      await exec(`sudo chown ${boltUser}:${boltUser} ${homeDir}/mitmdump`)
     } else if (isMacOS) {
-      await exec(`sudo cp bolt/mitmproxy.app /home/${boltUser}/`)
+      await exec(`sudo cp bolt/mitmproxy.app ${homeDir}`)
     }
-    await exec(`sudo cp bolt/intercept.py /home/${boltUser}/`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
+    await exec(`sudo cp bolt/intercept.py ${homeDir}`)
+    await exec(`sudo chown ${boltUser}:${boltUser} ${homeDir}/intercept.py`)
     core.endGroup('download-executable')
 
     benchmark('download-executable')
@@ -103,33 +104,33 @@ async function run() {
 
     core.info('Create bolt output file...')
     await exec(
-      `sudo -u ${boltUser} -H bash -c "touch /home/${boltUser}/output.log`
+      `sudo -u ${boltUser} -H bash -c "touch ${homeDir}/output.log`
     )
     core.info('Create bolt output file... done')
 
     core.info('Create bolt config...')
-    const boltConfig = `dump_destination: "/home/${boltUser}/output.log"`
+    const boltConfig = `dump_destination: "${homeDir}/output.log"`
     fs.writeFileSync('config.yaml', boltConfig)
     await exec(
-      `sudo -u ${boltUser} -H bash -c "mkdir -p /home/${boltUser}/.mitmproxy"`
+      `sudo -u ${boltUser} -H bash -c "mkdir -p ${homeDir}/.mitmproxy"`
     )
-    await exec(`sudo cp config.yaml /home/${boltUser}/.mitmproxy/`)
+    await exec(`sudo cp config.yaml ${homeDir}/.mitmproxy/`)
     await exec(
-      `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/.mitmproxy/config.yaml`
+      `sudo chown ${boltUser}:${boltUser} ${homeDir}/.mitmproxy/config.yaml`
     )
     core.info('Create bolt config... done')
 
     core.info('Create bolt egress_rules.yaml...')
     fs.writeFileSync('egress_rules.yaml', egressRulesYAML)
-    await exec(`sudo cp egress_rules.yaml /home/${boltUser}/`)
+    await exec(`sudo cp egress_rules.yaml ${homeDir}`)
     await exec(
-      `sudo chown ${boltUser}:${boltUser} /home/${boltUser}/egress_rules.yaml`
+      `sudo chown ${boltUser}:${boltUser} ${homeDir}/egress_rules.yaml`
     )
     core.info('Create bolt egress_rules.yaml... done')
 
     core.info('Create bolt service log files...')
-    const logFile = `/home/${boltUser}/bolt.log`
-    const errorLogFile = `/home/${boltUser}/bolt-error.log`
+    const logFile = `${homeDir}/bolt.log`
+    const errorLogFile = `${homeDir}/bolt-error.log`
     await exec(`sudo touch ${logFile}`)
     await exec(`sudo touch ${errorLogFile}`)
     await exec(`sudo chown ${boltUser}:${boltUser} ${logFile} ${errorLogFile}`)
