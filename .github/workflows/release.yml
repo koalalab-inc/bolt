@@ -8,32 +8,56 @@ on:
 permissions: read-all
 
 jobs:
-  release:
+  package:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    strategy:
+      matrix:
+        os: [linux, macos]
+        arch: [x86_64]          
     env:
       tag: ${{ github.ref_name }}
-      os: linux
-      arch: x86_64
+      version: 10.2.2
+      os: ${{ matrix.os }}
+      arch: ${{ matrix.arch }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Fetch MITM-Proxy
         run: |
           mkdir -p mitmproxy
-          wget https://downloads.mitmproxy.org/10.2.2/mitmproxy-10.2.2-${{ env.os }}-${{ env.arch }}.tar.gz --quiet
-          tar -xzf mitmproxy-10.2.2-${{ env.os }}-${{ env.arch }}.tar.gz -C mitmproxy
+          wget https://downloads.mitmproxy.org/${{ env.version }}/mitmproxy-${{ env.version }}-${{ env.os }}-${{ env.arch }}.tar.gz --quiet
+          tar -xzf mitmproxy-${{ env.version }}-${{ env.os }}-${{ env.arch }}.tar.gz -C mitmproxy
           mkdir -p bolt
-          cp mitmproxy/mitmdump bolt/mitmdump
           cp src/intercept.py bolt/intercept.py
+      - name: Packag-Linux
+        if: ${{ env.os == 'linux' }}
+        run: |
+          cp mitmproxy/mitmdump bolt/mitmdump
           tar -czf bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz bolt
           rm -rf mitmproxy bolt
-          rm mitmproxy-10.2.2-linux-x86_64.tar.gz
+          rm mitmproxy-${{ env.version }}-${{ env.os }}-${{ env.arch }}.tar.gz
+      - name: Packag-MacOS
+        if: ${{ env.os == 'macos' }}
+        run: |
+          cp mitmproxy/mitmdump bolt/mitmdump
+          cp -R mitmproxy/mitmproxy.app bolt/
+          tar -czf bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz bolt
+          rm -rf mitmproxy bolt
+          rm mitmproxy-${{ env.version }}-${{ env.os }}-${{ env.arch }}.tar.gz
+  release:
+    needs: package
+    permissions:
+      contents: write
+    env:
+      tag: ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+          files: |
+            bolt-${{ env.tag }}-linux-x86_64.tar.gz
+            bolt-${{ env.tag }}-macos-x86_64.tar.gz
           tag_name: ${{ env.tag }}
           name: ${{ env.tag }}
           generate_release_notes: true

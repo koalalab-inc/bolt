@@ -24,15 +24,22 @@ async function run() {
     startTime = Date.now()
     core.info(`Start time: ${startTime}`)
 
+    const { platform } = core;
+  
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
 
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
-    await exec(`sudo useradd ${boltUser}`)
-    await exec(`sudo mkdir -p /home/${boltUser}`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}`)
+    if (platform.isLinux) {
+      await exec(`sudo useradd ${boltUser}`)
+      await exec(`sudo mkdir -p /home/${boltUser}`)
+      await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}`)
+    } else if (platform.isMacOS) {
+      await exec(`sudo sysadminctl -addUser ${boltUser}`)
+    }
+
     core.info('Creating bolt user... done')
     core.endGroup('create-bolt-user')
 
@@ -43,8 +50,9 @@ async function run() {
     // const extractDir = 'home/runner/bolt'
     // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
-    const releaseVersion = 'v1.1.0'
-    const filename = `${releaseName}-${releaseVersion}-linux-x86_64.tar.gz`
+    const releaseVersion = 'v1.2.0-rc'
+    const platformOS = platform.isLinux ? 'linux' : 'macos'
+    const filename = `${releaseName}-${releaseVersion}-${platformOS}-x86_64.tar.gz`
     // Sample URL :: https://api-do-blr.koalalab.com/bolt/package/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     // Sample Backup URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     let referrer = ''
@@ -171,6 +179,7 @@ async function run() {
     benchmark('setup-iptables-redirection')
   } catch (error) {
     // Fail the workflow run if an error occurs
+    core.saveState('boltFailed', 'true')
     core.setFailed(error.message)
   }
 }
