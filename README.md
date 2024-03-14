@@ -41,7 +41,7 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
     with:
       mode: 'audit'
       default_policy: 'block-all'
-      allow-http: 'false'
+      allow_http: 'false'
       egress_rules: |
         - name: 'Allow GitHub subs'
           destination: '*.github.com'
@@ -51,7 +51,7 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
 ---------------------------------|---------------------------------
 | `mode` | Configure the mode of operation for the Bolt gateway. It can be `audit` or `active`. Default: `audit` |
 | `default_policy` | It can be either `block-all` or `allow-all`. Default: `block-all` |
-| `allow-http` | Whether to allow non-secure HTTP requests or not. Default: `false`
+| `allow_http` | Whether to allow non-secure HTTP requests or not. Default: `false`
 | `egress_rules` | A list of custom egress rules to be applied. Default: `[]`.
 
 ## Custom Egress Policy
@@ -75,7 +75,7 @@ It is an ordered list of rules. The first rule that matches the destination will
     with:
       mode: 'audit'
       default_policy: 'block-all'
-      allow-http: 'false'
+      allow_http: 'false'
       egress_rules: |
         - name: 'Allow GitHub subdomains'
           destination: '*.github.com'
