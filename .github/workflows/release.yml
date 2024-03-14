@@ -60,12 +60,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: bolt-${{ env.tag }}-linux-x86_64
-          path: bolt-${{ env.tag }}-linux-x86_64.tar.gz
       - name: Download MacOS Artifact
         uses: actions/download-artifact@v4
         with:
           name: bolt-${{ env.tag }}-macos-x86_64
-          path: bolt-${{ env.tag }}-macos-x86_64.tar.gz
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
