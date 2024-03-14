@@ -39,7 +39,6 @@ jobs:
       - name: Packag-MacOS
         if: ${{ env.os == 'macos' }}
         run: |
-          cp mitmproxy/mitmdump bolt/mitmdump
           cp -R mitmproxy/mitmproxy.app bolt/
           tar -czf bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz bolt
           rm -rf mitmproxy bolt
