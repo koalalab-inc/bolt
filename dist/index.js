@@ -26062,7 +26062,7 @@ async function run() {
       await exec(`sudo cp bolt/mitmdump ${homeDir}`)
       await exec(`sudo chown ${boltUser}:${boltUser} ${homeDir}/mitmdump`)
     } else if (isMacOS) {
-      await exec(`sudo cp bolt/mitmproxy.app ${homeDir}`)
+      await exec(`sudo cp -R bolt/mitmproxy.app ${homeDir}`)
     }
     await exec(`sudo cp bolt/intercept.py ${homeDir}`)
     await exec(`sudo chown ${boltUser}:${boltUser} ${homeDir}/intercept.py`)
