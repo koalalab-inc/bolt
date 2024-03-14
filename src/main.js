@@ -37,11 +37,11 @@ async function run() {
     const isMacOS = platform === 'darwin'
     if (isLinux) {
       await exec(`sudo useradd ${boltUser}`)
-      await exec(`sudo mkdir -p /home/${boltUser}`)
-      await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}`)
     } else if (isMacOS) {
       await exec(`sudo sysadminctl -addUser ${boltUser}`)
     }
+    await exec(`sudo mkdir -p /home/${boltUser}`)
+    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}`)
 
     core.info('Creating bolt user... done')
     core.endGroup('create-bolt-user')
@@ -78,8 +78,12 @@ async function run() {
     }
     core.info('Downloading mitmproxy... done')
     await exec(`tar -xzf ${filename}`)
-    await exec(`sudo cp bolt/mitmdump /home/${boltUser}/`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
+    if (isLinux) {
+      await exec(`sudo cp bolt/mitmdump /home/${boltUser}/`)
+      await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
+    } else if (isMacOS) {
+      await exec(`sudo cp bolt/mitmproxy.app /home/${boltUser}/`)
+    }
     await exec(`sudo cp bolt/intercept.py /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
     core.endGroup('download-executable')
