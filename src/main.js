@@ -4,6 +4,7 @@ const { wait } = require('./wait')
 const { boltService } = require('./bolt_service')
 const YAML = require('yaml')
 const fs = require('fs')
+const os = require('os')
 
 let startTime = Date.now()
 
@@ -24,19 +25,21 @@ async function run() {
     startTime = Date.now()
     core.info(`Start time: ${startTime}`)
 
-    const { platform } = core;
-  
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
 
+    const platform = os.platform()
+
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
-    if (platform.isLinux) {
+    const isLinux = platform === 'linux'
+    const isMacOS = platform === 'darwin'
+    if (isLinux) {
       await exec(`sudo useradd ${boltUser}`)
       await exec(`sudo mkdir -p /home/${boltUser}`)
       await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}`)
-    } else if (platform.isMacOS) {
+    } else if (isMacOS) {
       await exec(`sudo sysadminctl -addUser ${boltUser}`)
     }
 
@@ -51,7 +54,7 @@ async function run() {
     // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
     const releaseVersion = 'v1.2.0-rc'
-    const platformOS = platform.isLinux ? 'linux' : 'macos'
+    const platformOS = isLinux ? 'linux' : 'macos'
     const filename = `${releaseName}-${releaseVersion}-${platformOS}-x86_64.tar.gz`
     // Sample URL :: https://api-do-blr.koalalab.com/bolt/package/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     // Sample Backup URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz

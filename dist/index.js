@@ -25983,6 +25983,7 @@ const { wait } = __nccwpck_require__(1312)
 const { boltService } = __nccwpck_require__(5147)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
+const os = __nccwpck_require__(2037)
 
 let startTime = Date.now()
 
@@ -26003,19 +26004,21 @@ async function run() {
     startTime = Date.now()
     core.info(`Start time: ${startTime}`)
 
-    const { platform } = core;
-  
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
 
+    const platform = os.platform()
+
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
-    if (platform.isLinux) {
+    const isLinux = platform === 'linux'
+    const isMacOS = platform === 'darwin'
+    if (isLinux) {
       await exec(`sudo useradd ${boltUser}`)
       await exec(`sudo mkdir -p /home/${boltUser}`)
       await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}`)
-    } else if (platform.isMacOS) {
+    } else if (isMacOS) {
       await exec(`sudo sysadminctl -addUser ${boltUser}`)
     }
 
@@ -26030,7 +26033,7 @@ async function run() {
     // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
     const releaseVersion = 'v1.2.0-rc'
-    const platformOS = platform.isLinux ? 'linux' : 'macos'
+    const platformOS = isLinux ? 'linux' : 'macos'
     const filename = `${releaseName}-${releaseVersion}-${platformOS}-x86_64.tar.gz`
     // Sample URL :: https://api-do-blr.koalalab.com/bolt/package/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     // Sample Backup URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
@@ -42633,6 +42636,7 @@ const { all } = __nccwpck_require__(5229)
 const { run } = __nccwpck_require__(1713)
 const { summary } = __nccwpck_require__(7259)
 const core = __nccwpck_require__(2186)
+const os = __nccwpck_require__(2037)
 
 const isPost = core.getState('isPost')
 const flag = isPost === 'true'
@@ -42652,16 +42656,17 @@ function init() {
       core.saveState('isPost', 'true')
     }
 
-    const { platform } = core
-    if (platform.isWindows) {
+    const platform = os.platform()
+    // 'win32' | 'darwin' | 'linux' | 'freebsd' | 'openbsd' | 'android' | 'cygwin' | 'sunos'
+    if (['darwin', 'linux'].indexOf(platform) === -1) {
       core.saveState('boltFailed', 'true')
-      core.setFailed('This action is not supported on Windows')
+      core.setFailed(`This action is not supported on ${platform}`)
       return
     }
     // Possible Archs
     // 'x64' | 'arm' | 'arm64' | 'ia32' | 'mips' | 'mipsel' | 'ppc' | 'ppc64' | 'riscv64' | 's390' | 's390x'
     const allowedArch = ['x64', 'arm64', 'arm']
-    const arch = platform.arch
+    const arch = os.arch()
     if (allowedArch.indexOf(arch) === -1) {
       core.saveState('boltFailed', 'true')
       core.setFailed(`This action is not supported on ${arch}`)
