@@ -25974,6 +25974,21 @@ module.exports = { boltService }
 
 /***/ }),
 
+/***/ 4607:
+/***/ ((module) => {
+
+async function boltSudoers(boltUser) {
+  return `
+${boltUser} ALL=(root) NOPASSWD:ALL
+runner ALL=(${boltUser}) NOPASSWD:ALL
+`
+}
+
+module.exports = { boltSudoers }
+
+
+/***/ }),
+
 /***/ 1713:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -25981,6 +25996,7 @@ const core = __nccwpck_require__(2186)
 const { exec } = __nccwpck_require__(1514)
 const { wait } = __nccwpck_require__(1312)
 const { boltService } = __nccwpck_require__(5147)
+const { boltSudoers } = __nccwpck_require__(4607)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
 const os = __nccwpck_require__(2037)
@@ -26022,10 +26038,9 @@ async function run() {
       await exec(`sudo chown ${boltUser}:${boltGroup} ${homeDir}`)
     } else if (isMacOS) {
       await exec(`sudo sysadminctl -addUser ${boltUser}`)
-      await exec(
-        `echo -e "${boltUser} ALL=(root) NOPASSWD:ALL \nrunner ALL=(${boltUser}) NOPASSWD:ALL \n" > bolt-sudoers-conf`
-      )
-      await exec(`sudo chown root:wheel bolt-sudoers-conf`)
+      const boltSudoersFileContent = await boltSudoers(boltUser);
+      fs.writeFileSync('bolt-sudoers', boltSudoersFileContent)
+      await exec(`sudo chown root:wheel bolt-sudoers`)
       await exec(`sudo mv bolt-sudoeers-conf /etc/sudoers.d/${boltUser}`)
     }
 

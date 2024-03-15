@@ -2,6 +2,7 @@ const core = require('@actions/core')
 const { exec } = require('@actions/exec')
 const { wait } = require('./wait')
 const { boltService } = require('./bolt_service')
+const { boltSudoers } = require('./bolt_sudoers')
 const YAML = require('yaml')
 const fs = require('fs')
 const os = require('os')
@@ -43,10 +44,9 @@ async function run() {
       await exec(`sudo chown ${boltUser}:${boltGroup} ${homeDir}`)
     } else if (isMacOS) {
       await exec(`sudo sysadminctl -addUser ${boltUser}`)
-      await exec(
-        `echo -e "${boltUser} ALL=(root) NOPASSWD:ALL \nrunner ALL=(${boltUser}) NOPASSWD:ALL \n" > bolt-sudoers-conf`
-      )
-      await exec(`sudo chown root:wheel bolt-sudoers-conf`)
+      const boltSudoersFileContent = await boltSudoers(boltUser);
+      fs.writeFileSync('bolt-sudoers', boltSudoersFileContent)
+      await exec(`sudo chown root:wheel bolt-sudoers`)
       await exec(`sudo mv bolt-sudoeers-conf /etc/sudoers.d/${boltUser}`)
     }
 
