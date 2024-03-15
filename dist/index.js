@@ -26007,18 +26007,19 @@ async function run() {
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
-
+    
     const platform = os.platform()
-
+    
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
     const isLinux = platform === 'linux'
     const isMacOS = platform === 'darwin'
     const homeDir = isLinux ? `/home/${boltUser}` : `/Users/${boltUser}`
+    const boltGroup = isLinux ? 'bolt' : 'staff'
     if (isLinux) {
       await exec(`sudo useradd ${boltUser}`)
       await exec(`sudo mkdir -p ${homeDir}`)
-      await exec(`sudo chown ${boltUser}:${boltUser} ${homeDir}`)
+      await exec(`sudo chown ${boltUser}:${boltGroup} ${homeDir}`)
     } else if (isMacOS) {
       await exec(`sudo sysadminctl -addUser ${boltUser}`)
     }
@@ -26060,12 +26061,12 @@ async function run() {
     await exec(`tar -xzf ${filename}`)
     if (isLinux) {
       await exec(`sudo cp bolt/mitmdump ${homeDir}`)
-      await exec(`sudo chown ${boltUser}:${boltUser} ${homeDir}/mitmdump`)
+      await exec(`sudo chown ${boltUser}:${boltGroup} ${homeDir}/mitmdump`)
     } else if (isMacOS) {
       await exec(`sudo cp -R bolt/mitmproxy.app ${homeDir}`)
     }
     await exec(`sudo cp bolt/intercept.py ${homeDir}`)
-    await exec(`sudo chown ${boltUser}:${boltUser} ${homeDir}/intercept.py`)
+    await exec(`sudo chown ${boltUser}:${boltGroup} ${homeDir}/intercept.py`)
     core.endGroup('download-executable')
 
     benchmark('download-executable')
@@ -26095,7 +26096,7 @@ async function run() {
     )
     await exec(`sudo cp config.yaml ${homeDir}/.mitmproxy/`)
     await exec(
-      `sudo chown ${boltUser}:${boltUser} ${homeDir}/.mitmproxy/config.yaml`
+      `sudo chown ${boltUser}:${boltGroup} ${homeDir}/.mitmproxy/config.yaml`
     )
     core.info('Create bolt config... done')
 
@@ -26103,7 +26104,7 @@ async function run() {
     fs.writeFileSync('egress_rules.yaml', egressRulesYAML)
     await exec(`sudo cp egress_rules.yaml ${homeDir}`)
     await exec(
-      `sudo chown ${boltUser}:${boltUser} ${homeDir}/egress_rules.yaml`
+      `sudo chown ${boltUser}:${boltGroup} ${homeDir}/egress_rules.yaml`
     )
     core.info('Create bolt egress_rules.yaml... done')
 
@@ -26112,7 +26113,7 @@ async function run() {
     const errorLogFile = `${homeDir}/bolt-error.log`
     await exec(`sudo touch ${logFile}`)
     await exec(`sudo touch ${errorLogFile}`)
-    await exec(`sudo chown ${boltUser}:${boltUser} ${logFile} ${errorLogFile}`)
+    await exec(`sudo chown ${boltUser}:${boltGroup} ${logFile} ${errorLogFile}`)
     core.info('Create bolt service log files... done')
 
     core.info('Create bolt service...')
