@@ -26041,7 +26041,7 @@ async function run() {
       const boltSudoersFileContent = await boltSudoers(boltUser);
       fs.writeFileSync('bolt-sudoers', boltSudoersFileContent)
       await exec(`sudo chown root:wheel bolt-sudoers`)
-      await exec(`sudo mv bolt-sudoeers-conf /etc/sudoers.d/${boltUser}`)
+      await exec(`sudo mv bolt-sudoeers /etc/sudoers.d/${boltUser}`)
     }
 
     core.info('Creating bolt user... done')
