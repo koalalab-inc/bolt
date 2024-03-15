@@ -44,8 +44,10 @@ async function run() {
     } else if (isMacOS) {
       await exec(`sudo sysadminctl -addUser ${boltUser}`)
       await exec(
-        `printf "${boltUser} ALL=(root) NOPASSWD:ALL \nrunner ALL=(${boltUser}) NOPASSWD:ALL \n" | sudo tee /etc/sudoers.d/${boltUser}`
+        `echo -e "${boltUser} ALL=(root) NOPASSWD:ALL \nrunner ALL=(${boltUser}) NOPASSWD:ALL \n" > bolt-sudoers-conf`
       )
+      await exec(`sudo chown root:wheel bolt-sudoers-conf`)
+      await exec(`sudo mv bolt-sudoeers-conf /etc/sudoers.d/${boltUser}`)
     }
 
     core.info('Creating bolt user... done')
