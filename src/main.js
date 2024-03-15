@@ -43,6 +43,9 @@ async function run() {
       await exec(`sudo chown ${boltUser}:${boltGroup} ${homeDir}`)
     } else if (isMacOS) {
       await exec(`sudo sysadminctl -addUser ${boltUser}`)
+      await exec(`sudo su`)
+      await exec(`echo "${boltUser} ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/bolt`)
+      await exec(`exit`)
     }
 
     core.info('Creating bolt user... done')
@@ -85,6 +88,7 @@ async function run() {
       await exec(`sudo chown ${boltUser}:${boltGroup} ${homeDir}/mitmdump`)
     } else if (isMacOS) {
       await exec(`sudo cp -R bolt/mitmproxy.app ${homeDir}`)
+      await exec(`sudo chown -R ${boltUser}:${boltGroup} ${homeDir}/mitmdump.app`)
     }
     await exec(`sudo cp bolt/intercept.py ${homeDir}`)
     await exec(`sudo chown ${boltUser}:${boltGroup} ${homeDir}/intercept.py`)
@@ -103,9 +107,10 @@ async function run() {
     YAML.parse(egressRulesYAML)
     core.info('Reading inputs... done')
 
+    await exec(`sudo su - ${boltUser}`)
     core.info('Create bolt output file...')
     await exec(
-      `sudo -u ${boltUser} -H bash -c "touch ${homeDir}/output.log`
+      `touch ${homeDir}/output.log`
     )
     core.info('Create bolt output file... done')
 
@@ -113,11 +118,13 @@ async function run() {
     const boltConfig = `dump_destination: "${homeDir}/output.log"`
     fs.writeFileSync('config.yaml', boltConfig)
     await exec(
-      `sudo -u ${boltUser} -H bash -c "mkdir -p ${homeDir}/.mitmproxy"`
+      `mkdir -p ${homeDir}/.mitmproxy`
     )
-    await exec(`sudo cp config.yaml ${homeDir}/.mitmproxy/`)
     await exec(
-      `sudo chown ${boltUser}:${boltGroup} ${homeDir}/.mitmproxy/config.yaml`
+      `mv config.yaml ${homeDir}/.mitmproxy/`
+    )
+    await exec(
+      `exit`
     )
     core.info('Create bolt config... done')
 

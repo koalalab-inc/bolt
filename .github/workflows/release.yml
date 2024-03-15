@@ -74,4 +74,5 @@ jobs:
           name: ${{ env.tag }}
           generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: endsWith(env.tag, 'rc')
 
