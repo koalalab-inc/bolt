@@ -26377,7 +26377,7 @@ async function summary() {
     core.info(`Bolt output file not found`)
     return
   }
-  await exec(`sudo cp ${homeDir}/${outputFile} $${outputFile}`)
+  await exec(`sudo cp ${homeDir}/${outputFile} ${outputFile}`)
   const runnerGroupName = isLinux ? 'docker' : 'staff'
   await exec(`sudo chown -R runner:${runnerGroupName} ${outputFile}`)
   const mode = core.getInput('mode')
