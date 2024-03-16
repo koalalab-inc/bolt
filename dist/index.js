@@ -26066,6 +26066,7 @@ const { wait } = __nccwpck_require__(1312)
 const { boltService } = __nccwpck_require__(5147)
 const { boltSudoers } = __nccwpck_require__(4607)
 const { boltPlist } = __nccwpck_require__(3998)
+const  { pfConf } = __nccwpck_require__(5128)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
 const os = __nccwpck_require__(2037)
@@ -26293,6 +26294,15 @@ async function run() {
       )
       core.endGroup('setup-iptables-redirection')
       benchmark('setup-iptables-redirection')
+    } else if (isMacOS) {
+      core.startGroup('setup-pf-redirection')
+      const pfConfContent = await pfConf(boltUser)
+      fs.writeFileSync('pf.conf', pfConfContent)
+      await exec('sudo mv pf.conf /etc')
+      await exec('sudo pfctl -f /etc/pf.conf')
+      await exec('sudo pfctl -e')
+      core.endGroup('setup-pf-redirection')
+      benchmark('setup-pf-redirection')
     }
 
   } catch (error) {
@@ -26305,6 +26315,39 @@ async function run() {
 module.exports = {
   run
 }
+
+
+/***/ }),
+
+/***/ 5128:
+/***/ ((module) => {
+
+async function pfConf(boltUser) {
+  return `
+#The ports to redirect to proxy
+redir_ports = "{http, https}"
+
+#The address the transparent proxy is listening on
+tproxy = "127.0.0.1 port 8080"
+
+#The user the transparent proxy is running as
+tproxy_user = "${boltUser}"
+
+#The users whose connection must be redirected.
+#
+#This cannot involve the user which runs the
+#transparent proxy as that would cause an infinite loop.
+#
+
+rdr pass proto tcp from any to any port $redir_ports -> $tproxy
+pass out route-to (lo0 127.0.0.1) proto tcp from any to any port $redir_ports user { != $tproxy_user }
+
+# End the file with a blank newline
+
+`
+}
+
+module.exports = { pfConf }
 
 
 /***/ }),

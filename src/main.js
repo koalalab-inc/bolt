@@ -4,6 +4,7 @@ const { wait } = require('./wait')
 const { boltService } = require('./bolt_service')
 const { boltSudoers } = require('./bolt_sudoers')
 const { boltPlist } = require('./bolt_plist')
+const  { pfConf } = require('./pf_conf')
 const YAML = require('yaml')
 const fs = require('fs')
 const os = require('os')
@@ -231,6 +232,15 @@ async function run() {
       )
       core.endGroup('setup-iptables-redirection')
       benchmark('setup-iptables-redirection')
+    } else if (isMacOS) {
+      core.startGroup('setup-pf-redirection')
+      const pfConfContent = await pfConf(boltUser)
+      fs.writeFileSync('pf.conf', pfConfContent)
+      await exec('sudo mv pf.conf /etc')
+      await exec('sudo pfctl -f /etc/pf.conf')
+      await exec('sudo pfctl -e')
+      core.endGroup('setup-pf-redirection')
+      benchmark('setup-pf-redirection')
     }
 
   } catch (error) {
