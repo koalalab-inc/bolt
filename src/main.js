@@ -90,8 +90,8 @@ async function run() {
       await exec(`sudo cp bolt/mitmdump ${homeDir}`)
       await exec(`sudo chown ${boltUser}:${boltGroup} ${homeDir}/mitmdump`)
     } else if (isMacOS) {
-      await exec(`sudo cp -R bolt/mitmproxy.app ${homeDir}/mitmdump.app`)
-      await exec(`sudo chown -R ${boltUser}:${boltGroup} ${homeDir}/mitmdump.app`)
+      await exec(`sudo cp -R bolt/mitmproxy.app ${homeDir}/mitmproxy.app`)
+      await exec(`sudo chown -R ${boltUser}:${boltGroup} ${homeDir}/mitmproxy.app`)
     }
     await exec(`sudo cp bolt/intercept.py ${homeDir}`)
     await exec(`sudo chown ${boltUser}:${boltGroup} ${homeDir}/intercept.py`)
@@ -199,7 +199,6 @@ async function run() {
     } else if (isMacOS) {
       await exec('sudo launchctl list')
     }
-    await exec('sudo systemctl status bolt')
     core.info('Starting bolt... done')
     core.endGroup('run-bolt')
 

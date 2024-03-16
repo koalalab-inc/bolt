@@ -12,6 +12,7 @@ import os
 import re
 import time
 from queue import Queue
+from sys import platform
 from threading import Lock, Thread
 
 # pylint: disable=import-error
@@ -111,7 +112,10 @@ class Interceptor:
         self.mode = os.environ.get("BOLT_MODE", "audit")
         self.default_policy = os.environ.get("BOLT_DEFAULT_POLICY", "block-all")
         self.allow_http = os.environ.get("BOLT_ALLOW_HTTP", False)
-        with open("/home/bolt/egress_rules.yaml", "r") as file:
+        egress_yaml_path = "/home/bolt/egress_rules.yaml"
+        if platform == "darwin":
+            egress_yaml_path = "/Users/bolt/egress_rules.yaml"
+        with open(egress_yaml_path, "r") as file:
             yaml = ruamel.yaml.YAML(typ="safe", pure=True)
             self.egress_rules = yaml.load(file)
             default_egress_rules = yaml.load(DEFAULT_EGRESS_RULES_YAML)
