@@ -15,7 +15,7 @@ const failedFlag = boltFailed === 'true'
 function init() {
   if (flag) {
     if (failedFlag) {
-      core.setFailed('Skipping post action as bolt failed')
+      core.info('Skipping post action as bolt failed')
       return
     }
     // Post

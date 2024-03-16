@@ -25936,11 +25936,79 @@ exports["default"] = _default;
 
 /***/ }),
 
+/***/ 3998:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const { error } = __nccwpck_require__(2186)
+
+async function boltPlist(
+  boltUser,
+  boltGroup,
+  homeDir,
+  mode,
+  allowHTTP,
+  defaultPolicy,
+  logFile,
+  errorLogFile
+) {
+  return `
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.koalalab.bolt</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${homeDir}/mitmproxy.app/Contents/MacOS/mitmdump</string>
+        <string>--mode</string>
+        <string>transparent</string>
+        <string>--showhost</string>
+        <string>--set</string>
+        <string>block_global=false</string>
+        <string>-s</string>
+        <string>${homeDir}/intercept.py</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>${homeDir}</string>
+    <key>StandardOutPath</key>
+    <string>${logFile}</string>
+    <key>StandardErrorPath</key>
+    <string>${errorLogFile}</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>BOLT_MODE</key>
+        <string>${mode}</string>
+        <key>BOLT_ALLOW_HTTP</key>
+        <string>${allowHTTP}</string>
+        <key>BOLT_DEFAULT_POLICY</key>
+        <string>${defaultPolicy}</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>UserName</key>
+    <string>${boltUser}</string>
+    <key>GroupName</key>
+    <string>${boltGroup}</string>
+</dict>
+</plist>
+`
+}
+
+module.exports = { boltPlist }
+
+
+/***/ }),
+
 /***/ 5147:
 /***/ ((module) => {
 
 async function boltService(
   boltUser,
+  boltGroup,
+  homeDir,
   mode,
   allowHTTP,
   defaultPolicy,
@@ -25956,7 +26024,7 @@ After=network.target
 Type=simple
 User=${boltUser}
 Group=${boltUser}
-ExecStart=/home/${boltUser}/mitmdump --mode transparent --showhost --set block_global=false -s /home/${boltUser}/intercept.py
+ExecStart=${homeDir}/mitmdump --mode transparent --showhost --set block_global=false -s ${homeDir}/intercept.py
 Restart=always
 Environment="BOLT_MODE=${mode}"
 Environment="BOLT_ALLOW_HTTP=${allowHTTP}"
@@ -25997,6 +26065,7 @@ const { exec } = __nccwpck_require__(1514)
 const { wait } = __nccwpck_require__(1312)
 const { boltService } = __nccwpck_require__(5147)
 const { boltSudoers } = __nccwpck_require__(4607)
+const { boltPlist } = __nccwpck_require__(3998)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
 const os = __nccwpck_require__(2037)
@@ -26139,55 +26208,86 @@ async function run() {
     await exec(`sudo chown ${boltUser}:${boltGroup} ${logFile} ${errorLogFile}`)
     core.info('Create bolt service log files... done')
 
-    core.info('Create bolt service...')
-    const boltServiceConfig = await boltService(
-      boltUser,
-      mode,
-      allowHTTP,
-      defaultPolicy,
-      logFile,
-      errorLogFile
-    )
-    fs.writeFileSync('bolt.service', boltServiceConfig)
-    await exec('sudo cp bolt.service /etc/systemd/system/')
-    await exec('sudo chown root:root /etc/systemd/system/bolt.service')
-    await exec('sudo systemctl daemon-reload')
-    core.info('Create bolt service... done')
+    if (isLinux) {
+      core.info('Create bolt service...')
+      const boltServiceConfig = await boltService(
+        boltUser,
+        mode,
+        allowHTTP,
+        defaultPolicy,
+        logFile,
+        errorLogFile
+      )
+      fs.writeFileSync('bolt.service', boltServiceConfig)
+      await exec('sudo cp bolt.service /etc/systemd/system/')
+      await exec('sudo chown root:root /etc/systemd/system/bolt.service')
+      await exec('sudo systemctl daemon-reload')
+      core.info('Create bolt service... done')
+    } else if (isMacOS) {
+      core.info('Create bolt plist...')
+      const boltPlistConfig = await boltPlist(
+        boltUser,
+        boltGroup,
+        homeDir,
+        mode,
+        allowHTTP,
+        defaultPolicy,
+        logFile,
+        errorLogFile
+      )
+      fs.writeFileSync('com.koalalab.bolt.plist', boltPlistConfig)
+      await exec('sudo cp com.koalalab.bolt.plist /Library/LaunchDaemons/')
+      await exec('sudo chown root:wheel /Library/LaunchDaemons/com.koalalab.bolt.plist')
+      await exec('sudo launchctl load /Library/LaunchDaemons/com.koalalab.bolt.plist')
+      core.info('Create bolt plist... done')
+    }
+      
     core.endGroup('setup-bolt')
 
     benchmark('configure-bolt')
 
     core.startGroup('run-bolt')
     core.info('Starting bolt...')
-    await exec('sudo systemctl start bolt')
+    if (isLinux) {
+      await exec('sudo systemctl start bolt')
+    } else if (isMacOS) {
+      await exec('sudo launchctl start com.koalalab.bolt')
+    }
     core.info('Waiting for bolt to start...')
     const ms = 1000
     await wait(ms)
+    if (isLinux) {
+      await exec('sudo systemctl status bolt')
+    } else if (isMacOS) {
+      await exec('sudo launchctl list')
+    }
     await exec('sudo systemctl status bolt')
     core.info('Starting bolt... done')
     core.endGroup('run-bolt')
 
     benchmark('start-bolt')
 
-    core.startGroup('setup-iptables-redirection')
-    await exec('sudo sysctl -w net.ipv4.ip_forward=1')
-    await exec('sudo sysctl -w net.ipv6.conf.all.forwarding=1')
-    await exec('sudo sysctl -w net.ipv4.conf.all.send_redirects=0')
-    await exec(
-      `sudo iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 80 -j REDIRECT --to-port 8080`
-    )
-    await exec(
-      `sudo iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 443 -j REDIRECT --to-port 8080`
-    )
-    await exec(
-      `sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 80 -j REDIRECT --to-port 8080`
-    )
-    await exec(
-      `sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 443 -j REDIRECT --to-port 8080`
-    )
-    core.endGroup('setup-iptables-redirection')
+    if (isLinux) {
+      core.startGroup('setup-iptables-redirection')
+      await exec('sudo sysctl -w net.ipv4.ip_forward=1')
+      await exec('sudo sysctl -w net.ipv6.conf.all.forwarding=1')
+      await exec('sudo sysctl -w net.ipv4.conf.all.send_redirects=0')
+      await exec(
+        `sudo iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 80 -j REDIRECT --to-port 8080`
+      )
+      await exec(
+        `sudo iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 443 -j REDIRECT --to-port 8080`
+      )
+      await exec(
+        `sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 80 -j REDIRECT --to-port 8080`
+      )
+      await exec(
+        `sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 443 -j REDIRECT --to-port 8080`
+      )
+      core.endGroup('setup-iptables-redirection')
+      benchmark('setup-iptables-redirection')
+    }
 
-    benchmark('setup-iptables-redirection')
   } catch (error) {
     // Fail the workflow run if an error occurs
     core.saveState('boltFailed', 'true')
@@ -42675,7 +42775,7 @@ const failedFlag = boltFailed === 'true'
 function init() {
   if (flag) {
     if (failedFlag) {
-      core.setFailed('Skipping post action as bolt failed')
+      core.info('Skipping post action as bolt failed')
       return
     }
     // Post

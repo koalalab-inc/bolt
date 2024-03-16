@@ -1,5 +1,7 @@
 async function boltService(
   boltUser,
+  boltGroup,
+  homeDir,
   mode,
   allowHTTP,
   defaultPolicy,
@@ -15,7 +17,7 @@ After=network.target
 Type=simple
 User=${boltUser}
 Group=${boltUser}
-ExecStart=/home/${boltUser}/mitmdump --mode transparent --showhost --set block_global=false -s /home/${boltUser}/intercept.py
+ExecStart=${homeDir}/mitmdump --mode transparent --showhost --set block_global=false -s ${homeDir}/intercept.py
 Restart=always
 Environment="BOLT_MODE=${mode}"
 Environment="BOLT_ALLOW_HTTP=${allowHTTP}"
