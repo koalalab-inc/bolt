@@ -55,6 +55,8 @@ async function summary() {
   const outputFile = core.getState('outputFile')
   const boltUser = core.getState('boltUser')
   const homeDir = core.getState('homeDir')
+  const isLinux = core.getState('isLinux') === 'true'
+  // const isMacOS = core.getState('isMacOS') === 'true'
   if (!outputFile || !boltUser || !homeDir) {
     core.info(`Invalid Bold run. Missing required state variables`)
     return
@@ -64,7 +66,8 @@ async function summary() {
     return
   }
   await exec(`sudo cp ${homeDir}/${outputFile} $${outputFile}`)
-  await exec(`sudo chown -R runner:docker ${outputFile}`)
+  const runnerGroupName = isLinux ? 'docker' : 'staff'
+  await exec(`sudo chown -R runner:${runnerGroupName} ${outputFile}`)
   const mode = core.getInput('mode')
   const allowHTTP = core.getInput('allow_http')
   const defaultPolicy = core.getInput('default_policy')

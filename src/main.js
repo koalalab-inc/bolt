@@ -40,6 +40,8 @@ async function run() {
     core.info('Creating bolt user...')
     const isLinux = platform === 'linux'
     const isMacOS = platform === 'darwin'
+    core.saveState('isLinux', isLinux)
+    core.saveState('isMacOS', isMacOS)
     const homeDir = isLinux ? `/home/${boltUser}` : `/Users/${boltUser}`
     core.saveState('homeDir', homeDir)
     const boltGroup = isLinux ? 'bolt' : 'staff'
