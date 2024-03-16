@@ -76,7 +76,7 @@ async function summary() {
     core.info(`Invalid YAML: ${error.message}`)
   }
 
-  const results = await generateTestResults(filePath)
+  const results = await generateTestResults(outputFile)
 
   const uniqueResults = getUniqueBy(results, ['destination', 'scheme']).map(
     result => [
