@@ -30,6 +30,9 @@ async function run() {
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
+
+    const outputFile = 'output.log'
+    core.saveState('outputFile', outputFile)
     
     const platform = os.platform()
     
@@ -38,6 +41,7 @@ async function run() {
     const isLinux = platform === 'linux'
     const isMacOS = platform === 'darwin'
     const homeDir = isLinux ? `/home/${boltUser}` : `/Users/${boltUser}`
+    core.saveState('homeDir', homeDir)
     const boltGroup = isLinux ? 'bolt' : 'staff'
     if (isLinux) {
       await exec(`sudo useradd ${boltUser}`)
@@ -112,12 +116,12 @@ async function run() {
 
     core.info('Create bolt output file...')
     await exec(
-      `sudo -u ${boltUser} -H bash -c "touch ${homeDir}/output.log`
+      `sudo -u ${boltUser} -H bash -c "touch ${homeDir}/${outputFile}`
     )
     core.info('Create bolt output file... done')
 
     core.info('Create bolt config...')
-    const boltConfig = `dump_destination: "${homeDir}/output.log"`
+    const boltConfig = `dump_destination: "${homeDir}/${outputFile}"`
     fs.writeFileSync('config.yaml', boltConfig)
     await exec(
       `sudo -u ${boltUser} -H bash -c "mkdir -p ${homeDir}/.mitmproxy`

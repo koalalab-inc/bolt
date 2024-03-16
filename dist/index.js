@@ -26092,6 +26092,9 @@ async function run() {
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
+
+    const outputFile = 'output.log'
+    core.saveState('outputFile', outputFile)
     
     const platform = os.platform()
     
@@ -26100,6 +26103,7 @@ async function run() {
     const isLinux = platform === 'linux'
     const isMacOS = platform === 'darwin'
     const homeDir = isLinux ? `/home/${boltUser}` : `/Users/${boltUser}`
+    core.saveState('homeDir', homeDir)
     const boltGroup = isLinux ? 'bolt' : 'staff'
     if (isLinux) {
       await exec(`sudo useradd ${boltUser}`)
@@ -26174,12 +26178,12 @@ async function run() {
 
     core.info('Create bolt output file...')
     await exec(
-      `sudo -u ${boltUser} -H bash -c "touch ${homeDir}/output.log`
+      `sudo -u ${boltUser} -H bash -c "touch ${homeDir}/${outputFile}`
     )
     core.info('Create bolt output file... done')
 
     core.info('Create bolt config...')
-    const boltConfig = `dump_destination: "${homeDir}/output.log"`
+    const boltConfig = `dump_destination: "${homeDir}/${outputFile}"`
     fs.writeFileSync('config.yaml', boltConfig)
     await exec(
       `sudo -u ${boltUser} -H bash -c "mkdir -p ${homeDir}/.mitmproxy`
@@ -26309,10 +26313,8 @@ const { exec } = __nccwpck_require__(1514)
 const fs = __nccwpck_require__(7147)
 const YAML = __nccwpck_require__(4083)
 
-async function generateTestResults(boltUser) {
-  const filePath = 'output.log'
-  await exec(`sudo cp /home/${boltUser}/${filePath} output.log`)
-  await exec(`sudo chown -R runner:docker ${filePath}`)
+async function generateTestResults(filePath) {
+  // const filePath = 'output.log'
 
   try {
     // Read the entire file synchronously and split it into an array of lines
@@ -26360,7 +26362,19 @@ function getUniqueBy(arr, keys) {
 }
 
 async function summary() {
+  const outputFile = core.getState('outputFile')
   const boltUser = core.getState('boltUser')
+  const homeDir = core.getState('homeDir')
+  if (!outputFile || !boltUser || !homeDir) {
+    core.info(`Invalid Bold run. Missing required state variables`)
+    return
+  }
+  if (!fs.existsSync(`${homeDir}/${outputFile}`)) {
+    core.info(`Bolt output file not found`)
+    return
+  }
+  await exec(`sudo cp ${homeDir}/${outputFile} $${outputFile}`)
+  await exec(`sudo chown -R runner:docker ${outputFile}`)
   const mode = core.getInput('mode')
   const allowHTTP = core.getInput('allow_http')
   const defaultPolicy = core.getInput('default_policy')
@@ -26372,7 +26386,7 @@ async function summary() {
     core.info(`Invalid YAML: ${error.message}`)
   }
 
-  const results = await generateTestResults(boltUser)
+  const results = await generateTestResults(filePath)
 
   const uniqueResults = getUniqueBy(results, ['destination', 'scheme']).map(
     result => [

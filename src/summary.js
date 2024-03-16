@@ -3,10 +3,8 @@ const { exec } = require('@actions/exec')
 const fs = require('fs')
 const YAML = require('yaml')
 
-async function generateTestResults(boltUser) {
-  const filePath = 'output.log'
-  await exec(`sudo cp /home/${boltUser}/${filePath} output.log`)
-  await exec(`sudo chown -R runner:docker ${filePath}`)
+async function generateTestResults(filePath) {
+  // const filePath = 'output.log'
 
   try {
     // Read the entire file synchronously and split it into an array of lines
@@ -54,7 +52,19 @@ function getUniqueBy(arr, keys) {
 }
 
 async function summary() {
+  const outputFile = core.getState('outputFile')
   const boltUser = core.getState('boltUser')
+  const homeDir = core.getState('homeDir')
+  if (!outputFile || !boltUser || !homeDir) {
+    core.info(`Invalid Bold run. Missing required state variables`)
+    return
+  }
+  if (!fs.existsSync(`${homeDir}/${outputFile}`)) {
+    core.info(`Bolt output file not found`)
+    return
+  }
+  await exec(`sudo cp ${homeDir}/${outputFile} $${outputFile}`)
+  await exec(`sudo chown -R runner:docker ${outputFile}`)
   const mode = core.getInput('mode')
   const allowHTTP = core.getInput('allow_http')
   const defaultPolicy = core.getInput('default_policy')
@@ -66,7 +76,7 @@ async function summary() {
     core.info(`Invalid YAML: ${error.message}`)
   }
 
-  const results = await generateTestResults(boltUser)
+  const results = await generateTestResults(filePath)
 
   const uniqueResults = getUniqueBy(results, ['destination', 'scheme']).map(
     result => [
