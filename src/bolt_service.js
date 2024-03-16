@@ -16,7 +16,7 @@ After=network.target
 [Service]
 Type=simple
 User=${boltUser}
-Group=${boltUser}
+Group=${boltGroup}
 ExecStart=${homeDir}/mitmdump --mode transparent --showhost --set block_global=false -s ${homeDir}/intercept.py
 Restart=always
 Environment="BOLT_MODE=${mode}"

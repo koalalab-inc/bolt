@@ -26023,7 +26023,7 @@ After=network.target
 [Service]
 Type=simple
 User=${boltUser}
-Group=${boltUser}
+Group=${boltGroup}
 ExecStart=${homeDir}/mitmdump --mode transparent --showhost --set block_global=false -s ${homeDir}/intercept.py
 Restart=always
 Environment="BOLT_MODE=${mode}"
@@ -26218,6 +26218,8 @@ async function run() {
       core.info('Create bolt service...')
       const boltServiceConfig = await boltService(
         boltUser,
+        boltGroup,
+        homeDir,
         mode,
         allowHTTP,
         defaultPolicy,

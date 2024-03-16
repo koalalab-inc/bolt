@@ -1,0 +1,26 @@
+async function pfConf(boltUser) {
+  return `
+#The ports to redirect to proxy
+redir_ports = "{http, https}"
+
+#The address the transparent proxy is listening on
+tproxy = "127.0.0.1 port 8080"
+
+#The user the transparent proxy is running as
+tproxy_user = "${boltUser}"
+
+#The users whose connection must be redirected.
+#
+#This cannot involve the user which runs the
+#transparent proxy as that would cause an infinite loop.
+#
+
+rdr pass proto tcp from any to any port $redir_ports -> $tproxy
+pass out route-to (lo0 127.0.0.1) proto tcp from any to any port $redir_ports user { != $tproxy_user }
+
+# End the file with a blank newline
+
+`
+}
+
+module.exports = { pfConf }

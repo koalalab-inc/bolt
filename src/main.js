@@ -156,6 +156,8 @@ async function run() {
       core.info('Create bolt service...')
       const boltServiceConfig = await boltService(
         boltUser,
+        boltGroup,
+        homeDir,
         mode,
         allowHTTP,
         defaultPolicy,
