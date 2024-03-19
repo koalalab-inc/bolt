@@ -94,6 +94,10 @@ packages or containers to GitHub Packages'
   description: 'Needed for instance metadata'
   destination: '169.254.169.254'
   action: 'allow'
+- name: 'Reqd for instance metadata'
+  description: 'Needed for instance metadata'
+  destination: '169.254.170.2'
+  action: 'allow'
 """
 
 
