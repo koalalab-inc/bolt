@@ -114,6 +114,7 @@ class Interceptor:
         self.egress_rules = None
         self.mode = os.environ.get("BOLT_MODE", "audit")
         self.default_policy = os.environ.get("BOLT_DEFAULT_POLICY", "block-all")
+        self.trusted_github_accounts = os.environ.get("BOLT_TRUSTED_GITHUB_ACCOUNTS", None)
         self.allow_http = os.environ.get("BOLT_ALLOW_HTTP", False)
         with open("/home/bolt/egress_rules.yaml", "r") as file:
             yaml = ruamel.yaml.YAML(typ="safe", pure=True)
@@ -189,12 +190,12 @@ class Interceptor:
 
     def tls_clienthello(self, data):
         default_policy = self.default_policy
+        destination = data.client_hello.sni
 
         matched_rules = []
 
         for rule in self.egress_rules:
             destination_pattern = self.wildcard_to_regex(rule["destination"])
-            destination = data.client_hello.sni
             if destination_pattern.match(destination) is not None:
                 matched_rules.append(rule)
 
@@ -203,6 +204,9 @@ class Interceptor:
         has_paths = len(matched_rules) > 0 and "paths" in matched_rules[0]
 
         if has_paths:
+            return
+        
+        if destination == "github.com" or destination == "api.github.com":
             return
 
         applied_rule = matched_rules[0] if len(matched_rules) > 0 else None
@@ -252,6 +256,7 @@ class Interceptor:
         default_policy = self.default_policy
 
         sni = flow.client_conn.sni
+        #TODO: check whether host header is spoofed or not
         host = flow.request.pretty_host
         destination = sni if sni is not None else host
         scheme = flow.request.scheme
@@ -298,6 +303,21 @@ class Interceptor:
         else:
             applied_rule_name = f"Default Policy - {default_policy}"
 
+        normalised_request_path = request_path
+        if not normalised_request_path.endswith("/"):
+            normalised_request_path = normalised_request_path + "/"
+
+        trusted_github_account_flag = None
+        if destination == "github.com" or destination == "api.github.com":
+            if self.trusted_github_accounts is not None:
+                for trusted_github_account in self.trusted_github_accounts:
+                    if normalised_request_path.startswith(f"/orgs/{trusted_github_account}/") or \
+                      normalised_request_path.startswith(f"/repos/{trusted_github_account}/"):
+                        trusted_github_account_flag = True
+                        break
+                if trusted_github_account_flag is None:
+                    trusted_github_account_flag = False
+
         if block:
             event = {
                 "action": "block",
@@ -314,6 +334,10 @@ class Interceptor:
                 "scheme": scheme,
                 "rule_name": applied_rule_name,
             }
+
+        if trusted_github_account_flag is not None:
+            event["trusted_github_account_flag"] = trusted_github_account_flag
+            event["request_path"] = request_path
 
         self.queue.put(event)
 
