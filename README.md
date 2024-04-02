@@ -94,23 +94,67 @@ It is an ordered list of rules. The first rule that matches the destination will
 ## Report
 Once the job is over, bolt will add a egress traffic report to the job summary. The report will show the egress traffic and the rules that were applied. A sample report is shown below.
 
-### Egress Report - powered by Bolt
-#### Bolt Configuration
+<hr>
 
-|Option | Value |
-|---|---|
-| Mode | audit |
-| Default Policy | block-all |
-| Allow HTTP | false |
+<h2>⚡ Egress Report - powered by Bolt</h2>
 
-#### Custom Egress Rules
-```yaml
-- name: 'Allow ifconfig.me'
-  action: 'allow'
-  destinatiom: 'ifconfig.me'
-```
-#### Egress Traffic
-> [!NOTE]
->
-> Running in Audit mode. Unverified destinations will be blocked in Active mode.
-<table><tr><th>Destination</th><th>Scheme</th><th>Rule</th><th>Action</th></tr><tr><td>github.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr><tr><td>packages.microsoft.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Destination</td></tr><tr><td>results-receiver.actions.githubusercontent.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr><tr><td>ppa.launchpadcontent.net</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Destination</td></tr><tr><td>esm.ubuntu.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Destination</td></tr><tr><td>azure.archive.ubuntu.com</td><td>http</td><td>allow_http is False</td><td>Unknown Destination</td></tr><tr><td>www.google.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Destination</td></tr><tr><td>ifconfig.me</td><td>https</td><td>Allow ifconfig.me</td><td>✅</td></tr><tr><td>pipelinesghubeus6.actions.githubusercontent.com</td><td>https</td><td>Reqd by GitHub Action</td><td>✅</td></tr></table>
+<details open>
+  <summary>
+<h3>🛠️ Bolt Configuration</h3>
+
+  </summary>
+<table><tr><td>Mode</td><td>audit</td></tr><tr><td>Allow HTTP</td><td>false</td></tr><tr><td>Default Policy</td><td>block-all</td></tr></table>
+
+</details>
+    
+<details open>
+  <summary>
+    <h4>🔒 Trusted Github Accounts</h4>
+
+  </summary>
+  <table><tr><th>Github Account</th></tr><tr><td>akto-api-security</td></tr></table>
+
+</details>
+      <blockquote>NOTE: The account in which workflow runs is always trusted.</blockquote>
+<h3>📝 Egress rules</h3>
+<pre lang="yaml"><code>- destination: google.com
+  action: block
+  name: Block Google
+- destination: ifconfig.me
+  action: allow
+  name: Allow ifconfig.me</code></pre>
+<h3>🚨 Requests to untrusted GitHub accounts found</h3>
+
+> [!CAUTION]
+> If you do not recognize these GitHub Accounts, you may want to investigate further. Add them to your trusted GitHub accounts if this is expected. See [Docs](https://github.com/koalalab-inc/bolt?tab=readme-ov-file#configure) for more information.
+      
+<details open>
+  <summary>
+    razorpay
+  </summary>
+  <ul>
+    <li>/orgs/razorpay/repos</li>
+  </ul>
+</details>
+        <h3>Egress Traffic</h3>
+<blockquote>NOTE: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.</blockquote>
+
+<details open>
+  <summary>
+<h4>🚨 Unknown Destinations</h4>
+
+  </summary>
+<table><tr><th>Destination</th><th>Scheme</th><th>Rule</th><th>Action</th></tr><tr><td>www.google.com</td><td>https</td><td>Default Policy - block-all</td><td>Unknown Destination</td></tr></table>
+
+</details>
+    
+<details>
+  <summary>
+<h4>✅ Known Destinations</h4>
+
+  </summary>
+<table><tr><th>Destination</th><th>Scheme</th><th>Rule</th><th>Action</th></tr><tr><td>github.com</td><td>https</td><td>Reqd by Github Action</td><td>✅</td></tr><tr><td>pipelinesghubeus6.actions.githubusercontent.com</td><td>https</td><td>Reqd by Github Action</td><td>✅</td></tr><tr><td>results-receiver.actions.githubusercontent.com</td><td>https</td><td>Reqd by Github Action</td><td>✅</td></tr><tr><td>ifconfig.me</td><td>https</td><td>Allow ifconfig.me</td><td>✅</td></tr><tr><td>api.github.com</td><td>https</td><td>Reqd by Github Action</td><td>✅</td></tr></table>
+
+</details>
+    <a href="https://www.koalalab.com">View detailed analysis of this run on Koalalab!</a>
+<hr>
