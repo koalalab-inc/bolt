@@ -26339,7 +26339,7 @@ async function generateSummary() {
 
   const trustedGithubAccountsData = [
     [{ data: 'Github Account', header: true }],
-    ...trustedGithubAccounts
+    ...trustedGithubAccounts.map(account => [account])
   ]
 
   core.info('Koalalab-inc-bolt-config>>>')
