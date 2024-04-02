@@ -26237,6 +26237,15 @@ function getUniqueBy(arr, keys) {
   return Object.values(uniqueObj)
 }
 
+function resultToRow(result) {
+  return [
+    result.destination,
+    result.scheme,
+    result.rule_name,
+    actionString(result.action)
+  ]
+}
+
 async function generateSummary() {
   const boltUser = core.getState('boltUser')
   const mode = core.getInput('mode')
@@ -26252,15 +26261,8 @@ async function generateSummary() {
 
   const results = await generateTestResults(boltUser)
 
-  const uniqueResults = getUniqueBy(results, ['destination', 'scheme']).map(
-    result => [
-      result.destination,
-      result.scheme,
-      result.rule_name,
-      actionString(result.action),
-      result.default
-    ]
-  )
+  const uniqueResults = getUniqueBy(results, ['destination', 'scheme'])
+  // const uniqueResultRows = uniqueResults.map(resultToRow)
 
   const githubAccountCalls = results.filter(result => {
     return result.trusted_github_account_flag !== undefined
@@ -26307,7 +26309,7 @@ async function generateSummary() {
     ],
     ...uniqueResults
       .filter(result => result.default || result.action === 'allow')
-      .map(result => result.slice(0, 4))
+      .map(resultToRow)
   ]
 
   const unknownDestinations = [
@@ -26319,7 +26321,7 @@ async function generateSummary() {
     ],
     ...uniqueResults
       .filter(result => result.default === false && result.action === 'block')
-      .map(result => result.slice(0, 4))
+      .map(resultToRow)
   ]
 
   core.info('Koalalab-inc-bolt-config>>>')
@@ -26366,10 +26368,8 @@ async function generateSummary() {
     .stringify()
   core.summary.clear()
 
-  let summary = core.summary
-    .addHeading('⚡ Egress Report - powered by Bolt', 2)
-    .addRaw(
-      `
+  core.summary.addHeading('⚡ Egress Report - powered by Bolt', 2).addRaw(
+    `
 <details open>
   <summary>
 ${configHeaderString}
@@ -26377,28 +26377,31 @@ ${configHeaderString}
 ${configTableString}
 </details>
     `
-    )
+  )
 
   if (egressRules.length > 0) {
-    summary = summary
+    core.summary
       .addHeading('📝 Egress rules', 3)
       .addCodeBlock(egressRulesYAML, 'yaml')
   } else {
-    summary = summary.addRaw(`
+    core.summary
+      .addRaw(
+        `
 > [!NOTE]
-> You have not configured egress rules. Only deault policy will be applied. See [documentation]https://github.com/koalalab-inc/bolt/blob/main/README.md#custom-egress-policy) for more information.
-      `)
+> You have not configured egress rules. Only deault policy will be applied. See [documentation](https://github.com/koalalab-inc/bolt/blob/main/README.md#custom-egress-policy) for more information.
+      `
+      )
+      .addEOL()
   }
 
   if (untrustedGithubAccounts.length > 0) {
-    summary = summary.addHeading('🚨 Untrusted Github Accounts Found', 3)
-      .addRaw(`
+    core.summary.addHeading('🚨 Untrusted Github Accounts Found', 3).addRaw(`
 > [!CAUTION]
 > If you are not expecting these accounts to be making requests, you may want to investigate further. To avoid getting reports about these accounts, you can add them to the trusted_github_accounts.
       `)
 
     for (const account of untrustedGithubAccounts) {
-      summary = summary.addRaw(`
+      core.summary.addRaw(`
 <details open>
   <summary>
     ${account.name}
@@ -26411,7 +26414,7 @@ ${configTableString}
     }
   }
 
-  summary = summary
+  core.summary
     .addHeading('Egress Traffic', 3)
     .addRaw(
       `
@@ -26444,7 +26447,7 @@ ${knownDestinationsTableString}
       'https://www.koalalab.com'
     )
 
-  summary.write()
+  core.summary.write()
 }
 
 module.exports = { generateSummary }
