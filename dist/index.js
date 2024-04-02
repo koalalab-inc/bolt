@@ -25983,6 +25983,7 @@ const core = __nccwpck_require__(2186)
 const { exec } = __nccwpck_require__(1514)
 const { wait } = __nccwpck_require__(1312)
 const { boltService } = __nccwpck_require__(5147)
+const { releaseVersion } = __nccwpck_require__(9554)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
 
@@ -26026,7 +26027,7 @@ async function run() {
     // const extractDir = 'home/runner/bolt'
     // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
-    const releaseVersion = 'v1.1.0'
+    // const releaseVersion = 'v1.3.0-rc'
     const filename = `${releaseName}-${releaseVersion}-linux-x86_64.tar.gz`
     // Sample URL :: https://api-do-blr.koalalab.com/bolt/package/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     // Sample Backup URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
@@ -26368,6 +26369,19 @@ async function generateSummary() {
 }
 
 module.exports = { generateSummary }
+
+
+/***/ }),
+
+/***/ 9554:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "releaseVersion": () => (/* binding */ releaseVersion)
+/* harmony export */ });
+const releaseVersion = 'v1.3.0-rc'
 
 
 /***/ }),
@@ -36715,6 +36729,34 @@ exports.visitAsync = visitAsync;
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";

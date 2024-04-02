@@ -2,6 +2,7 @@ const core = require('@actions/core')
 const { exec } = require('@actions/exec')
 const { wait } = require('./wait')
 const { boltService } = require('./bolt_service')
+const { releaseVersion } = require('./version')
 const YAML = require('yaml')
 const fs = require('fs')
 
@@ -45,7 +46,7 @@ async function run() {
     // const extractDir = 'home/runner/bolt'
     // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
-    const releaseVersion = 'v1.1.0'
+    // const releaseVersion = 'v1.3.0-rc'
     const filename = `${releaseName}-${releaseVersion}-linux-x86_64.tar.gz`
     // Sample URL :: https://api-do-blr.koalalab.com/bolt/package/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     // Sample Backup URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
