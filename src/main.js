@@ -82,7 +82,8 @@ async function run() {
     const allowHTTP = core.getInput('allow_http')
     const defaultPolicy = core.getInput('default_policy')
     const egressRulesYAML = core.getInput('egress_rules')
-    const trustedGithubAccounts = core.getInput('trusted_github_accounts')
+    const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
+    const trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
     const trustedGithubAccountsString = trustedGithubAccounts.push(repoOwner).reverse().join(',')
 
     // Verify that egress_rules_yaml is valid YAML
