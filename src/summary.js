@@ -68,9 +68,13 @@ async function generateSummary() {
   const allowHTTP = core.getInput('allow_http')
   const defaultPolicy = core.getInput('default_policy')
   const egressRulesYAML = core.getInput('egress_rules')
+  const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
   // Verify that egress_rules_yaml is valid YAML
+  let egressRules
+  let trustedGithubAccounts
   try {
-    const egressRules = YAML.parse(egressRulesYAML)
+    egressRules = YAML.parse(egressRulesYAML)
+    trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
   } catch (error) {
     core.info(`Invalid YAML: ${error.message}`)
   }
@@ -140,12 +144,14 @@ async function generateSummary() {
       .map(resultToRow)
   ]
 
+  const trustedGithubAccountsData = [
+    [{ data: 'Github Account', header: true }, ...trustedGithubAccounts]
+  ]
+
   core.info('Koalalab-inc-bolt-config>>>')
   core.info(JSON.stringify(configMap))
   core.info('<<<Koalalab-inc-bolt-config')
-  let egressRules
   try {
-    egressRules = YAML.parse(egressRulesYAML)
     core.info('Koalalab-inc-bolt-egress-config>>>')
     core.info(JSON.stringify(egressRules))
     core.info('<<<Koalalab-inc-bolt-egress-config')
@@ -156,11 +162,21 @@ async function generateSummary() {
   core.info(JSON.stringify(results))
   core.info('<<<Koalalab-inc-bolt-egress-traffic-report')
 
+  const configHeaderString = core.summary
+    .addHeading('🛠️ Bolt Configuration', 3)
+    .stringify()
+  core.summary.emptyBuffer()
+
   const configTableString = core.summary.addTable(configTable).stringify()
   core.summary.emptyBuffer()
 
-  const configHeaderString = core.summary
-    .addHeading('🛠️ Bolt Configuration', 3)
+  const trustedGithubAccountsHeaderString = core.summary
+    .addHeading('🔒 Trusted Github Accounts', 4)
+    .stringify()
+  core.summary.emptyBuffer()
+
+  const trustedGithubAccountsTableString = core.summary
+    .addTable(trustedGithubAccountsData)
     .stringify()
   core.summary.emptyBuffer()
 
@@ -196,6 +212,21 @@ ${configTableString}
 </details>
     `
     )
+
+  if (trustedGithubAccounts.length > 0) {
+    summary = summary
+      .addRaw(
+        `
+<details open>
+  <summary>
+    ${trustedGithubAccountsHeaderString}
+  </summary>
+  ${trustedGithubAccountsTableString}
+</details>
+      `
+      )
+      .addQuote('NOTE: The account in which workflow runs is always trusted.')
+  }
 
   if (egressRules.length > 0) {
     summary = summary
@@ -254,9 +285,11 @@ ${knownDestinationsHeaderString}
 ${knownDestinationsTableString}
 </details>
     `
-    ).addRaw(`
-[View detailed analysis of this run on Koalalab!](https://www.koalalab.com){:target="_blank", :rel="noreferrer"}
-    `)
+    )
+    .addLink(
+      'View detailed analysis of this run on Koalalab!',
+      'https://www.koalalab.com'
+    )
 
   summary.write()
 }

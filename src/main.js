@@ -148,8 +148,6 @@ async function run() {
     core.info('Starting bolt...')
     await exec('sudo systemctl start bolt')
     core.info('Waiting for bolt to start...')
-    const ms = 2000
-    await wait(ms)
     await exec('sudo systemctl status bolt')
     core.info('Starting bolt... done')
     core.endGroup('run-bolt')
@@ -158,10 +156,21 @@ async function run() {
 
     core.startGroup('trust-bolt-certificate')
     core.info('Trust bolt certificate...')
-    await exec(
-      `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca-certificates/bolt.crt`
-    )
-    await exec('sudo update-ca-certificates')
+    const ms = 500
+    for (let i = 1; i <= 10; i++) {
+      try {
+        await wait(ms)
+        await exec(
+          `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca-certificates/bolt.crt`
+        )
+        await exec('sudo update-ca-certificates')
+        break
+      }
+      catch (error) {
+        core.info(`waiting for bolt to start, retrying in ${ms}ms...`)
+      }
+    }
+    core.info('Trust bolt certificate... done')
     core.endGroup('trust-bolt-certificate')
     
     benchmark('trust-bolt-certificate')

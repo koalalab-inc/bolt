@@ -26129,8 +26129,6 @@ async function run() {
     core.info('Starting bolt...')
     await exec('sudo systemctl start bolt')
     core.info('Waiting for bolt to start...')
-    const ms = 2000
-    await wait(ms)
     await exec('sudo systemctl status bolt')
     core.info('Starting bolt... done')
     core.endGroup('run-bolt')
@@ -26139,10 +26137,21 @@ async function run() {
 
     core.startGroup('trust-bolt-certificate')
     core.info('Trust bolt certificate...')
-    await exec(
-      `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca-certificates/bolt.crt`
-    )
-    await exec('sudo update-ca-certificates')
+    const ms = 500
+    for (let i = 1; i <= 10; i++) {
+      try {
+        await wait(ms)
+        await exec(
+          `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca-certificates/bolt.crt`
+        )
+        await exec('sudo update-ca-certificates')
+        break
+      }
+      catch (error) {
+        core.info(`waiting for bolt to start, retrying in ${ms}ms...`)
+      }
+    }
+    core.info('Trust bolt certificate... done')
     core.endGroup('trust-bolt-certificate')
     
     benchmark('trust-bolt-certificate')
@@ -26252,9 +26261,13 @@ async function generateSummary() {
   const allowHTTP = core.getInput('allow_http')
   const defaultPolicy = core.getInput('default_policy')
   const egressRulesYAML = core.getInput('egress_rules')
+  const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
   // Verify that egress_rules_yaml is valid YAML
+  let egressRules
+  let trustedGithubAccounts
   try {
-    const egressRules = YAML.parse(egressRulesYAML)
+    egressRules = YAML.parse(egressRulesYAML)
+    trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
   } catch (error) {
     core.info(`Invalid YAML: ${error.message}`)
   }
@@ -26324,12 +26337,14 @@ async function generateSummary() {
       .map(resultToRow)
   ]
 
+  const trustedGithubAccountsData = [
+    [{ data: 'Github Account', header: true }, ...trustedGithubAccounts]
+  ]
+
   core.info('Koalalab-inc-bolt-config>>>')
   core.info(JSON.stringify(configMap))
   core.info('<<<Koalalab-inc-bolt-config')
-  let egressRules
   try {
-    egressRules = YAML.parse(egressRulesYAML)
     core.info('Koalalab-inc-bolt-egress-config>>>')
     core.info(JSON.stringify(egressRules))
     core.info('<<<Koalalab-inc-bolt-egress-config')
@@ -26340,11 +26355,21 @@ async function generateSummary() {
   core.info(JSON.stringify(results))
   core.info('<<<Koalalab-inc-bolt-egress-traffic-report')
 
+  const configHeaderString = core.summary
+    .addHeading('🛠️ Bolt Configuration', 3)
+    .stringify()
+  core.summary.emptyBuffer()
+
   const configTableString = core.summary.addTable(configTable).stringify()
   core.summary.emptyBuffer()
 
-  const configHeaderString = core.summary
-    .addHeading('🛠️ Bolt Configuration', 3)
+  const trustedGithubAccountsHeaderString = core.summary
+    .addHeading('🔒 Trusted Github Accounts', 4)
+    .stringify()
+  core.summary.emptyBuffer()
+
+  const trustedGithubAccountsTableString = core.summary
+    .addTable(trustedGithubAccountsData)
     .stringify()
   core.summary.emptyBuffer()
 
@@ -26380,6 +26405,21 @@ ${configTableString}
 </details>
     `
     )
+
+  if (trustedGithubAccounts.length > 0) {
+    summary = summary
+      .addRaw(
+        `
+<details open>
+  <summary>
+    ${trustedGithubAccountsHeaderString}
+  </summary>
+  ${trustedGithubAccountsTableString}
+</details>
+      `
+      )
+      .addQuote('NOTE: The account in which workflow runs is always trusted.')
+  }
 
   if (egressRules.length > 0) {
     summary = summary
@@ -26438,9 +26478,11 @@ ${knownDestinationsHeaderString}
 ${knownDestinationsTableString}
 </details>
     `
-    ).addRaw(`
-[View detailed analysis of this run on Koalalab!](https://www.koalalab.com){:target="_blank", :rel="noreferrer"}
-    `)
+    )
+    .addLink(
+      'View detailed analysis of this run on Koalalab!',
+      'https://www.koalalab.com'
+    )
 
   summary.write()
 }
