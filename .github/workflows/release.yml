@@ -18,7 +18,7 @@ jobs:
       arch: x86_64
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # actions/checkout@v4 | 1567,v4.1.1
       - name: Get release version
         id: releaseVersion
         run: echo "releaseVersion=\"$(awk -F\' '/export const releaseVersion/ { print $2 }' src/version.js)\"" >> "$GITHUB_ENV"
@@ -40,7 +40,7 @@ jobs:
           rm -rf mitmproxy bolt
           rm mitmproxy-10.2.2-linux-x86_64.tar.gz
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@9d7c94cfd0a1f3ed45544c887983e9fa900f0564 # softprops/action-gh-release@v2
         with:
           files: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
           tag_name: ${{ env.tag }}
