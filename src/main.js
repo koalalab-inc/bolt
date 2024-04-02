@@ -26,6 +26,8 @@ async function run() {
 
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
+    const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
+    const repoOwner = repoName.split('/')[0]; // e.g. koalalab-inc
     core.saveState('boltUser', boltUser)
 
     core.startGroup('create-bolt-user')
@@ -49,7 +51,6 @@ async function run() {
     // Sample Backup URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     let referrer = ''
     try {
-      const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
       const workflowName = process.env.GITHUB_WORKFLOW.replace(/\//g, "|"); // e.g. CI
       const jobName = process.env.GITHUB_JOB; // e.g. build
       referrer = `github.com/${repoName}/${workflowName}/${jobName}`
@@ -81,6 +82,8 @@ async function run() {
     const allowHTTP = core.getInput('allow_http')
     const defaultPolicy = core.getInput('default_policy')
     const egressRulesYAML = core.getInput('egress_rules')
+    const trustedGithubAccounts = core.getInput('trusted_github_accounts')
+    const trustedGithubAccountsString = trustedGithubAccounts.push(repoOwner).reverse().join(',')
 
     // Verify that egress_rules_yaml is valid YAML
     YAML.parse(egressRulesYAML)
@@ -126,6 +129,7 @@ async function run() {
       mode,
       allowHTTP,
       defaultPolicy,
+      trustedGithubAccountsString,
       logFile,
       errorLogFile
     )
@@ -149,6 +153,20 @@ async function run() {
     core.endGroup('run-bolt')
 
     benchmark('start-bolt')
+
+    core.startGroup('trust-bolt-certificate')
+    core.info('Install ca-certificates...')
+    await exec('sudo apt-get update')
+    await exec('sudo apt-get install -y ca-certificates')
+    core.info('Install ca-certificates... done')
+    core.info('Trust bolt certificate...')
+    await exec(
+      `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca-certificates/bolt.crt`
+    )
+    await exec('sudo update-ca-certificates')
+    core.endGroup('trust-bolt-certificate')
+    
+    benchmark('trust-bolt-certificate')
 
     core.startGroup('setup-iptables-redirection')
     await exec('sudo sysctl -w net.ipv4.ip_forward=1')

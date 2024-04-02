@@ -3,6 +3,7 @@ async function boltService(
   mode,
   allowHTTP,
   defaultPolicy,
+  trustedGithubAccountsString,
   logFile,
   errorLogFile
 ) {
@@ -20,6 +21,7 @@ Restart=always
 Environment="BOLT_MODE=${mode}"
 Environment="BOLT_ALLOW_HTTP=${allowHTTP}"
 Environment="BOLT_DEFAULT_POLICY=${defaultPolicy}"
+Environment="BOLT_TRUSTED_GITHUB_ACCOUNTS=${trustedGithubAccountsString}"
 StandardOutput=file:${logFile}
 StandardError=file:${errorLogFile}
 
