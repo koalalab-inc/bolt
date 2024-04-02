@@ -26065,7 +26065,7 @@ async function run() {
     const egressRulesYAML = core.getInput('egress_rules')
     const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
     const trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
-    const trustedGithubAccountsString = trustedGithubAccounts.push(repoOwner).reverse().join(',')
+    const trustedGithubAccountsString = [repoOwner, ...trustedGithubAccounts].join(',')
 
     // Verify that egress_rules_yaml is valid YAML
     YAML.parse(egressRulesYAML)
