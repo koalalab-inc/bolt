@@ -1,5 +1,4 @@
-![Bolt](assets/imgs/bolt-header-light.png#gh-light-mode-only)
-![Bolt](assets/imgs/bolt-header-dark.png#gh-dark-mode-only)
+![Bolt](assets/imgs/bolt-header-dark.png)
 ## Secure GitHub actions with 1 line of code
 Add this step to jobs in your GitHub workflow file(s) to secure your runner:
 ```yaml
