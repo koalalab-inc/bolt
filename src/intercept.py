@@ -114,7 +114,8 @@ class Interceptor:
         self.egress_rules = None
         self.mode = os.environ.get("BOLT_MODE", "audit")
         self.default_policy = os.environ.get("BOLT_DEFAULT_POLICY", "block-all")
-        self.trusted_github_accounts = os.environ.get("BOLT_TRUSTED_GITHUB_ACCOUNTS", None)
+        trusted_github_accounts_string = os.environ.get("BOLT_TRUSTED_GITHUB_ACCOUNTS", "")
+        self.trusted_github_accounts = trusted_github_accounts_string.split(",")
         self.allow_http = os.environ.get("BOLT_ALLOW_HTTP", False)
         with open("/home/bolt/egress_rules.yaml", "r") as file:
             yaml = ruamel.yaml.YAML(typ="safe", pure=True)
@@ -306,13 +307,17 @@ class Interceptor:
         normalised_request_path = request_path
         if not normalised_request_path.endswith("/"):
             normalised_request_path = normalised_request_path + "/"
+        
+        if not normalised_request_path.startswith("/"):
+            normalised_request_path = "/" + normalised_request_path
 
         trusted_github_account_flag = None
         if destination == "github.com" or destination == "api.github.com":
-            if self.trusted_github_accounts is not None:
+            if  normalised_request_path.startswith("/orgs/") or \
+                normalised_request_path.startswith("/repos/"):
                 for trusted_github_account in self.trusted_github_accounts:
                     if normalised_request_path.startswith(f"/orgs/{trusted_github_account}/") or \
-                      normalised_request_path.startswith(f"/repos/{trusted_github_account}/"):
+                        normalised_request_path.startswith(f"/repos/{trusted_github_account}/"):
                         trusted_github_account_flag = True
                         break
                 if trusted_github_account_flag is None:
@@ -336,7 +341,9 @@ class Interceptor:
             }
 
         if trusted_github_account_flag is not None:
+            github_account_name = request_path.split("/")[2]
             event["trusted_github_account_flag"] = trusted_github_account_flag
+            event["github_account_name"] = github_account_name
             event["request_path"] = request_path
 
         self.queue.put(event)
