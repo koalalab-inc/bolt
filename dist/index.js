@@ -25944,6 +25944,7 @@ async function boltService(
   mode,
   allowHTTP,
   defaultPolicy,
+  trustedGithubAccountsString,
   logFile,
   errorLogFile
 ) {
@@ -25961,6 +25962,7 @@ Restart=always
 Environment="BOLT_MODE=${mode}"
 Environment="BOLT_ALLOW_HTTP=${allowHTTP}"
 Environment="BOLT_DEFAULT_POLICY=${defaultPolicy}"
+Environment="BOLT_TRUSTED_GITHUB_ACCOUNTS=${trustedGithubAccountsString}"
 StandardOutput=file:${logFile}
 StandardError=file:${errorLogFile}
 
@@ -25974,6 +25976,70 @@ module.exports = { boltService }
 
 /***/ }),
 
+/***/ 4351:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+/**
+ * The entrypoint for the action.
+ */
+const { run } = __nccwpck_require__(1713)
+const { generateSummary } = __nccwpck_require__(7259)
+const core = __nccwpck_require__(2186)
+const os = __nccwpck_require__(2037)
+const { releaseVersion } = __nccwpck_require__(9554)
+
+const isPost = core.getState('isPost')
+const flag = isPost === 'true'
+const boltFailed = core.getState('boltFailed')
+const failedFlag = boltFailed === 'true'
+
+function init(platform, arch) {
+  if (flag) {
+    if (failedFlag) {
+      core.info('Skipping post action as bolt failed')
+      return
+    }
+    // Post
+    generateSummary()
+  } else {
+    if (!isPost) {
+      core.saveState('isPost', 'true')
+    }
+
+    // 'win32' | 'darwin' | 'linux' | 'freebsd' | 'openbsd' | 'android' | 'cygwin' | 'sunos'
+    if (['linux'].indexOf(platform) === -1) {
+      core.saveState('boltFailed', 'true')
+      core.setFailed(
+        `Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}`
+      )
+      return
+    }
+    // Possible Archs
+    // 'x64' | 'arm' | 'arm64' | 'ia32' | 'mips' | 'mipsel' | 'ppc' | 'ppc64' | 'riscv64' | 's390' | 's390x'
+    const allowedArch = ['x64', 'arm64', 'arm']
+    if (allowedArch.indexOf(arch) === -1) {
+      core.saveState('boltFailed', 'true')
+      core.setFailed(
+        `Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}`
+      )
+      return
+    }
+
+    run()
+  }
+}
+
+const platform = os.platform()
+const arch = os.arch()
+init(platform, arch)
+
+module.exports = {
+  init
+}
+
+
+/***/ }),
+
 /***/ 1713:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -25981,6 +26047,7 @@ const core = __nccwpck_require__(2186)
 const { exec } = __nccwpck_require__(1514)
 const { wait } = __nccwpck_require__(1312)
 const { boltService } = __nccwpck_require__(5147)
+const { releaseVersion } = __nccwpck_require__(9554)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
 
@@ -26007,6 +26074,16 @@ async function run() {
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
 
+    const outputFile = 'output.log'
+    core.saveState('outputFile', outputFile)
+
+    const homeDir = `/home/${boltUser}`
+    core.saveState('homeDir', homeDir)
+
+    const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
+    const repoOwner = repoName.split('/')[0]; // e.g. koalalab-inc
+
+
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
     await exec(`sudo useradd ${boltUser}`)
@@ -26022,13 +26099,12 @@ async function run() {
     // const extractDir = 'home/runner/bolt'
     // await exec(`mkdir -p ${extractDir}`)
     core.info('Downloading mitmproxy...')
-    const releaseVersion = 'v1.1.0'
+    // const releaseVersion = 'v1.3.0-rc'
     const filename = `${releaseName}-${releaseVersion}-linux-x86_64.tar.gz`
     // Sample URL :: https://api-do-blr.koalalab.com/bolt/package/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     // Sample Backup URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     let referrer = ''
     try {
-      const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
       const workflowName = process.env.GITHUB_WORKFLOW.replace(/\//g, "|"); // e.g. CI
       const jobName = process.env.GITHUB_JOB; // e.g. build
       referrer = `github.com/${repoName}/${workflowName}/${jobName}`
@@ -26060,6 +26136,9 @@ async function run() {
     const allowHTTP = core.getInput('allow_http')
     const defaultPolicy = core.getInput('default_policy')
     const egressRulesYAML = core.getInput('egress_rules')
+    const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
+    const trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
+    const trustedGithubAccountsString = [repoOwner, ...trustedGithubAccounts].join(',')
 
     // Verify that egress_rules_yaml is valid YAML
     YAML.parse(egressRulesYAML)
@@ -26105,6 +26184,7 @@ async function run() {
       mode,
       allowHTTP,
       defaultPolicy,
+      trustedGithubAccountsString,
       logFile,
       errorLogFile
     )
@@ -26121,13 +26201,32 @@ async function run() {
     core.info('Starting bolt...')
     await exec('sudo systemctl start bolt')
     core.info('Waiting for bolt to start...')
-    const ms = 1000
-    await wait(ms)
     await exec('sudo systemctl status bolt')
     core.info('Starting bolt... done')
     core.endGroup('run-bolt')
 
     benchmark('start-bolt')
+
+    core.startGroup('trust-bolt-certificate')
+    core.info('Trust bolt certificate...')
+    const ms = 500
+    for (let i = 1; i <= 10; i++) {
+      try {
+        await wait(ms)
+        await exec(
+          `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca-certificates/bolt.crt`
+        )
+        await exec('sudo update-ca-certificates')
+        break
+      }
+      catch (error) {
+        core.info(`waiting for bolt to start, retrying in ${ms}ms...`)
+      }
+    }
+    core.info('Trust bolt certificate... done')
+    core.endGroup('trust-bolt-certificate')
+    
+    benchmark('trust-bolt-certificate')
 
     core.startGroup('setup-iptables-redirection')
     await exec('sudo sysctl -w net.ipv4.ip_forward=1')
@@ -26150,6 +26249,7 @@ async function run() {
     benchmark('setup-iptables-redirection')
   } catch (error) {
     // Fail the workflow run if an error occurs
+    core.saveState('boltFailed', 'true')
     core.setFailed(error.message)
   }
 }
@@ -26169,11 +26269,7 @@ const { exec } = __nccwpck_require__(1514)
 const fs = __nccwpck_require__(7147)
 const YAML = __nccwpck_require__(4083)
 
-async function generateTestResults(boltUser) {
-  const filePath = 'output.log'
-  await exec(`sudo cp /home/${boltUser}/${filePath} output.log`)
-  await exec(`sudo chown -R runner:docker ${filePath}`)
-
+async function generateTestResults(filePath) {
   try {
     // Read the entire file synchronously and split it into an array of lines
     const fileContent = fs.readFileSync(filePath, 'utf-8')
@@ -26219,28 +26315,73 @@ function getUniqueBy(arr, keys) {
   return Object.values(uniqueObj)
 }
 
-async function summary() {
+function resultToRow(result) {
+  return [
+    result.destination,
+    result.scheme,
+    result.rule_name,
+    actionString(result.action)
+  ]
+}
+
+async function generateSummary() {
+  const outputFile = core.getState('outputFile')
+  const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
   const mode = core.getInput('mode')
   const allowHTTP = core.getInput('allow_http')
   const defaultPolicy = core.getInput('default_policy')
   const egressRulesYAML = core.getInput('egress_rules')
+  const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
+
+  if (!outputFile || !boltUser || !homeDir) {
+    core.info(`Invalid Bold run. Missing required state variables`)
+    return
+  }
+  if (!fs.existsSync(`${homeDir}/${outputFile}`)) {
+    core.info(`Bolt output file not found`)
+    return
+  }
+
+  await exec(`sudo cp ${homeDir}/${outputFile} ${outputFile}`)
+
   // Verify that egress_rules_yaml is valid YAML
+  let egressRules
+  let trustedGithubAccounts
   try {
-    YAML.parse(egressRulesYAML)
+    egressRules = YAML.parse(egressRulesYAML)
+    trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
   } catch (error) {
     core.info(`Invalid YAML: ${error.message}`)
   }
 
-  const results = await generateTestResults(boltUser)
+  const results = await generateTestResults(outputFile)
 
-  const uniqueResults = getUniqueBy(results, ['destination', 'scheme']).map(
-    result => [
-      result.destination,
-      result.scheme,
-      result.rule_name,
-      actionString(result.action)
-    ]
+  const uniqueResults = getUniqueBy(results, ['destination', 'scheme'])
+  // const uniqueResultRows = uniqueResults.map(resultToRow)
+
+  const githubAccountCalls = results.filter(result => {
+    return result.trusted_github_account_flag !== undefined
+  })
+
+  const githubAccounts = githubAccountCalls.reduce((accounts, call) => {
+    const path = call.request_path
+    const name = call.github_account_name
+    const trusted_flag = call.trusted_github_account_flag
+    accounts[name] = accounts[name] || {}
+    accounts[name]['name'] = name
+    accounts[name]['trusted'] = trusted_flag
+    const paths = accounts[name]['paths'] || []
+    if (!paths.includes(path)) {
+      accounts[name]['paths'] = [...paths, path]
+    }
+    return accounts
+  }, [])
+
+  const untrustedGithubAccounts = Object.values(githubAccounts).filter(
+    account => {
+      return account['trusted'] === false
+    }
   )
 
   const configMap = {
@@ -26255,7 +26396,7 @@ async function summary() {
     ['Default Policy', defaultPolicy]
   ]
 
-  const table = [
+  const knownDestinations = [
     [
       { data: 'Destination', header: true },
       { data: 'Scheme', header: true },
@@ -26263,13 +26404,31 @@ async function summary() {
       { data: 'Action', header: true }
     ],
     ...uniqueResults
+      .filter(result => result.default || result.action === 'allow')
+      .map(resultToRow)
+  ]
+
+  const unknownDestinations = [
+    [
+      { data: 'Destination', header: true },
+      { data: 'Scheme', header: true },
+      { data: 'Rule', header: true },
+      { data: 'Action', header: true }
+    ],
+    ...uniqueResults
+      .filter(result => result.default === false && result.action === 'block')
+      .map(resultToRow)
+  ]
+
+  const trustedGithubAccountsData = [
+    [{ data: 'Github Account', header: true }],
+    ...trustedGithubAccounts.map(account => [account])
   ]
 
   core.info('Koalalab-inc-bolt-config>>>')
   core.info(JSON.stringify(configMap))
   core.info('<<<Koalalab-inc-bolt-config')
   try {
-    const egressRules = YAML.parse(egressRulesYAML)
     core.info('Koalalab-inc-bolt-egress-config>>>')
     core.info(JSON.stringify(egressRules))
     core.info('<<<Koalalab-inc-bolt-egress-config')
@@ -26280,25 +26439,156 @@ async function summary() {
   core.info(JSON.stringify(results))
   core.info('<<<Koalalab-inc-bolt-egress-traffic-report')
 
-  core.summary
-    .addHeading('Egress Report - powered by Bolt', 2)
-    .addHeading('Bolt Configuration', 3)
-    .addTable(configTable)
-    .addHeading('Egress rules', 3)
-    .addCodeBlock(egressRulesYAML, 'yaml')
+  const configHeaderString = core.summary
+    .addHeading('🛠️ Bolt Configuration', 3)
+    .stringify()
+  core.summary.emptyBuffer()
+
+  const configTableString = core.summary.addTable(configTable).stringify()
+  core.summary.emptyBuffer()
+
+  const trustedGithubAccountsHeaderString = core.summary
+    .addHeading('🔒 Trusted Github Accounts', 4)
+    .stringify()
+  core.summary.emptyBuffer()
+
+  const trustedGithubAccountsTableString = core.summary
+    .addTable(trustedGithubAccountsData)
+    .stringify()
+  core.summary.emptyBuffer()
+
+  const knownDestinationsHeaderString = core.summary
+    .addHeading('✅ Known Destinations', 4)
+    .stringify()
+  core.summary.emptyBuffer()
+
+  const knownDestinationsTableString = core.summary
+    .addTable(knownDestinations)
+    .stringify()
+  core.summary.emptyBuffer()
+
+  const unknownDestinationsHeaderString = core.summary
+    .addHeading('🚨 Unknown Destinations', 4)
+    .stringify()
+  core.summary.emptyBuffer()
+
+  const unknownDestinationsTableString = core.summary
+    .addTable(unknownDestinations)
+    .stringify()
+  core.summary.emptyBuffer()
+
+  let summary = core.summary
+    .addSeparator()
+    .addEOL()
+    .addHeading('⚡ Egress Report - powered by Bolt', 2)
+    .addRaw(
+      `
+<details open>
+  <summary>
+${configHeaderString}
+  </summary>
+${configTableString}
+</details>
+    `
+    )
+
+  if (trustedGithubAccounts.length > 0) {
+    summary = summary
+      .addRaw(
+        `
+<details open>
+  <summary>
+    ${trustedGithubAccountsHeaderString}
+  </summary>
+  ${trustedGithubAccountsTableString}
+</details>
+      `
+      )
+      .addQuote('NOTE: The account in which workflow runs is always trusted.')
+  }
+
+  if (egressRules.length > 0) {
+    summary = summary
+      .addHeading('📝 Egress rules', 3)
+      .addCodeBlock(egressRulesYAML, 'yaml')
+  } else {
+    summary = summary
+      .addQuote(
+        'NOTE: You have not configured egress rules. Only deault policy will be applied. See [documentation](https://github.com/koalalab-inc/bolt/blob/main/README.md#custom-egress-policy) for more information.'
+      )
+      .addEOL()
+  }
+
+  if (untrustedGithubAccounts.length > 0) {
+    summary = summary.addHeading(
+      '🚨 Requests to untrusted GitHub accounts found',
+      3
+    ).addRaw(`
+> [!CAUTION]
+> If you do not recognize these GitHub Accounts, you may want to investigate further. Add them to your trusted GitHub accounts if this is expected. See [Docs](https://github.com/koalalab-inc/bolt?tab=readme-ov-file#configure) for more information.
+      `)
+
+    for (const account of untrustedGithubAccounts) {
+      summary = summary.addRaw(`
+<details open>
+  <summary>
+    ${account.name}
+  </summary>
+  <ul>
+    ${account.paths.map(path => `<li>${path}</li>`).join('')}
+  </ul>
+</details>
+        `)
+    }
+  }
+
+  summary = summary
     .addHeading('Egress Traffic', 3)
     .addQuote(
-      'Note:: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
+      'NOTE: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
     )
-    .addTable(table)
+    .addRaw(
+      `
+<details open>
+  <summary>
+${unknownDestinationsHeaderString}
+  </summary>
+${unknownDestinationsTableString}
+</details>
+    `
+    )
+    .addRaw(
+      `
+<details>
+  <summary>
+${knownDestinationsHeaderString}
+  </summary>
+${knownDestinationsTableString}
+</details>
+    `
+    )
     .addLink(
       'View detailed analysis of this run on Koalalab!',
       'https://www.koalalab.com'
     )
-    .write()
+    .addSeparator()
+
+  summary.write()
 }
 
-module.exports = { summary }
+module.exports = { generateSummary }
+
+
+/***/ }),
+
+/***/ 9554:
+/***/ ((module) => {
+
+const releaseVersion = 'v1.3.0'
+
+module.exports = {
+  releaseVersion
+}
 
 
 /***/ }),
@@ -36651,31 +36941,12 @@ exports.visitAsync = visitAsync;
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
-/**
- * The entrypoint for the action.
- */
-const { run } = __nccwpck_require__(1713)
-const { summary } = __nccwpck_require__(7259)
-const core = __nccwpck_require__(2186)
-
-const isPost = core.getState('isPost')
-const flag = isPost === 'true'
-
-if (flag) {
-  // Post
-  summary()
-} else {
-  if (!isPost) {
-    core.saveState('isPost', 'true')
-  }
-  run()
-}
-
-})();
-
-module.exports = __webpack_exports__;
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __nccwpck_require__(4351);
+/******/ 	module.exports = __webpack_exports__;
+/******/ 	
 /******/ })()
 ;

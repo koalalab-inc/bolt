@@ -18,6 +18,10 @@ inputs:
     description: 'Default policy for egress traffic - allow-all or block-all'
     required: false
     default: 'block-all'
+  trusted_github_accounts:
+    description: 'Trusted Github accounts'
+    required: false
+    default: '[]'
   egress_rules:
     description: 'Egress rules'
     required: false
