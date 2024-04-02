@@ -101,8 +101,13 @@ packages or containers to GitHub Packages'
 """
 
 
-# pylint: disable=missing-class-docstring,missing-function-docstring,unspecified-encoding
+# pylint: disable=missing-function-docstring,unspecified-encoding
 class Interceptor:
+    """
+    The Interceptor class is responsible for managing
+    and controlling the flow of http requests.
+    """
+
     # pylint: disable=too-many-instance-attributes
     def __init__(self):
         self.outfile = None
@@ -114,7 +119,9 @@ class Interceptor:
         self.egress_rules = None
         self.mode = os.environ.get("BOLT_MODE", "audit")
         self.default_policy = os.environ.get("BOLT_DEFAULT_POLICY", "block-all")
-        trusted_github_accounts_string = os.environ.get("BOLT_TRUSTED_GITHUB_ACCOUNTS", "")
+        trusted_github_accounts_string = os.environ.get(
+            "BOLT_TRUSTED_GITHUB_ACCOUNTS", ""
+        )
         self.trusted_github_accounts = trusted_github_accounts_string.split(",")
         self.allow_http = os.environ.get("BOLT_ALLOW_HTTP", False)
         with open("/home/bolt/egress_rules.yaml", "r") as file:
@@ -206,8 +213,8 @@ class Interceptor:
 
         if has_paths:
             return
-        
-        if destination == "github.com" or destination == "api.github.com":
+
+        if destination in ["github.com", "api.github.com"]:
             return
 
         applied_rule = matched_rules[0] if len(matched_rules) > 0 else None
@@ -251,13 +258,14 @@ class Interceptor:
             data.ssl_conn = SSL.Connection(SSL.Context(SSL.SSLv23_METHOD))
             data.conn.error = "TLS Handshake failed"
 
-    # pylint: disable=too-many-branches,too-many-locals
+    # pylint: disable=too-many-branches,too-many-locals,too-many-statements
     def request(self, flow):
         allow_http = self.allow_http
         default_policy = self.default_policy
 
         sni = flow.client_conn.sni
-        #TODO: check whether host header is spoofed or not
+        # pylint: disable=fixme
+        # TODO: check whether host header is spoofed or not
         host = flow.request.pretty_host
         destination = sni if sni is not None else host
         scheme = flow.request.scheme
@@ -307,17 +315,21 @@ class Interceptor:
         normalised_request_path = request_path
         if not normalised_request_path.endswith("/"):
             normalised_request_path = normalised_request_path + "/"
-        
+
         if not normalised_request_path.startswith("/"):
             normalised_request_path = "/" + normalised_request_path
 
         trusted_github_account_flag = None
-        if destination == "github.com" or destination == "api.github.com":
-            if  normalised_request_path.startswith("/orgs/") or \
-                normalised_request_path.startswith("/repos/"):
+        if destination in ["github.com", "api.github.com"]:
+            if normalised_request_path.startswith(
+                "/orgs/"
+            ) or normalised_request_path.startswith("/repos/"):
                 for trusted_github_account in self.trusted_github_accounts:
-                    if normalised_request_path.startswith(f"/orgs/{trusted_github_account}/") or \
-                        normalised_request_path.startswith(f"/repos/{trusted_github_account}/"):
+                    if normalised_request_path.startswith(
+                        f"/orgs/{trusted_github_account}/"
+                    ) or normalised_request_path.startswith(
+                        f"/repos/{trusted_github_account}/"
+                    ):
                         trusted_github_account_flag = True
                         break
                 if trusted_github_account_flag is None:
