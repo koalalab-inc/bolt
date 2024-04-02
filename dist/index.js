@@ -26338,7 +26338,8 @@ async function generateSummary() {
   ]
 
   const trustedGithubAccountsData = [
-    [{ data: 'Github Account', header: true }, ...trustedGithubAccounts]
+    [{ data: 'Github Account', header: true }],
+    ...trustedGithubAccounts
   ]
 
   core.info('Koalalab-inc-bolt-config>>>')
@@ -26394,6 +26395,8 @@ async function generateSummary() {
   core.summary.emptyBuffer()
 
   let summary = core.summary
+    .addSeparator()
+    .addEOL()
     .addHeading('⚡ Egress Report - powered by Bolt', 2)
     .addRaw(
       `
@@ -26434,10 +26437,12 @@ ${configTableString}
   }
 
   if (untrustedGithubAccounts.length > 0) {
-    summary = summary.addHeading('🚨 Untrusted Github Accounts Found', 3)
-      .addRaw(`
+    summary = summary.addHeading(
+      '🚨 Requests to untrusted GitHub accounts found',
+      3
+    ).addRaw(`
 > [!CAUTION]
-> If you do not recognize these Github Accounts, you may want to investigate further. Add them to your trusted GitHub accounts if this is expected. See [Docs](https://github.com/koalalab-inc/bolt?tab=readme-ov-file#configure) for more information.
+> If you do not recognize these GitHub Accounts, you may want to investigate further. Add them to your trusted GitHub accounts if this is expected. See [Docs](https://github.com/koalalab-inc/bolt?tab=readme-ov-file#configure) for more information.
       `)
 
     for (const account of untrustedGithubAccounts) {
@@ -26483,6 +26488,7 @@ ${knownDestinationsTableString}
       'View detailed analysis of this run on Koalalab!',
       'https://www.koalalab.com'
     )
+    .addSeparator()
 
   summary.write()
 }
