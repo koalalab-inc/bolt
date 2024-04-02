@@ -157,35 +157,37 @@ async function generateSummary() {
   core.info('<<<Koalalab-inc-bolt-egress-traffic-report')
 
   const configTableString = core.summary.addTable(configTable).stringify()
-  core.summary.clear()
+  core.summary.emptyBuffer()
 
   const configHeaderString = core.summary
     .addHeading('🛠️ Bolt Configuration', 3)
     .stringify()
-  core.summary.clear()
+  core.summary.emptyBuffer()
 
   const knownDestinationsHeaderString = core.summary
     .addHeading('✅ Known Destinations', 4)
     .stringify()
-  core.summary.clear()
+  core.summary.emptyBuffer()
 
   const knownDestinationsTableString = core.summary
     .addTable(knownDestinations)
     .stringify()
-  core.summary.clear()
+  core.summary.emptyBuffer()
 
   const unknownDestinationsHeaderString = core.summary
     .addHeading('🚨 Unknown Destinations', 4)
     .stringify()
-  core.summary.clear()
+  core.summary.emptyBuffer()
 
   const unknownDestinationsTableString = core.summary
     .addTable(unknownDestinations)
     .stringify()
-  core.summary.clear()
+  core.summary.emptyBuffer()
 
-  core.summary.addHeading('⚡ Egress Report - powered by Bolt', 2).addRaw(
-    `
+  let summary = core.summary
+    .addHeading('⚡ Egress Report - powered by Bolt', 2)
+    .addRaw(
+      `
 <details open>
   <summary>
 ${configHeaderString}
@@ -193,14 +195,14 @@ ${configHeaderString}
 ${configTableString}
 </details>
     `
-  )
+    )
 
   if (egressRules.length > 0) {
-    core.summary
+    summary = summary
       .addHeading('📝 Egress rules', 3)
       .addCodeBlock(egressRulesYAML, 'yaml')
   } else {
-    core.summary
+    summary = summary
       .addRaw(
         `
 > [!NOTE]
@@ -211,13 +213,14 @@ ${configTableString}
   }
 
   if (untrustedGithubAccounts.length > 0) {
-    core.summary.addHeading('🚨 Untrusted Github Accounts Found', 3).addRaw(`
+    summary = summary.addHeading('🚨 Untrusted Github Accounts Found', 3)
+      .addRaw(`
 > [!CAUTION]
 > If you are not expecting these accounts to be making requests, you may want to investigate further. To avoid getting reports about these accounts, you can add them to the trusted_github_accounts.
       `)
 
     for (const account of untrustedGithubAccounts) {
-      core.summary.addRaw(`
+      summary = summary.addRaw(`
 <details open>
   <summary>
     ${account.name}
@@ -230,7 +233,7 @@ ${configTableString}
     }
   }
 
-  core.summary
+  summary = summary
     .addHeading('Egress Traffic', 3)
     .addRaw(
       `
@@ -250,7 +253,7 @@ ${unknownDestinationsTableString}
     )
     .addRaw(
       `
-<details open>
+<details>
   <summary>
 ${knownDestinationsHeaderString}
   </summary>
@@ -263,7 +266,7 @@ ${knownDestinationsTableString}
       'https://www.koalalab.com'
     )
 
-  core.summary.write()
+  summary.write()
 }
 
 module.exports = { generateSummary }
