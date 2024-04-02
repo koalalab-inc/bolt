@@ -42,6 +42,8 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
       mode: 'audit'
       default_policy: 'block-all'
       allow_http: 'false'
+      trusted_github_accounts: |
+        - 'akto-api-security'
       egress_rules: |
         - name: 'Allow GitHub subs'
           destination: '*.github.com'
@@ -52,6 +54,7 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
 | `mode` | Configure the mode of operation for the Bolt gateway. It can be `audit` or `active`. Default: `audit` |
 | `default_policy` | It can be either `block-all` or `allow-all`. Default: `block-all` |
 | `allow_http` | Whether to allow non-secure HTTP requests or not. Default: `false`
+| `trusted_github_accounts` | A list of trusted GitHub accounts.  Default: `[]`. The account in which workflow is running will always be trusted.
 | `egress_rules` | A list of custom egress rules to be applied. Default: `[]`.
 
 ## Custom Egress Policy

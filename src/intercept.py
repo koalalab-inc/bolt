@@ -198,6 +198,7 @@ class Interceptor:
         regex_pattern = "^" + regex_pattern + "$"
         return re.compile(regex_pattern)
 
+    # pylint: disable=too-many-branches
     def tls_clienthello(self, data):
         default_policy = self.default_policy
         destination = data.client_hello.sni
@@ -341,7 +342,7 @@ class Interceptor:
                         break
                 if trusted_github_account_flag is None:
                     trusted_github_account_flag = False
-                    
+
         if applied_rule is not None:
             default_rules_applied = applied_rule.get("default", False)
         else:

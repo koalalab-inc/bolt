@@ -26387,11 +26387,8 @@ ${configTableString}
       .addCodeBlock(egressRulesYAML, 'yaml')
   } else {
     summary = summary
-      .addRaw(
-        `
-> [!NOTE]
-> You have not configured egress rules. Only deault policy will be applied. See [documentation](https://github.com/koalalab-inc/bolt/blob/main/README.md#custom-egress-policy) for more information.
-      `
+      .addQuote(
+        'NOTE: You have not configured egress rules. Only deault policy will be applied. See [documentation](https://github.com/koalalab-inc/bolt/blob/main/README.md#custom-egress-policy) for more information.'
       )
       .addEOL()
   }
@@ -26400,7 +26397,7 @@ ${configTableString}
     summary = summary.addHeading('🚨 Untrusted Github Accounts Found', 3)
       .addRaw(`
 > [!CAUTION]
-> If you are not expecting these accounts to be making requests, you may want to investigate further. To avoid getting reports about these accounts, you can add them to the trusted_github_accounts.
+> If you do not recognize these Github Accounts, you may want to investigate further. Add them to your trusted GitHub accounts if this is expected. See [Docs](https://github.com/koalalab-inc/bolt?tab=readme-ov-file#configure) for more information.
       `)
 
     for (const account of untrustedGithubAccounts) {
@@ -26419,11 +26416,8 @@ ${configTableString}
 
   summary = summary
     .addHeading('Egress Traffic', 3)
-    .addRaw(
-      `
-> [!NOTE]  
-> Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.
-    `
+    .addQuote(
+      'NOTE: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
     )
     .addRaw(
       `
@@ -26444,11 +26438,11 @@ ${knownDestinationsHeaderString}
 ${knownDestinationsTableString}
 </details>
     `
-    )
-    .addLink(
-      'View detailed analysis of this run on Koalalab!',
-      'https://www.koalalab.com'
-    )
+    ).addRaw(`
+      <a href="https://www.koalalab.com" target="_blank" rel=”noreferrer”>
+        View detailed analysis of this run on Koalalab!
+      </a>
+    `)
 
   summary.write()
 }
