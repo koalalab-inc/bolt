@@ -88,9 +88,9 @@ async function generateSummary() {
     accounts[name] = accounts[name] || {}
     accounts[name]['name'] = name
     accounts[name]['trusted'] = trusted_flag
-    accounts[name]['paths'] = accounts[name]['paths'] || []
+    const paths = accounts[name]['paths'] || []
     if (!accounts[name]['paths'].includes(path)) {
-      accounts[name]['paths'].push(path)
+      accounts[name]['paths'] = [...paths, path]
     }
     return accounts
   }, [])
@@ -147,21 +147,21 @@ async function generateSummary() {
 
   if (untrustedGithubAccounts.length > 0) {
     summary = summary.addHeading('Untrusted Github Accounts Found', 3).addRaw(`
-        > [!CAUTION]
-        > If you are not expecting these accounts to be making requests, you may want to investigate further. To avoid getting reports about these accounts, you can add them to the trusted_github_accounts.
+> [!CAUTION]
+> If you are not expecting these accounts to be making requests, you may want to investigate further. To avoid getting reports about these accounts, you can add them to the trusted_github_accounts.
       `)
 
     for (const account of untrustedGithubAccounts) {
       summary = summary.addRaw(`
-          <details open>
-            <summary>
-              ${account.name}
-            </summary>
-            <p>Paths:</p>
-            <ul>
-              ${account.paths.map(path => `<li>${path}</li>`).join('')}
-            </ul>
-          </details>
+<details open>
+  <summary>
+    ${account.name}
+  </summary>
+  <p>Paths:</p>
+  <ul>
+    ${account.paths.map(path => `<li>${path}</li>`).join('')}
+  </ul>
+</details>
         `)
     }
   }
