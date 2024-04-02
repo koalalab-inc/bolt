@@ -1,0 +1,47 @@
+############################################
+# Move this file to .github/worklows/bolt.yml 
+# in your repository to see Bolt in action.
+############################################
+name: Bolt Example
+permissions:
+  contents: read
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Bolt
+      uses: koalalab-inc/bolt@v1.3.0
+      with:
+        trusted_github_accounts: |
+          - akto-api-security
+        egress_rules: |
+          - destination: google.com
+            action: block
+            name: Block Google
+          - destination: ifconfig.me
+            action: allow
+            name: Allow ifconfig.me
+      continue-on-error: true
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Curl Banned Domain
+      run: curl https://www.google.com
+      continue-on-error: true
+    - name: Curl Allowed Domain
+      run: curl https://ifconfig.me
+      continue-on-error: true
+    - name: Curl Some other Github Account API
+      run: |
+        curl -L \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/orgs/akto-api-security/repos
+      continue-on-error: true
+    - name: Curl Some other Github Account
+      run: |
+        curl -L \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/orgs/razorpay/repos
+      continue-on-error: true

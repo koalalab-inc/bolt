@@ -157,3 +157,4 @@ Once the job is over, bolt will add a egress traffic report to the job summary. 
 </details>
     <a href="https://www.koalalab.com">View detailed analysis of this run on Koalalab!</a>
 <hr>
+This report was generated using this workflow file: [bolt-sample.yml](./examples/bolt.yml)
