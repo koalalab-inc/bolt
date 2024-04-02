@@ -25976,6 +25976,65 @@ module.exports = { boltService }
 
 /***/ }),
 
+/***/ 4351:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+/**
+ * The entrypoint for the action.
+ */
+const { run } = __nccwpck_require__(1713)
+const { generateSummary } = __nccwpck_require__(7259)
+const core = __nccwpck_require__(2186)
+const os = __nccwpck_require__(2037)
+
+const isPost = core.getState('isPost')
+const flag = isPost === 'true'
+const boltFailed = core.getState('boltFailed')
+const failedFlag = boltFailed === 'true'
+
+function init(platform, arch) {
+  if (flag) {
+    if (failedFlag) {
+      core.info('Skipping post action as bolt failed')
+      return
+    }
+    // Post
+    generateSummary()
+  } else {
+    if (!isPost) {
+      core.saveState('isPost', 'true')
+    }
+
+    // 'win32' | 'darwin' | 'linux' | 'freebsd' | 'openbsd' | 'android' | 'cygwin' | 'sunos'
+    if (['linux'].indexOf(platform) === -1) {
+      core.saveState('boltFailed', 'true')
+      core.setFailed(`This action is not supported on ${platform}`)
+      return
+    }
+    // Possible Archs
+    // 'x64' | 'arm' | 'arm64' | 'ia32' | 'mips' | 'mipsel' | 'ppc' | 'ppc64' | 'riscv64' | 's390' | 's390x'
+    const allowedArch = ['x64', 'arm64', 'arm']
+    if (allowedArch.indexOf(arch) === -1) {
+      core.saveState('boltFailed', 'true')
+      core.setFailed(`This action is not supported on ${arch}`)
+      return
+    }
+
+    run()
+  }
+}
+
+const platform = os.platform()
+const arch = os.arch()
+init(platform, arch)
+
+module.exports = {
+  init
+}
+
+
+/***/ }),
+
 /***/ 1713:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -26008,9 +26067,17 @@ async function run() {
 
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
+    core.saveState('boltUser', boltUser)
+
+    const outputFile = 'output.log'
+    core.saveState('outputFile', outputFile)
+
+    const homeDir = `/home/${boltUser}`
+    core.saveState('homeDir', homeDir)
+
     const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
     const repoOwner = repoName.split('/')[0]; // e.g. koalalab-inc
-    core.saveState('boltUser', boltUser)
+
 
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
@@ -26177,6 +26244,7 @@ async function run() {
     benchmark('setup-iptables-redirection')
   } catch (error) {
     // Fail the workflow run if an error occurs
+    core.saveState('boltFailed', 'true')
     core.setFailed(error.message)
   }
 }
@@ -26196,11 +26264,7 @@ const { exec } = __nccwpck_require__(1514)
 const fs = __nccwpck_require__(7147)
 const YAML = __nccwpck_require__(4083)
 
-async function generateTestResults(boltUser) {
-  const filePath = 'output.log'
-  await exec(`sudo cp /home/${boltUser}/${filePath} output.log`)
-  await exec(`sudo chown -R runner:docker ${filePath}`)
-
+async function generateTestResults(filePath) {
   try {
     // Read the entire file synchronously and split it into an array of lines
     const fileContent = fs.readFileSync(filePath, 'utf-8')
@@ -26256,12 +26320,26 @@ function resultToRow(result) {
 }
 
 async function generateSummary() {
+  const outputFile = core.getState('outputFile')
+  const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
   const mode = core.getInput('mode')
   const allowHTTP = core.getInput('allow_http')
   const defaultPolicy = core.getInput('default_policy')
   const egressRulesYAML = core.getInput('egress_rules')
   const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
+
+  if (!outputFile || !boltUser || !homeDir) {
+    core.info(`Invalid Bold run. Missing required state variables`)
+    return
+  }
+  if (!fs.existsSync(`${homeDir}/${outputFile}`)) {
+    core.info(`Bolt output file not found`)
+    return
+  }
+
+  await exec(`sudo cp ${homeDir}/${outputFile} ${outputFile}`)
+
   // Verify that egress_rules_yaml is valid YAML
   let egressRules
   let trustedGithubAccounts
@@ -26272,7 +26350,7 @@ async function generateSummary() {
     core.info(`Invalid YAML: ${error.message}`)
   }
 
-  const results = await generateTestResults(boltUser)
+  const results = await generateTestResults(outputFile)
 
   const uniqueResults = getUniqueBy(results, ['destination', 'scheme'])
   // const uniqueResultRows = uniqueResults.map(resultToRow)
@@ -36887,31 +36965,12 @@ exports.visitAsync = visitAsync;
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
-/**
- * The entrypoint for the action.
- */
-const { run } = __nccwpck_require__(1713)
-const { generateSummary } = __nccwpck_require__(7259)
-const core = __nccwpck_require__(2186)
-
-const isPost = core.getState('isPost')
-const flag = isPost === 'true'
-
-if (flag) {
-  // Post
-  generateSummary()
-} else {
-  if (!isPost) {
-    core.saveState('isPost', 'true')
-  }
-  run()
-}
-
-})();
-
-module.exports = __webpack_exports__;
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __nccwpck_require__(4351);
+/******/ 	module.exports = __webpack_exports__;
+/******/ 	
 /******/ })()
 ;

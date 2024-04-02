@@ -10,9 +10,17 @@ jest.mock('../src/main', () => ({
 }))
 
 describe('index', () => {
-  it('calls run when imported', async () => {
-    require('../src/index')
+  it('calls run when imported on linux', async () => {
+    const { init } = require('../src/index')
+    init('linux', 'x64')
 
     expect(run).toHaveBeenCalled()
+  })
+
+  it('fails when imported on platform other than linux', async () => {
+    const { init } = require('../src/index')
+    init('darwin', 'x64')
+
+    expect(run).not.toHaveBeenCalled()
   })
 })

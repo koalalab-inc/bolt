@@ -27,9 +27,17 @@ async function run() {
 
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
+    core.saveState('boltUser', boltUser)
+
+    const outputFile = 'output.log'
+    core.saveState('outputFile', outputFile)
+
+    const homeDir = `/home/${boltUser}`
+    core.saveState('homeDir', homeDir)
+
     const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
     const repoOwner = repoName.split('/')[0]; // e.g. koalalab-inc
-    core.saveState('boltUser', boltUser)
+
 
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
@@ -196,6 +204,7 @@ async function run() {
     benchmark('setup-iptables-redirection')
   } catch (error) {
     // Fail the workflow run if an error occurs
+    core.saveState('boltFailed', 'true')
     core.setFailed(error.message)
   }
 }

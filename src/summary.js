@@ -3,11 +3,7 @@ const { exec } = require('@actions/exec')
 const fs = require('fs')
 const YAML = require('yaml')
 
-async function generateTestResults(boltUser) {
-  const filePath = 'output.log'
-  await exec(`sudo cp /home/${boltUser}/${filePath} output.log`)
-  await exec(`sudo chown -R runner:docker ${filePath}`)
-
+async function generateTestResults(filePath) {
   try {
     // Read the entire file synchronously and split it into an array of lines
     const fileContent = fs.readFileSync(filePath, 'utf-8')
@@ -63,12 +59,26 @@ function resultToRow(result) {
 }
 
 async function generateSummary() {
+  const outputFile = core.getState('outputFile')
+  const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
   const mode = core.getInput('mode')
   const allowHTTP = core.getInput('allow_http')
   const defaultPolicy = core.getInput('default_policy')
   const egressRulesYAML = core.getInput('egress_rules')
   const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
+
+  if (!outputFile || !boltUser || !homeDir) {
+    core.info(`Invalid Bold run. Missing required state variables`)
+    return
+  }
+  if (!fs.existsSync(`${homeDir}/${outputFile}`)) {
+    core.info(`Bolt output file not found`)
+    return
+  }
+
+  await exec(`sudo cp ${homeDir}/${outputFile} ${outputFile}`)
+
   // Verify that egress_rules_yaml is valid YAML
   let egressRules
   let trustedGithubAccounts
@@ -79,7 +89,7 @@ async function generateSummary() {
     core.info(`Invalid YAML: ${error.message}`)
   }
 
-  const results = await generateTestResults(boltUser)
+  const results = await generateTestResults(outputFile)
 
   const uniqueResults = getUniqueBy(results, ['destination', 'scheme'])
   // const uniqueResultRows = uniqueResults.map(resultToRow)
