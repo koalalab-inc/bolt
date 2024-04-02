@@ -21,10 +21,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Get release version
         id: releaseVersion
-        run: echo "::set-output name=releaseVersion::$(awk -F\' '/export const releaseVersion/ { print $2 }' src/version.js)"
+        run: echo "releaseVersion=$(awk -F\' '/export const releaseVersion/ { print $2 }' src/version.js)" >> $GITHUB_ENV
       - name: Check if releaseVersion is same as tag
         run: |
-          if [ "${{ env.tag }}" != "${{ steps.releaseVersion.outputs.releaseVersion }}" ]; then
+          if [ "${{ env.tag }}" != "${{ env.releaseVersion }}" ]; then
             echo "releaseVersion does not match the tag"
             exit 1
           fi
