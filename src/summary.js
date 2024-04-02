@@ -77,6 +77,28 @@ async function summary() {
     ]
   )
 
+  const githubAccountCalls = results.filter((result) => {
+    return result.trusted_github_account_flag !== undefined
+  })
+
+  const githubAccounts = githubAccountCalls.reduce((accounts, call) => {
+    const path = call.destination.request_path
+    const name = call.github_account_name
+    const trusted_flag = call.trusted_github_account_flag
+    accounts[name] = accounts[name] || {}
+    accounts[name]["name"] = name
+    accounts[name]["trusted"] = trusted_flag
+    accounts[name]["paths"] = accounts[name]["paths"] || []
+    if (!accounts[name]["paths"].includes(path)) {
+      accounts[name]["paths"].push(path)
+    }
+    return accounts
+  }, [])
+
+  const untrustedGithubAccounts = Object.values(githubAccounts).filter((account) => {
+    return account["trusted"] === false
+  })
+
   const configMap = {
     mode,
     allowHTTP,
@@ -114,12 +136,39 @@ async function summary() {
   core.info(JSON.stringify(results))
   core.info('<<<Koalalab-inc-bolt-egress-traffic-report')
 
-  core.summary
+  let summary = core.summary
     .addHeading('Egress Report - powered by Bolt', 2)
     .addHeading('Bolt Configuration', 3)
     .addTable(configTable)
     .addHeading('Egress rules', 3)
     .addCodeBlock(egressRulesYAML, 'yaml')
+  
+  if (untrustedGithubAccounts.length > 0) {
+    summary = summary
+      .addHeading('Untrusted Github Accounts Found', 3)
+      .addRaw(`
+        > [!CAUTION]
+        > If you are not expecting these accounts to be making requests, you may want to investigate further. To avoid getting reports about these accounts, you can add them to the trusted_github_accounts.
+      `)
+    
+    for (const account of untrustedGithubAccounts) {
+      summary = summary
+        .addRaw(`
+          <details open>
+            <summary>
+              ${account.name}
+            </summary>
+            <p>Paths:</p>
+            <ul>
+              ${account.paths.map(path => `<li>${path}</li>`).join('')}
+            </ul>
+          </details>
+        `)
+    }
+  }
+  
+  summary = summary
+    .addHeading
     .addHeading('Egress Traffic', 3)
     .addQuote(
       'Note:: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
@@ -129,7 +178,8 @@ async function summary() {
       'View detailed analysis of this run on Koalalab!',
       'https://www.koalalab.com'
     )
-    .write()
+
+  summary.write()
 }
 
 module.exports = { summary }
