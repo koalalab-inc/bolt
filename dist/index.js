@@ -26245,7 +26245,7 @@ async function generateSummary() {
   const egressRulesYAML = core.getInput('egress_rules')
   // Verify that egress_rules_yaml is valid YAML
   try {
-    YAML.parse(egressRulesYAML)
+    const egressRules = YAML.parse(egressRulesYAML)
   } catch (error) {
     core.info(`Invalid YAML: ${error.message}`)
   }
@@ -26257,7 +26257,8 @@ async function generateSummary() {
       result.destination,
       result.scheme,
       result.rule_name,
-      actionString(result.action)
+      actionString(result.action),
+      result.default
     ]
   )
 
@@ -26297,7 +26298,7 @@ async function generateSummary() {
     ['Default Policy', defaultPolicy]
   ]
 
-  const table = [
+  const knownDestinations = [
     [
       { data: 'Destination', header: true },
       { data: 'Scheme', header: true },
@@ -26305,13 +26306,28 @@ async function generateSummary() {
       { data: 'Action', header: true }
     ],
     ...uniqueResults
+      .filter(result => result.default || result.action === 'allow')
+      .map(result => result.slice(0, 4))
+  ]
+
+  const unknownDestinations = [
+    [
+      { data: 'Destination', header: true },
+      { data: 'Scheme', header: true },
+      { data: 'Rule', header: true },
+      { data: 'Action', header: true }
+    ],
+    ...uniqueResults
+      .filter(result => result.default === false && result.action === 'block')
+      .map(result => result.slice(0, 4))
   ]
 
   core.info('Koalalab-inc-bolt-config>>>')
   core.info(JSON.stringify(configMap))
   core.info('<<<Koalalab-inc-bolt-config')
+  let egressRules
   try {
-    const egressRules = YAML.parse(egressRulesYAML)
+    egressRules = YAML.parse(egressRulesYAML)
     core.info('Koalalab-inc-bolt-egress-config>>>')
     core.info(JSON.stringify(egressRules))
     core.info('<<<Koalalab-inc-bolt-egress-config')
@@ -26323,9 +26339,33 @@ async function generateSummary() {
   core.info('<<<Koalalab-inc-bolt-egress-traffic-report')
 
   const configTableString = core.summary.addTable(configTable).stringify()
+  core.summary.clear()
+
   const configHeaderString = core.summary
     .addHeading('🛠️ Bolt Configuration', 3)
     .stringify()
+  core.summary.clear()
+
+  const knownDestinationsHeaderString = core.summary
+    .addHeading('✅ Known Destinations', 4)
+    .stringify()
+  core.summary.clear()
+
+  const knownDestinationsTableString = core.summary
+    .addTable(knownDestinations)
+    .stringify()
+  core.summary.clear()
+
+  const unknownDestinationsHeaderString = core.summary
+    .addHeading('🚨 Unknown Destinations', 4)
+    .stringify()
+  core.summary.clear()
+
+  const unknownDestinationsTableString = core.summary
+    .addTable(unknownDestinations)
+    .stringify()
+  core.summary.clear()
+
   let summary = core.summary
     .addHeading('⚡ Egress Report - powered by Bolt', 2)
     .addRaw(
@@ -26338,8 +26378,17 @@ ${configTableString}
 </details>
     `
     )
-    .addHeading('📝 Egress rules', 3)
-    .addCodeBlock(egressRulesYAML, 'yaml')
+
+  if (egressRules.length > 0) {
+    summary = summary
+      .addHeading('📝 Egress rules', 3)
+      .addCodeBlock(egressRulesYAML, 'yaml')
+  } else {
+    summary = summary.addRaw(`
+> [!NOTE]
+> You have not configured egress rules. Only deault policy will be applied. See [documentation]https://github.com/koalalab-inc/bolt/blob/main/README.md#custom-egress-policy) for more information.
+      `)
+  }
 
   if (untrustedGithubAccounts.length > 0) {
     summary = summary.addHeading('🚨 Untrusted Github Accounts Found', 3)
@@ -26354,7 +26403,6 @@ ${configTableString}
   <summary>
     ${account.name}
   </summary>
-  <p>Paths:</p>
   <ul>
     ${account.paths.map(path => `<li>${path}</li>`).join('')}
   </ul>
@@ -26365,10 +26413,32 @@ ${configTableString}
 
   summary = summary
     .addHeading('Egress Traffic', 3)
-    .addQuote(
-      'Note:: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
+    .addRaw(
+      `
+> [!NOTE]  
+> Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.
+    `
     )
-    .addTable(table)
+    .addRaw(
+      `
+<details open>
+  <summary>
+${unknownDestinationsHeaderString}
+  </summary>
+${unknownDestinationsTableString}
+</details>
+    `
+    )
+    .addRaw(
+      `
+<details open>
+  <summary>
+${knownDestinationsHeaderString}
+  </summary>
+${knownDestinationsTableString}
+</details>
+    `
+    )
     .addLink(
       'View detailed analysis of this run on Koalalab!',
       'https://www.koalalab.com'

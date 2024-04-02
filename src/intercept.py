@@ -128,6 +128,8 @@ class Interceptor:
             yaml = ruamel.yaml.YAML(typ="safe", pure=True)
             self.egress_rules = yaml.load(file)
             default_egress_rules = yaml.load(DEFAULT_EGRESS_RULES_YAML)
+            for rule in default_egress_rules:
+                rule["default"] = True
             self.egress_rules = self.egress_rules + default_egress_rules
 
     def done(self):
@@ -218,6 +220,10 @@ class Interceptor:
             return
 
         applied_rule = matched_rules[0] if len(matched_rules) > 0 else None
+        if applied_rule is not None:
+            default_rules_applied = applied_rule.get("default", False)
+        else:
+            default_rules_applied = False
 
         if applied_rule is not None:
             applied_rule_name = applied_rule.get("name", "Name not configured")
@@ -235,6 +241,7 @@ class Interceptor:
                 "destination": destination,
                 "scheme": "https",
                 "rule_name": applied_rule_name,
+                "default": default_rules_applied,
             }
             data.context.action = "block"
             if self.mode == "audit":
@@ -334,6 +341,11 @@ class Interceptor:
                         break
                 if trusted_github_account_flag is None:
                     trusted_github_account_flag = False
+                    
+        if applied_rule is not None:
+            default_rules_applied = applied_rule.get("default", False)
+        else:
+            default_rules_applied = False
 
         if block:
             event = {
@@ -341,6 +353,7 @@ class Interceptor:
                 "destination": destination,
                 "scheme": scheme,
                 "rule_name": applied_rule_name,
+                "default": default_rules_applied,
             }
             if self.mode != "audit":
                 flow.kill()
@@ -350,6 +363,7 @@ class Interceptor:
                 "destination": destination,
                 "scheme": scheme,
                 "rule_name": applied_rule_name,
+                "default": default_rules_applied,
             }
 
         if trusted_github_account_flag is not None:
