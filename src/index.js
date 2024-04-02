@@ -5,6 +5,7 @@ const { run } = require('./main')
 const { generateSummary } = require('./summary')
 const core = require('@actions/core')
 const os = require('os')
+const { releaseVersion } = require('./version')
 
 const isPost = core.getState('isPost')
 const flag = isPost === 'true'
@@ -27,7 +28,9 @@ function init(platform, arch) {
     // 'win32' | 'darwin' | 'linux' | 'freebsd' | 'openbsd' | 'android' | 'cygwin' | 'sunos'
     if (['linux'].indexOf(platform) === -1) {
       core.saveState('boltFailed', 'true')
-      core.setFailed(`This action is not supported on ${platform}`)
+      core.setFailed(
+        `Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}`
+      )
       return
     }
     // Possible Archs
@@ -35,7 +38,9 @@ function init(platform, arch) {
     const allowedArch = ['x64', 'arm64', 'arm']
     if (allowedArch.indexOf(arch) === -1) {
       core.saveState('boltFailed', 'true')
-      core.setFailed(`This action is not supported on ${arch}`)
+      core.setFailed(
+        `Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}`
+      )
       return
     }
 

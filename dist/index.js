@@ -25986,6 +25986,7 @@ const { run } = __nccwpck_require__(1713)
 const { generateSummary } = __nccwpck_require__(7259)
 const core = __nccwpck_require__(2186)
 const os = __nccwpck_require__(2037)
+const { releaseVersion } = __nccwpck_require__(9554)
 
 const isPost = core.getState('isPost')
 const flag = isPost === 'true'
@@ -26008,7 +26009,9 @@ function init(platform, arch) {
     // 'win32' | 'darwin' | 'linux' | 'freebsd' | 'openbsd' | 'android' | 'cygwin' | 'sunos'
     if (['linux'].indexOf(platform) === -1) {
       core.saveState('boltFailed', 'true')
-      core.setFailed(`This action is not supported on ${platform}`)
+      core.setFailed(
+        `Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}`
+      )
       return
     }
     // Possible Archs
@@ -26016,7 +26019,9 @@ function init(platform, arch) {
     const allowedArch = ['x64', 'arm64', 'arm']
     if (allowedArch.indexOf(arch) === -1) {
       core.saveState('boltFailed', 'true')
-      core.setFailed(`This action is not supported on ${arch}`)
+      core.setFailed(
+        `Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}`
+      )
       return
     }
 
