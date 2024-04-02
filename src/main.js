@@ -148,7 +148,7 @@ async function run() {
     core.info('Starting bolt...')
     await exec('sudo systemctl start bolt')
     core.info('Waiting for bolt to start...')
-    const ms = 1000
+    const ms = 2000
     await wait(ms)
     await exec('sudo systemctl status bolt')
     core.info('Starting bolt... done')
