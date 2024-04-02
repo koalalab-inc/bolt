@@ -26277,7 +26277,7 @@ async function generateSummary() {
     accounts[name]['name'] = name
     accounts[name]['trusted'] = trusted_flag
     const paths = accounts[name]['paths'] || []
-    if (paths.includes(path)) {
+    if (!paths.includes(path)) {
       accounts[name]['paths'] = [...paths, path]
     }
     return accounts
