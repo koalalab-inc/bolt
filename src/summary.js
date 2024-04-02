@@ -255,9 +255,7 @@ ${knownDestinationsTableString}
 </details>
     `
     ).addRaw(`
-      <a href="https://www.koalalab.com" target="_blank" rel=”noreferrer”>
-        View detailed analysis of this run on Koalalab!
-      </a>
+[View detailed analysis of this run on Koalalab!](https://www.koalalab.com){:target="_blank", :rel="noreferrer"}
     `)
 
   summary.write()
