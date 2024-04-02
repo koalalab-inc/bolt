@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # actions/checkout@v4 | 1567,v4.1.1
       - name: Get release version
         id: releaseVersion
-        run: echo "releaseVersion=\"$(awk -F\' '/export const releaseVersion/ { print $2 }' src/version.js)\"" >> "$GITHUB_ENV"
+        run: echo "releaseVersion=\"$(awk -F\' '/const releaseVersion/ { print $2 }' src/version.js)\"" >> "$GITHUB_ENV"
       - name: Check if releaseVersion is same as tag
         run: |
           if [ "${{ env.tag }}" != "${{ env.releaseVersion }}" ]; then
