@@ -157,10 +157,6 @@ async function run() {
     benchmark('start-bolt')
 
     core.startGroup('trust-bolt-certificate')
-    core.info('Install ca-certificates...')
-    await exec('sudo apt-get update')
-    await exec('sudo apt-get install -y ca-certificates')
-    core.info('Install ca-certificates... done')
     core.info('Trust bolt certificate...')
     await exec(
       `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca-certificates/bolt.crt`

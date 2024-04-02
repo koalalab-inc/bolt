@@ -26138,10 +26138,6 @@ async function run() {
     benchmark('start-bolt')
 
     core.startGroup('trust-bolt-certificate')
-    core.info('Install ca-certificates...')
-    await exec('sudo apt-get update')
-    await exec('sudo apt-get install -y ca-certificates')
-    core.info('Install ca-certificates... done')
     core.info('Trust bolt certificate...')
     await exec(
       `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca-certificates/bolt.crt`
@@ -26270,7 +26266,7 @@ async function generateSummary() {
   })
 
   const githubAccounts = githubAccountCalls.reduce((accounts, call) => {
-    const path = call.destination.request_path
+    const path = call.request_path
     const name = call.github_account_name
     const trusted_flag = call.trusted_github_account_flag
     accounts[name] = accounts[name] || {}
@@ -26326,15 +26322,28 @@ async function generateSummary() {
   core.info(JSON.stringify(results))
   core.info('<<<Koalalab-inc-bolt-egress-traffic-report')
 
+  const configTableString = core.summary.addTable(configTable).stringify()
+  const configHeaderString = core.summary
+    .addHeading('🛠️ Bolt Configuration', 3)
+    .stringify()
   let summary = core.summary
-    .addHeading('Egress Report - powered by Bolt', 2)
-    .addHeading('Bolt Configuration', 3)
-    .addTable(configTable)
-    .addHeading('Egress rules', 3)
+    .addHeading('⚡ Egress Report - powered by Bolt', 2)
+    .addRaw(
+      `
+<details open>
+  <summary>
+${configHeaderString}
+  </summary>
+${configTableString}
+</details>
+    `
+    )
+    .addHeading('📝 Egress rules', 3)
     .addCodeBlock(egressRulesYAML, 'yaml')
 
   if (untrustedGithubAccounts.length > 0) {
-    summary = summary.addHeading('Untrusted Github Accounts Found', 3).addRaw(`
+    summary = summary.addHeading('🚨 Untrusted Github Accounts Found', 3)
+      .addRaw(`
 > [!CAUTION]
 > If you are not expecting these accounts to be making requests, you may want to investigate further. To avoid getting reports about these accounts, you can add them to the trusted_github_accounts.
       `)
