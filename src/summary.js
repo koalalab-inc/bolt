@@ -53,7 +53,7 @@ function getUniqueBy(arr, keys) {
   return Object.values(uniqueObj)
 }
 
-async function summary() {
+async function generateSummary() {
   const boltUser = core.getState('boltUser')
   const mode = core.getInput('mode')
   const allowHTTP = core.getInput('allow_http')
@@ -77,7 +77,7 @@ async function summary() {
     ]
   )
 
-  const githubAccountCalls = results.filter((result) => {
+  const githubAccountCalls = results.filter(result => {
     return result.trusted_github_account_flag !== undefined
   })
 
@@ -86,18 +86,20 @@ async function summary() {
     const name = call.github_account_name
     const trusted_flag = call.trusted_github_account_flag
     accounts[name] = accounts[name] || {}
-    accounts[name]["name"] = name
-    accounts[name]["trusted"] = trusted_flag
-    accounts[name]["paths"] = accounts[name]["paths"] || []
-    if (!accounts[name]["paths"].includes(path)) {
-      accounts[name]["paths"].push(path)
+    accounts[name]['name'] = name
+    accounts[name]['trusted'] = trusted_flag
+    accounts[name]['paths'] = accounts[name]['paths'] || []
+    if (!accounts[name]['paths'].includes(path)) {
+      accounts[name]['paths'].push(path)
     }
     return accounts
   }, [])
 
-  const untrustedGithubAccounts = Object.values(githubAccounts).filter((account) => {
-    return account["trusted"] === false
-  })
+  const untrustedGithubAccounts = Object.values(githubAccounts).filter(
+    account => {
+      return account['trusted'] === false
+    }
+  )
 
   const configMap = {
     mode,
@@ -142,18 +144,15 @@ async function summary() {
     .addTable(configTable)
     .addHeading('Egress rules', 3)
     .addCodeBlock(egressRulesYAML, 'yaml')
-  
+
   if (untrustedGithubAccounts.length > 0) {
-    summary = summary
-      .addHeading('Untrusted Github Accounts Found', 3)
-      .addRaw(`
+    summary = summary.addHeading('Untrusted Github Accounts Found', 3).addRaw(`
         > [!CAUTION]
         > If you are not expecting these accounts to be making requests, you may want to investigate further. To avoid getting reports about these accounts, you can add them to the trusted_github_accounts.
       `)
-    
+
     for (const account of untrustedGithubAccounts) {
-      summary = summary
-        .addRaw(`
+      summary = summary.addRaw(`
           <details open>
             <summary>
               ${account.name}
@@ -166,9 +165,8 @@ async function summary() {
         `)
     }
   }
-  
-  summary = summary
-    .addHeading
+
+  summary = summary.addHeading
     .addHeading('Egress Traffic', 3)
     .addQuote(
       'Note:: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
@@ -182,4 +180,4 @@ async function summary() {
   summary.write()
 }
 
-module.exports = { summary }
+module.exports = { generateSummary }

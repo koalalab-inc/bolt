@@ -2,7 +2,7 @@
  * The entrypoint for the action.
  */
 const { run } = require('./main')
-const { summary } = require('./summary')
+const { generateSummary } = require('./summary')
 const core = require('@actions/core')
 
 const isPost = core.getState('isPost')
@@ -10,7 +10,7 @@ const flag = isPost === 'true'
 
 if (flag) {
   // Post
-  summary()
+  generateSummary()
 } else {
   if (!isPost) {
     core.saveState('isPost', 'true')

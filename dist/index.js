@@ -25944,6 +25944,7 @@ async function boltService(
   mode,
   allowHTTP,
   defaultPolicy,
+  trustedGithubAccountsString,
   logFile,
   errorLogFile
 ) {
@@ -25961,6 +25962,7 @@ Restart=always
 Environment="BOLT_MODE=${mode}"
 Environment="BOLT_ALLOW_HTTP=${allowHTTP}"
 Environment="BOLT_DEFAULT_POLICY=${defaultPolicy}"
+Environment="BOLT_TRUSTED_GITHUB_ACCOUNTS=${trustedGithubAccountsString}"
 StandardOutput=file:${logFile}
 StandardError=file:${errorLogFile}
 
@@ -26005,6 +26007,8 @@ async function run() {
 
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
+    const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
+    const repoOwner = repoName.split('/')[0]; // e.g. koalalab-inc
     core.saveState('boltUser', boltUser)
 
     core.startGroup('create-bolt-user')
@@ -26028,7 +26032,6 @@ async function run() {
     // Sample Backup URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     let referrer = ''
     try {
-      const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
       const workflowName = process.env.GITHUB_WORKFLOW.replace(/\//g, "|"); // e.g. CI
       const jobName = process.env.GITHUB_JOB; // e.g. build
       referrer = `github.com/${repoName}/${workflowName}/${jobName}`
@@ -26060,6 +26063,8 @@ async function run() {
     const allowHTTP = core.getInput('allow_http')
     const defaultPolicy = core.getInput('default_policy')
     const egressRulesYAML = core.getInput('egress_rules')
+    const trustedGithubAccounts = core.getInput('trusted_github_accounts')
+    const trustedGithubAccountsString = trustedGithubAccounts.push(repoOwner).reverse().join(',')
 
     // Verify that egress_rules_yaml is valid YAML
     YAML.parse(egressRulesYAML)
@@ -26105,6 +26110,7 @@ async function run() {
       mode,
       allowHTTP,
       defaultPolicy,
+      trustedGithubAccountsString,
       logFile,
       errorLogFile
     )
@@ -26128,6 +26134,20 @@ async function run() {
     core.endGroup('run-bolt')
 
     benchmark('start-bolt')
+
+    core.startGroup('trust-bolt-certificate')
+    core.info('Install ca-certificates...')
+    await exec('sudo apt-get update')
+    await exec('sudo apt-get install -y ca-certificates')
+    core.info('Install ca-certificates... done')
+    core.info('Trust bolt certificate...')
+    await exec(
+      `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca-certificates/bolt.crt`
+    )
+    await exec('sudo update-ca-certificates')
+    core.endGroup('trust-bolt-certificate')
+    
+    benchmark('trust-bolt-certificate')
 
     core.startGroup('setup-iptables-redirection')
     await exec('sudo sysctl -w net.ipv4.ip_forward=1')
@@ -26219,7 +26239,7 @@ function getUniqueBy(arr, keys) {
   return Object.values(uniqueObj)
 }
 
-async function summary() {
+async function generateSummary() {
   const boltUser = core.getState('boltUser')
   const mode = core.getInput('mode')
   const allowHTTP = core.getInput('allow_http')
@@ -26241,6 +26261,30 @@ async function summary() {
       result.rule_name,
       actionString(result.action)
     ]
+  )
+
+  const githubAccountCalls = results.filter(result => {
+    return result.trusted_github_account_flag !== undefined
+  })
+
+  const githubAccounts = githubAccountCalls.reduce((accounts, call) => {
+    const path = call.destination.request_path
+    const name = call.github_account_name
+    const trusted_flag = call.trusted_github_account_flag
+    accounts[name] = accounts[name] || {}
+    accounts[name]['name'] = name
+    accounts[name]['trusted'] = trusted_flag
+    accounts[name]['paths'] = accounts[name]['paths'] || []
+    if (!accounts[name]['paths'].includes(path)) {
+      accounts[name]['paths'].push(path)
+    }
+    return accounts
+  }, [])
+
+  const untrustedGithubAccounts = Object.values(githubAccounts).filter(
+    account => {
+      return account['trusted'] === false
+    }
   )
 
   const configMap = {
@@ -26280,12 +26324,35 @@ async function summary() {
   core.info(JSON.stringify(results))
   core.info('<<<Koalalab-inc-bolt-egress-traffic-report')
 
-  core.summary
+  let summary = core.summary
     .addHeading('Egress Report - powered by Bolt', 2)
     .addHeading('Bolt Configuration', 3)
     .addTable(configTable)
     .addHeading('Egress rules', 3)
     .addCodeBlock(egressRulesYAML, 'yaml')
+
+  if (untrustedGithubAccounts.length > 0) {
+    summary = summary.addHeading('Untrusted Github Accounts Found', 3).addRaw(`
+        > [!CAUTION]
+        > If you are not expecting these accounts to be making requests, you may want to investigate further. To avoid getting reports about these accounts, you can add them to the trusted_github_accounts.
+      `)
+
+    for (const account of untrustedGithubAccounts) {
+      summary = summary.addRaw(`
+          <details open>
+            <summary>
+              ${account.name}
+            </summary>
+            <p>Paths:</p>
+            <ul>
+              ${account.paths.map(path => `<li>${path}</li>`).join('')}
+            </ul>
+          </details>
+        `)
+    }
+  }
+
+  summary = summary.addHeading
     .addHeading('Egress Traffic', 3)
     .addQuote(
       'Note:: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
@@ -26295,10 +26362,11 @@ async function summary() {
       'View detailed analysis of this run on Koalalab!',
       'https://www.koalalab.com'
     )
-    .write()
+
+  summary.write()
 }
 
-module.exports = { summary }
+module.exports = { generateSummary }
 
 
 /***/ }),
@@ -36658,7 +36726,7 @@ var __webpack_exports__ = {};
  * The entrypoint for the action.
  */
 const { run } = __nccwpck_require__(1713)
-const { summary } = __nccwpck_require__(7259)
+const { generateSummary } = __nccwpck_require__(7259)
 const core = __nccwpck_require__(2186)
 
 const isPost = core.getState('isPost')
@@ -36666,7 +36734,7 @@ const flag = isPost === 'true'
 
 if (flag) {
   // Post
-  summary()
+  generateSummary()
 } else {
   if (!isPost) {
     core.saveState('isPost', 'true')
