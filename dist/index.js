@@ -26353,7 +26353,7 @@ async function generateSummary() {
     }
   }
 
-  summary = summary.addHeading
+  summary = summary
     .addHeading('Egress Traffic', 3)
     .addQuote(
       'Note:: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
