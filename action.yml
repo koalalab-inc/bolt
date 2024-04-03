@@ -6,8 +6,12 @@ branding:
   icon: 'zap'
 # Define your inputs here.
 inputs:
+  graceful: 
+    description: 'Failure behaviour on unsupported platforms - true or false'
+    required: false
+    default: true
   mode:
-    description: 'Mode of operation - audit or block'
+    description: 'Mode of operation - audit or active'
     required: false
     default: 'audit'
   allow_http:

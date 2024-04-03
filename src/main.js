@@ -5,6 +5,13 @@ const { boltService } = require('./bolt_service')
 const { releaseVersion } = require('./version')
 const YAML = require('yaml')
 const fs = require('fs')
+const {
+  mode,
+  allowHTTP,
+  defaultPolicy,
+  egressRulesInput: egressRules,
+  trustedGithubAccountsInput: trustedGithubAccounts
+} = require('./input')
 
 let startTime = Date.now()
 
@@ -87,16 +94,8 @@ async function run() {
 
     core.startGroup('setup-bolt')
     core.info('Reading inputs...')
-    const mode = core.getInput('mode')
-    const allowHTTP = core.getInput('allow_http')
-    const defaultPolicy = core.getInput('default_policy')
-    const egressRulesYAML = core.getInput('egress_rules')
-    const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
-    const trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
     const trustedGithubAccountsString = [repoOwner, ...trustedGithubAccounts].join(',')
-
-    // Verify that egress_rules_yaml is valid YAML
-    YAML.parse(egressRulesYAML)
+    const egressRulesYAML = YAML.stringify(egressRules)
     core.info('Reading inputs... done')
 
     core.info('Create bolt output file...')

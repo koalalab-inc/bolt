@@ -2,6 +2,13 @@ const core = require('@actions/core')
 const { exec } = require('@actions/exec')
 const fs = require('fs')
 const YAML = require('yaml')
+const {
+  mode,
+  allowHTTP,
+  defaultPolicy,
+  egressRulesInput: egressRules,
+  trustedGithubAccountsInput: trustedGithubAccounts
+} = require('./input')
 
 async function generateTestResults(filePath) {
   try {
@@ -32,7 +39,10 @@ async function generateTestResults(filePath) {
 function actionString(action) {
   switch (action) {
     case 'block':
-      return 'Unknown Destination'
+      if (mode === 'active') {
+        return '❌ Blocked'
+      }
+      return '❗❗ Will be blocked in Active mode'
     case 'allow':
       return '✅'
     default:
@@ -62,11 +72,7 @@ async function generateSummary() {
   const outputFile = core.getState('outputFile')
   const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
-  const mode = core.getInput('mode')
-  const allowHTTP = core.getInput('allow_http')
-  const defaultPolicy = core.getInput('default_policy')
-  const egressRulesYAML = core.getInput('egress_rules')
-  const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
+  const egressRulesYAML = YAML.stringify(egressRules)
 
   if (!outputFile || !boltUser || !homeDir) {
     core.info(`Invalid Bold run. Missing required state variables`)
@@ -78,16 +84,6 @@ async function generateSummary() {
   }
 
   await exec(`sudo cp ${homeDir}/${outputFile} ${outputFile}`)
-
-  // Verify that egress_rules_yaml is valid YAML
-  let egressRules
-  let trustedGithubAccounts
-  try {
-    egressRules = YAML.parse(egressRulesYAML)
-    trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
-  } catch (error) {
-    core.info(`Invalid YAML: ${error.message}`)
-  }
 
   const results = await generateTestResults(outputFile)
 
@@ -276,11 +272,18 @@ ${configTableString}
     }
   }
 
-  summary = summary
-    .addHeading('Egress Traffic', 3)
-    .addQuote(
-      'NOTE: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
+  summary = summary.addHeading('Egress Traffic', 3)
+
+  if (mode === 'active') {
+    summary = summary.addQuote(
+      'NOTE: Running in Active mode. All unknown/unverified destinations will be blocked.'
     )
+  }
+  summary = summary.addQuote(
+    'NOTE: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
+  )
+
+  summary = summary
     .addRaw(
       `
 <details open>
