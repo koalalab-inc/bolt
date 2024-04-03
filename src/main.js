@@ -171,6 +171,16 @@ async function run() {
         await exec(
           `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem /usr/local/share/ca-certificates/bolt.crt`
         )
+        const boltCertDir = '/home/runner/.bolt/certs'
+        const boltCertPath = `${boltCertDir}/bolt.crt`
+        await exec(`mkdir -p ${boltCertDir}`)
+        await exec(
+          `sudo cp /home/${boltUser}/.mitmproxy/mitmproxy-ca-cert.pem ${boltCertPath}`
+        )
+        await exec(
+          `sudo chown runner:runner ${boltCertPath}`
+        )
+        core.exportVariable('NODE_EXTRA_CA_CERTS', boltCertPath)
         await exec('sudo update-ca-certificates')
         break
       }

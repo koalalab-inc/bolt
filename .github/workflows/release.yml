@@ -17,8 +17,8 @@ jobs:
       os: linux
       arch: x86_64
     steps:
-      - name: Setup Bolt
-        uses: koalalab-inc/bolt@28c30ca51e4b69b37262da23158de4a5d14f653d # koalalab-inc/bolt@v1.3.0 | main
+      # - name: Setup Bolt
+      #   uses: koalalab-inc/bolt@28c30ca51e4b69b37262da23158de4a5d14f653d # koalalab-inc/bolt@v1.3.0 | main
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # actions/checkout@v4 | 1567,v4.1.1
       - name: Get release version
