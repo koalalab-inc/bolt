@@ -26016,9 +26016,9 @@ function init(platform, arch) {
       if (graceful) {
         core.error(
           `
-          ❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}.
-          ⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.
-          🛠️ To change this behavious, set graceful flag to false. It is true by default
+❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}.
+⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.
+🛠️ To change this behavious, set graceful flag to false. It is true by default
           `
         )
       } else {
@@ -26035,13 +26035,11 @@ function init(platform, arch) {
       core.saveState('boltFailed', 'true')
       if (graceful) {
         core.error(
-          `❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}.`
-        )
-        core.error(
-          `⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.`
-        )
-        core.error(
-          `🛠️ To change this behavious, set graceful flag to false. It is true by default`
+          `
+❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}.
+⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.
+🛠️ To change this behavious, set graceful flag to false. It is true by default
+          `
         )
       } else {
         core.setFailed(
@@ -26133,10 +26131,12 @@ function getEgressRules() {
     egressRules.filter(rule => {
       const ruleJSON = JSON.stringify(rule)
       if (!rule.name || !rule.destination || !rule.action) {
-        core.warning(`⚠️ Invalid egress rule: ${ruleJSON}.`)
-        core.warning(`⏭️ Skipping this egress rule`)
         core.warning(
-          `ℹ️ Every egress rule should have keys: ['name', 'destination', 'action']`
+          `
+⚠️ Invalid egress rule: ${ruleJSON}.
+⏭️ Skipping this egress rule
+ℹ️ Every egress rule should have keys: ['name', 'destination', 'action']
+          `
         )
         return false
       }
@@ -26147,11 +26147,11 @@ function getEgressRules() {
       let ruleAction = rule.action?.toLowerCase()
       if (ruleAction !== 'allow' && ruleAction !== 'block') {
         core.warning(
-          `⚠️ Invalid action: ${rule.action} in egress rule: ${ruleJSON}.`
-        )
-        core.warning(`⏭️ Skipping this egress rule`)
-        core.warning(
-          `ℹ️ Every egress rule should have action as 'allow' or 'block'`
+          `
+⚠️ Invalid action: ${rule.action} in egress rule: ${ruleJSON}.
+⏭️ Skipping this egress rule
+ℹ️ Every egress rule should have action as 'allow' or 'block'
+          `
         )
         ruleAction = 'allow'
       }
@@ -26160,11 +26160,11 @@ function getEgressRules() {
         ruleDestination.startsWith('http://') ||
         ruleDestination.startsWith('https://')
       ) {
-        core.warning(`ℹ️ Removing http(s):// from destination`)
+        core.info(`ℹ️ Removing http(s):// from destination: ${ruleDestination}`)
         ruleDestination = ruleDestination.replace(/^https?:\/\//, '')
       }
       if (ruleDestination.includes('/')) {
-        core.warning(`ℹ️ Removing path from destination`)
+        core.info(`ℹ️ Removing path from destination: ${ruleDestination}`)
         ruleDestination = ruleDestination.split('/')[0]
       }
       return {
@@ -26175,8 +26175,12 @@ function getEgressRules() {
     })
     return egressRules
   } catch (error) {
-    core.error(`Invalid YAML in egress_rules input: ${error.message}`)
-    core.warning(`⏭️ Skipping all the egress rules`)
+    core.error(
+      `
+⚠️ Invalid YAML in egress_rules input: ${error.message}
+⏭️ Skipping all the egress rules
+      `
+    )
     return []
   }
 }
@@ -26187,23 +26191,23 @@ function getTrustedGithubAccounts() {
     const trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
     if (!Array.isArray(trustedGithubAccounts)) {
       core.warning(
-        `⚠️ Invalid trusted_github_accounts value: ${trustedGithubAccounts}.`
+        `
+⚠️ Invalid trusted_github_accounts value: ${trustedGithubAccounts}.
+ℹ️ trusted_github_accounts should be a list of github usernames
+ℹ️ Using enpty list as trusted_github_accounts
+        `
       )
-      core.warning(
-        `ℹ️ trusted_github_accounts should be a list of github usernames`
-      )
-      core.warning(`ℹ️ Using enpty list as trusted_github_accounts`)
       return []
     }
     return trustedGithubAccounts
   } catch (error) {
     core.error(
-      `Invalid YAML in trusted_github_accounts input: ${error.message}`
+      `
+❌ Invalid YAML in trusted_github_accounts input: ${error.message}
+ℹ️ trusted_github_accounts should be a list of github usernames
+ℹ️ Using enpty list as trusted_github_accounts
+      `
     )
-    core.warning(
-      `ℹ️ trusted_github_accounts should be a list of github usernames`
-    )
-    core.warning(`ℹ️ Using enpty list as trusted_github_accounts`)
     return []
   }
 }
@@ -26589,7 +26593,7 @@ async function generateSummary() {
 
   const configTable = [
     ['Mode', mode],
-    ['Allow HTTP', allowHTTP],
+    ['Allow HTTP', `${allowHTTP}`],
     ['Default Policy', defaultPolicy]
   ]
 

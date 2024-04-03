@@ -128,7 +128,7 @@ async function generateSummary() {
 
   const configTable = [
     ['Mode', mode],
-    ['Allow HTTP', allowHTTP],
+    ['Allow HTTP', `${allowHTTP}`],
     ['Default Policy', defaultPolicy]
   ]
 
