@@ -6,12 +6,18 @@ const { releaseVersion } = require('./version')
 const YAML = require('yaml')
 const fs = require('fs')
 const {
-  mode,
-  allowHTTP,
-  defaultPolicy,
-  egressRulesInput: egressRules,
-  trustedGithubAccountsInput: trustedGithubAccounts
+  getMode,
+  getAllowHTTP,
+  getDefaultPolicy,
+  getEgressRules,
+  getTrustedGithubAccounts 
 } = require('./input')
+
+const mode = getMode()
+const allowHTTP = getAllowHTTP()
+const defaultPolicy = getDefaultPolicy()
+const egressRules = getEgressRules()
+const trustedGithubAccounts = getTrustedGithubAccounts()
 
 let startTime = Date.now()
 

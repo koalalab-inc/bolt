@@ -25993,7 +25993,9 @@ const flag = isPost === 'true'
 const boltFailed = core.getState('boltFailed')
 const failedFlag = boltFailed === 'true'
 
-const { graceful } = __nccwpck_require__(6)
+const { getGraceful } = __nccwpck_require__(6)
+
+const graceful = getGraceful()
 
 function init(platform, arch) {
   if (flag) {
@@ -26072,7 +26074,7 @@ module.exports = {
 const core = __nccwpck_require__(2186)
 const YAML = __nccwpck_require__(4083)
 
-function graceful() {
+function getGraceful() {
   const gracefulInput = `${core.getInput('graceful')}`.toLowerCase()
   if (gracefulInput === 'true') {
     return true
@@ -26086,7 +26088,7 @@ function graceful() {
   return true
 }
 
-function mode() {
+function getMode() {
   const modeInput = `${core.getInput('mode')}`.toLowerCase()
   if (modeInput === 'audit') {
     return 'audit'
@@ -26098,7 +26100,7 @@ function mode() {
   return 'audit'
 }
 
-function allowHTTP() {
+function getAllowHTTP() {
   const allowHTTPInput = `${core.getInput('allow_http')}`.toLowerCase()
   if (allowHTTPInput === 'true') {
     return true
@@ -26112,7 +26114,7 @@ function allowHTTP() {
   return false
 }
 
-function defaultPolicy() {
+function getDefaultPolicy() {
   const defaultPolicyInput = `${core.getInput('default_policy')}`.toLowerCase()
   if (defaultPolicyInput === 'allow-all') {
     return 'allow-all'
@@ -26126,7 +26128,7 @@ function defaultPolicy() {
   return 'block-all'
 }
 
-function egressRulesInput() {
+function getEgressRules() {
   const egressRulesYAML = core.getInput('egress_rules')
   try {
     const egressRules = YAML.parse(egressRulesYAML)
@@ -26181,7 +26183,7 @@ function egressRulesInput() {
   }
 }
 
-function trustedGithubAccountsInput() {
+function getTrustedGithubAccounts() {
   const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
   try {
     const trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
@@ -26209,12 +26211,12 @@ function trustedGithubAccountsInput() {
 }
 
 module.exports = {
-  graceful,
-  mode,
-  allowHTTP,
-  defaultPolicy,
-  egressRulesInput,
-  trustedGithubAccountsInput
+  getGraceful,
+  getMode,
+  getAllowHTTP,
+  getDefaultPolicy,
+  getEgressRules,
+  getTrustedGithubAccounts
 }
 
 
@@ -26231,12 +26233,18 @@ const { releaseVersion } = __nccwpck_require__(9554)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
 const {
-  mode,
-  allowHTTP,
-  defaultPolicy,
-  egressRulesInput: egressRules,
-  trustedGithubAccountsInput: trustedGithubAccounts
+  getMode,
+  getAllowHTTP,
+  getDefaultPolicy,
+  getEgressRules,
+  getTrustedGithubAccounts 
 } = __nccwpck_require__(6)
+
+const mode = getMode()
+const allowHTTP = getAllowHTTP()
+const defaultPolicy = getDefaultPolicy()
+const egressRules = getEgressRules()
+const trustedGithubAccounts = getTrustedGithubAccounts()
 
 let startTime = Date.now()
 
@@ -26458,12 +26466,18 @@ const { exec } = __nccwpck_require__(1514)
 const fs = __nccwpck_require__(7147)
 const YAML = __nccwpck_require__(4083)
 const {
-  mode,
-  allowHTTP,
-  defaultPolicy,
-  egressRulesInput: egressRules,
-  trustedGithubAccountsInput: trustedGithubAccounts
+  getMode,
+  getAllowHTTP,
+  getDefaultPolicy,
+  getEgressRules,
+  getTrustedGithubAccounts
 } = __nccwpck_require__(6)
+
+const mode = getMode()
+const allowHTTP = getAllowHTTP()
+const defaultPolicy = getDefaultPolicy()
+const egressRules = getEgressRules()
+const trustedGithubAccounts = getTrustedGithubAccounts()
 
 async function generateTestResults(filePath) {
   try {

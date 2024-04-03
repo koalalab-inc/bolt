@@ -3,12 +3,18 @@ const { exec } = require('@actions/exec')
 const fs = require('fs')
 const YAML = require('yaml')
 const {
-  mode,
-  allowHTTP,
-  defaultPolicy,
-  egressRulesInput: egressRules,
-  trustedGithubAccountsInput: trustedGithubAccounts
+  getMode,
+  getAllowHTTP,
+  getDefaultPolicy,
+  getEgressRules,
+  getTrustedGithubAccounts
 } = require('./input')
+
+const mode = getMode()
+const allowHTTP = getAllowHTTP()
+const defaultPolicy = getDefaultPolicy()
+const egressRules = getEgressRules()
+const trustedGithubAccounts = getTrustedGithubAccounts()
 
 async function generateTestResults(filePath) {
   try {

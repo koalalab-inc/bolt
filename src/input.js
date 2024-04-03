@@ -1,7 +1,7 @@
 const core = require('@actions/core')
 const YAML = require('yaml')
 
-function graceful() {
+function getGraceful() {
   const gracefulInput = `${core.getInput('graceful')}`.toLowerCase()
   if (gracefulInput === 'true') {
     return true
@@ -15,7 +15,7 @@ function graceful() {
   return true
 }
 
-function mode() {
+function getMode() {
   const modeInput = `${core.getInput('mode')}`.toLowerCase()
   if (modeInput === 'audit') {
     return 'audit'
@@ -27,7 +27,7 @@ function mode() {
   return 'audit'
 }
 
-function allowHTTP() {
+function getAllowHTTP() {
   const allowHTTPInput = `${core.getInput('allow_http')}`.toLowerCase()
   if (allowHTTPInput === 'true') {
     return true
@@ -41,7 +41,7 @@ function allowHTTP() {
   return false
 }
 
-function defaultPolicy() {
+function getDefaultPolicy() {
   const defaultPolicyInput = `${core.getInput('default_policy')}`.toLowerCase()
   if (defaultPolicyInput === 'allow-all') {
     return 'allow-all'
@@ -55,7 +55,7 @@ function defaultPolicy() {
   return 'block-all'
 }
 
-function egressRulesInput() {
+function getEgressRules() {
   const egressRulesYAML = core.getInput('egress_rules')
   try {
     const egressRules = YAML.parse(egressRulesYAML)
@@ -110,7 +110,7 @@ function egressRulesInput() {
   }
 }
 
-function trustedGithubAccountsInput() {
+function getTrustedGithubAccounts() {
   const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
   try {
     const trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
@@ -138,10 +138,10 @@ function trustedGithubAccountsInput() {
 }
 
 module.exports = {
-  graceful,
-  mode,
-  allowHTTP,
-  defaultPolicy,
-  egressRulesInput,
-  trustedGithubAccountsInput
+  getGraceful,
+  getMode,
+  getAllowHTTP,
+  getDefaultPolicy,
+  getEgressRules,
+  getTrustedGithubAccounts
 }

@@ -12,7 +12,9 @@ const flag = isPost === 'true'
 const boltFailed = core.getState('boltFailed')
 const failedFlag = boltFailed === 'true'
 
-const { graceful } = require('./input')
+const { getGraceful } = require('./input')
+
+const graceful = getGraceful()
 
 function init(platform, arch) {
   if (flag) {

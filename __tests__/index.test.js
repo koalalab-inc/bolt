@@ -23,4 +23,12 @@ describe('index', () => {
 
     expect(run).not.toHaveBeenCalled()
   })
+
+  it('should return a array', async () => {
+    const { getTrustedGithubAccounts } = require('../src/input')
+
+    const accounts = getTrustedGithubAccounts()
+
+    expect(accounts).toBeInstanceOf(Array)
+  })
 })
