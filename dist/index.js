@@ -26567,14 +26567,15 @@ async function generateSummary() {
 
   const githubAccounts = githubAccountCalls.reduce((accounts, call) => {
     const path = call.request_path
+    const method = call.request_method
     const name = call.github_account_name
     const trusted_flag = call.trusted_github_account_flag
     accounts[name] = accounts[name] || {}
     accounts[name]['name'] = name
     accounts[name]['trusted'] = trusted_flag
     const paths = accounts[name]['paths'] || []
-    if (!paths.includes(path)) {
-      accounts[name]['paths'] = [...paths, path]
+    if (!paths.any(p => p.path === path)) {
+      accounts[name]['paths'] = [...paths, { path, method }]
     }
     return accounts
   }, [])
@@ -26736,7 +26737,7 @@ ${configTableString}
     ${account.name}
   </summary>
   <ul>
-    ${account.paths.map(path => `<li>${path}</li>`).join('')}
+    ${account.paths.map(({ method, path }) => `<li><b>[${method}]</b> ${path}</li>`).join('')}
   </ul>
 </details>
         `)
