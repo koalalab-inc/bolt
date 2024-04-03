@@ -25993,6 +25993,10 @@ const flag = isPost === 'true'
 const boltFailed = core.getState('boltFailed')
 const failedFlag = boltFailed === 'true'
 
+const { getGraceful } = __nccwpck_require__(6)
+
+const graceful = getGraceful()
+
 function init(platform, arch) {
   if (flag) {
     if (failedFlag) {
@@ -26009,9 +26013,19 @@ function init(platform, arch) {
     // 'win32' | 'darwin' | 'linux' | 'freebsd' | 'openbsd' | 'android' | 'cygwin' | 'sunos'
     if (['linux'].indexOf(platform) === -1) {
       core.saveState('boltFailed', 'true')
-      core.setFailed(
-        `Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}`
-      )
+      if (graceful) {
+        core.error(
+          `
+❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}.
+⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.
+🛠️ To change this behavious, set graceful flag to false. It is true by default
+          `
+        )
+      } else {
+        core.setFailed(
+          `Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}`
+        )
+      }
       return
     }
     // Possible Archs
@@ -26019,9 +26033,19 @@ function init(platform, arch) {
     const allowedArch = ['x64', 'arm64', 'arm']
     if (allowedArch.indexOf(arch) === -1) {
       core.saveState('boltFailed', 'true')
-      core.setFailed(
-        `Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}`
-      )
+      if (graceful) {
+        core.error(
+          `
+❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}.
+⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.
+🛠️ To change this behavious, set graceful flag to false. It is true by default
+          `
+        )
+      } else {
+        core.setFailed(
+          `Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}`
+        )
+      }
       return
     }
 
@@ -26040,6 +26064,166 @@ module.exports = {
 
 /***/ }),
 
+/***/ 6:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const core = __nccwpck_require__(2186)
+const YAML = __nccwpck_require__(4083)
+
+function getGraceful() {
+  const gracefulInput = `${core.getInput('graceful')}`.toLowerCase()
+  if (gracefulInput === 'true') {
+    return true
+  }
+  if (gracefulInput === 'false') {
+    return false
+  }
+  core.warning(
+    `⚠️ Invalid graceful flag value: ${gracefulInput}. Defaulting to true`
+  )
+  return true
+}
+
+function getMode() {
+  const modeInput = `${core.getInput('mode')}`.toLowerCase()
+  if (modeInput === 'audit') {
+    return 'audit'
+  }
+  if (modeInput === 'active') {
+    return 'active'
+  }
+  core.warning(`⚠️ Invalid mode value: ${modeInput}. Defaulting to audit`)
+  return 'audit'
+}
+
+function getAllowHTTP() {
+  const allowHTTPInput = `${core.getInput('allow_http')}`.toLowerCase()
+  if (allowHTTPInput === 'true') {
+    return true
+  }
+  if (allowHTTPInput === 'false') {
+    return false
+  }
+  core.warning(
+    `⚠️ Invalid allow_http value: ${allowHTTPInput}. Defaulting to false`
+  )
+  return false
+}
+
+function getDefaultPolicy() {
+  const defaultPolicyInput = `${core.getInput('default_policy')}`.toLowerCase()
+  if (defaultPolicyInput === 'allow-all') {
+    return 'allow-all'
+  }
+  if (defaultPolicyInput === 'block-all') {
+    return 'block-all'
+  }
+  core.warning(
+    `⚠️ Invalid default_policy value: ${defaultPolicyInput}. Defaulting to block-all`
+  )
+  return 'block-all'
+}
+
+function getEgressRules() {
+  const egressRulesYAML = core.getInput('egress_rules')
+  try {
+    const egressRules = YAML.parse(egressRulesYAML)
+    egressRules.filter(rule => {
+      const ruleJSON = JSON.stringify(rule)
+      if (!rule.name || !rule.destination || !rule.action) {
+        core.warning(
+          `
+⚠️ Invalid egress rule: ${ruleJSON}.
+⏭️ Skipping this egress rule
+ℹ️ Every egress rule should have keys: ['name', 'destination', 'action']
+          `
+        )
+        return false
+      }
+      return true
+    })
+    egressRules.map(rule => {
+      const ruleJSON = JSON.stringify(rule)
+      let ruleAction = rule.action?.toLowerCase()
+      if (ruleAction !== 'allow' && ruleAction !== 'block') {
+        core.warning(
+          `
+⚠️ Invalid action: ${rule.action} in egress rule: ${ruleJSON}.
+⏭️ Skipping this egress rule
+ℹ️ Every egress rule should have action as 'allow' or 'block'
+          `
+        )
+        ruleAction = 'allow'
+      }
+      let ruleDestination = rule.destination?.toLowerCase()
+      if (
+        ruleDestination.startsWith('http://') ||
+        ruleDestination.startsWith('https://')
+      ) {
+        core.info(`ℹ️ Removing http(s):// from destination: ${ruleDestination}`)
+        ruleDestination = ruleDestination.replace(/^https?:\/\//, '')
+      }
+      if (ruleDestination.includes('/')) {
+        core.info(`ℹ️ Removing path from destination: ${ruleDestination}`)
+        ruleDestination = ruleDestination.split('/')[0]
+      }
+      return {
+        name: rule.name,
+        destination: ruleDestination,
+        action: ruleAction
+      }
+    })
+    return egressRules
+  } catch (error) {
+    core.error(
+      `
+⚠️ Invalid YAML in egress_rules input: ${error.message}
+⏭️ Skipping all the egress rules
+      `
+    )
+    return []
+  }
+}
+
+function getTrustedGithubAccounts() {
+  const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
+  try {
+    const trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
+    if (!Array.isArray(trustedGithubAccounts)) {
+      core.warning(
+        `
+⚠️ Invalid trusted_github_accounts value: ${trustedGithubAccounts}.
+ℹ️ trusted_github_accounts should be a list of github usernames
+ℹ️ Using enpty list as trusted_github_accounts
+        `
+      )
+      return []
+    }
+    return trustedGithubAccounts
+  } catch (error) {
+    core.error(
+      `
+❌ Invalid YAML in trusted_github_accounts input: ${error.message}
+ℹ️ trusted_github_accounts should be a list of github usernames
+ℹ️ Using enpty list as trusted_github_accounts
+      `
+    )
+    return []
+  }
+}
+
+module.exports = {
+  getGraceful,
+  getMode,
+  getAllowHTTP,
+  getDefaultPolicy,
+  getEgressRules,
+  getTrustedGithubAccounts
+}
+
+
+/***/ }),
+
 /***/ 1713:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -26050,6 +26234,19 @@ const { boltService } = __nccwpck_require__(5147)
 const { releaseVersion } = __nccwpck_require__(9554)
 const YAML = __nccwpck_require__(4083)
 const fs = __nccwpck_require__(7147)
+const {
+  getMode,
+  getAllowHTTP,
+  getDefaultPolicy,
+  getEgressRules,
+  getTrustedGithubAccounts 
+} = __nccwpck_require__(6)
+
+const mode = getMode()
+const allowHTTP = getAllowHTTP()
+const defaultPolicy = getDefaultPolicy()
+const egressRules = getEgressRules()
+const trustedGithubAccounts = getTrustedGithubAccounts()
 
 let startTime = Date.now()
 
@@ -26132,16 +26329,8 @@ async function run() {
 
     core.startGroup('setup-bolt')
     core.info('Reading inputs...')
-    const mode = core.getInput('mode')
-    const allowHTTP = core.getInput('allow_http')
-    const defaultPolicy = core.getInput('default_policy')
-    const egressRulesYAML = core.getInput('egress_rules')
-    const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
-    const trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
     const trustedGithubAccountsString = [repoOwner, ...trustedGithubAccounts].join(',')
-
-    // Verify that egress_rules_yaml is valid YAML
-    YAML.parse(egressRulesYAML)
+    const egressRulesYAML = YAML.stringify(egressRules)
     core.info('Reading inputs... done')
 
     core.info('Create bolt output file...')
@@ -26278,6 +26467,19 @@ const core = __nccwpck_require__(2186)
 const { exec } = __nccwpck_require__(1514)
 const fs = __nccwpck_require__(7147)
 const YAML = __nccwpck_require__(4083)
+const {
+  getMode,
+  getAllowHTTP,
+  getDefaultPolicy,
+  getEgressRules,
+  getTrustedGithubAccounts
+} = __nccwpck_require__(6)
+
+const mode = getMode()
+const allowHTTP = getAllowHTTP()
+const defaultPolicy = getDefaultPolicy()
+const egressRules = getEgressRules()
+const trustedGithubAccounts = getTrustedGithubAccounts()
 
 async function generateTestResults(filePath) {
   try {
@@ -26308,7 +26510,10 @@ async function generateTestResults(filePath) {
 function actionString(action) {
   switch (action) {
     case 'block':
-      return 'Unknown Destination'
+      if (mode === 'active') {
+        return '❌ Blocked'
+      }
+      return '❗❗ Will be blocked in Active mode'
     case 'allow':
       return '✅'
     default:
@@ -26338,11 +26543,7 @@ async function generateSummary() {
   const outputFile = core.getState('outputFile')
   const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
-  const mode = core.getInput('mode')
-  const allowHTTP = core.getInput('allow_http')
-  const defaultPolicy = core.getInput('default_policy')
-  const egressRulesYAML = core.getInput('egress_rules')
-  const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
+  const egressRulesYAML = YAML.stringify(egressRules)
 
   if (!outputFile || !boltUser || !homeDir) {
     core.info(`Invalid Bold run. Missing required state variables`)
@@ -26355,16 +26556,6 @@ async function generateSummary() {
 
   await exec(`sudo cp ${homeDir}/${outputFile} ${outputFile}`)
 
-  // Verify that egress_rules_yaml is valid YAML
-  let egressRules
-  let trustedGithubAccounts
-  try {
-    egressRules = YAML.parse(egressRulesYAML)
-    trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
-  } catch (error) {
-    core.info(`Invalid YAML: ${error.message}`)
-  }
-
   const results = await generateTestResults(outputFile)
 
   const uniqueResults = getUniqueBy(results, ['destination', 'scheme'])
@@ -26376,14 +26567,15 @@ async function generateSummary() {
 
   const githubAccounts = githubAccountCalls.reduce((accounts, call) => {
     const path = call.request_path
+    const method = call.request_method
     const name = call.github_account_name
     const trusted_flag = call.trusted_github_account_flag
     accounts[name] = accounts[name] || {}
     accounts[name]['name'] = name
     accounts[name]['trusted'] = trusted_flag
     const paths = accounts[name]['paths'] || []
-    if (!paths.includes(path)) {
-      accounts[name]['paths'] = [...paths, path]
+    if (!paths.some(p => p.path === path)) {
+      accounts[name]['paths'] = [...paths, { path, method }]
     }
     return accounts
   }, [])
@@ -26402,7 +26594,7 @@ async function generateSummary() {
 
   const configTable = [
     ['Mode', mode],
-    ['Allow HTTP', allowHTTP],
+    ['Allow HTTP', `${allowHTTP}`],
     ['Default Policy', defaultPolicy]
   ]
 
@@ -26545,18 +26737,25 @@ ${configTableString}
     ${account.name}
   </summary>
   <ul>
-    ${account.paths.map(path => `<li>${path}</li>`).join('')}
+    ${account.paths.map(({ method, path }) => `<li><b>[${method}]</b> ${path}</li>`).join('')}
   </ul>
 </details>
         `)
     }
   }
 
-  summary = summary
-    .addHeading('Egress Traffic', 3)
-    .addQuote(
-      'NOTE: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
+  summary = summary.addHeading('Egress Traffic', 3)
+
+  if (mode === 'active') {
+    summary = summary.addQuote(
+      'NOTE: Running in Active mode. All unknown/unverified destinations will be blocked.'
     )
+  }
+  summary = summary.addQuote(
+    'NOTE: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
+  )
+
+  summary = summary
     .addRaw(
       `
 <details open>

@@ -278,6 +278,7 @@ class Interceptor:
         destination = sni if sni is not None else host
         scheme = flow.request.scheme
         request_path = flow.request.path
+        request_method = flow.request.method
 
         if (not allow_http) and scheme == "http":
             event = {
@@ -328,7 +329,7 @@ class Interceptor:
             normalised_request_path = "/" + normalised_request_path
 
         trusted_github_account_flag = None
-        if destination in ["github.com", "api.github.com"]:
+        if destination == "api.github.com":
             if normalised_request_path.startswith(
                 "/orgs/"
             ) or normalised_request_path.startswith("/repos/"):
@@ -342,6 +343,14 @@ class Interceptor:
                         break
                 if trusted_github_account_flag is None:
                     trusted_github_account_flag = False
+
+        if destination == "github.com":
+            for trusted_github_account in self.trusted_github_accounts:
+                if normalised_request_path.startswith(f"/{trusted_github_account}/"):
+                    trusted_github_account_flag = True
+                    break
+            if trusted_github_account_flag is None:
+                trusted_github_account_flag = False
 
         if applied_rule is not None:
             default_rules_applied = applied_rule.get("default", False)
@@ -372,6 +381,7 @@ class Interceptor:
             event["trusted_github_account_flag"] = trusted_github_account_flag
             event["github_account_name"] = github_account_name
             event["request_path"] = request_path
+            event["request_method"] = request_method
 
         self.queue.put(event)
 

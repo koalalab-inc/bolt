@@ -12,6 +12,10 @@ const flag = isPost === 'true'
 const boltFailed = core.getState('boltFailed')
 const failedFlag = boltFailed === 'true'
 
+const { getGraceful } = require('./input')
+
+const graceful = getGraceful()
+
 function init(platform, arch) {
   if (flag) {
     if (failedFlag) {
@@ -28,9 +32,19 @@ function init(platform, arch) {
     // 'win32' | 'darwin' | 'linux' | 'freebsd' | 'openbsd' | 'android' | 'cygwin' | 'sunos'
     if (['linux'].indexOf(platform) === -1) {
       core.saveState('boltFailed', 'true')
-      core.setFailed(
-        `Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}`
-      )
+      if (graceful) {
+        core.error(
+          `
+❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}.
+⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.
+🛠️ To change this behavious, set graceful flag to false. It is true by default
+          `
+        )
+      } else {
+        core.setFailed(
+          `Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}`
+        )
+      }
       return
     }
     // Possible Archs
@@ -38,9 +52,19 @@ function init(platform, arch) {
     const allowedArch = ['x64', 'arm64', 'arm']
     if (allowedArch.indexOf(arch) === -1) {
       core.saveState('boltFailed', 'true')
-      core.setFailed(
-        `Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}`
-      )
+      if (graceful) {
+        core.error(
+          `
+❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}.
+⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.
+🛠️ To change this behavious, set graceful flag to false. It is true by default
+          `
+        )
+      } else {
+        core.setFailed(
+          `Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}`
+        )
+      }
       return
     }
 

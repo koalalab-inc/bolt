@@ -23,4 +23,20 @@ describe('index', () => {
 
     expect(run).not.toHaveBeenCalled()
   })
+
+  it('should return an array', async () => {
+    const { getTrustedGithubAccounts } = require('../src/input')
+
+    const accounts = getTrustedGithubAccounts()
+
+    expect(accounts).toBeInstanceOf(Array)
+  })
+
+  it('should return a boolean', async () => {
+    const { getAllowHTTP } = require('../src/input')
+
+    const flag = getAllowHTTP()
+
+    expect(typeof flag).toBe('boolean')
+  })
 })

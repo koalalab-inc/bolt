@@ -2,6 +2,19 @@ const core = require('@actions/core')
 const { exec } = require('@actions/exec')
 const fs = require('fs')
 const YAML = require('yaml')
+const {
+  getMode,
+  getAllowHTTP,
+  getDefaultPolicy,
+  getEgressRules,
+  getTrustedGithubAccounts
+} = require('./input')
+
+const mode = getMode()
+const allowHTTP = getAllowHTTP()
+const defaultPolicy = getDefaultPolicy()
+const egressRules = getEgressRules()
+const trustedGithubAccounts = getTrustedGithubAccounts()
 
 async function generateTestResults(filePath) {
   try {
@@ -32,7 +45,10 @@ async function generateTestResults(filePath) {
 function actionString(action) {
   switch (action) {
     case 'block':
-      return 'Unknown Destination'
+      if (mode === 'active') {
+        return '❌ Blocked'
+      }
+      return '❗❗ Will be blocked in Active mode'
     case 'allow':
       return '✅'
     default:
@@ -62,11 +78,7 @@ async function generateSummary() {
   const outputFile = core.getState('outputFile')
   const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
-  const mode = core.getInput('mode')
-  const allowHTTP = core.getInput('allow_http')
-  const defaultPolicy = core.getInput('default_policy')
-  const egressRulesYAML = core.getInput('egress_rules')
-  const trustedGithubAccountsYAML = core.getInput('trusted_github_accounts')
+  const egressRulesYAML = YAML.stringify(egressRules)
 
   if (!outputFile || !boltUser || !homeDir) {
     core.info(`Invalid Bold run. Missing required state variables`)
@@ -79,16 +91,6 @@ async function generateSummary() {
 
   await exec(`sudo cp ${homeDir}/${outputFile} ${outputFile}`)
 
-  // Verify that egress_rules_yaml is valid YAML
-  let egressRules
-  let trustedGithubAccounts
-  try {
-    egressRules = YAML.parse(egressRulesYAML)
-    trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
-  } catch (error) {
-    core.info(`Invalid YAML: ${error.message}`)
-  }
-
   const results = await generateTestResults(outputFile)
 
   const uniqueResults = getUniqueBy(results, ['destination', 'scheme'])
@@ -100,14 +102,15 @@ async function generateSummary() {
 
   const githubAccounts = githubAccountCalls.reduce((accounts, call) => {
     const path = call.request_path
+    const method = call.request_method
     const name = call.github_account_name
     const trusted_flag = call.trusted_github_account_flag
     accounts[name] = accounts[name] || {}
     accounts[name]['name'] = name
     accounts[name]['trusted'] = trusted_flag
     const paths = accounts[name]['paths'] || []
-    if (!paths.includes(path)) {
-      accounts[name]['paths'] = [...paths, path]
+    if (!paths.some(p => p.path === path)) {
+      accounts[name]['paths'] = [...paths, { path, method }]
     }
     return accounts
   }, [])
@@ -126,7 +129,7 @@ async function generateSummary() {
 
   const configTable = [
     ['Mode', mode],
-    ['Allow HTTP', allowHTTP],
+    ['Allow HTTP', `${allowHTTP}`],
     ['Default Policy', defaultPolicy]
   ]
 
@@ -269,18 +272,25 @@ ${configTableString}
     ${account.name}
   </summary>
   <ul>
-    ${account.paths.map(path => `<li>${path}</li>`).join('')}
+    ${account.paths.map(({ method, path }) => `<li><b>[${method}]</b> ${path}</li>`).join('')}
   </ul>
 </details>
         `)
     }
   }
 
-  summary = summary
-    .addHeading('Egress Traffic', 3)
-    .addQuote(
-      'NOTE: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
+  summary = summary.addHeading('Egress Traffic', 3)
+
+  if (mode === 'active') {
+    summary = summary.addQuote(
+      'NOTE: Running in Active mode. All unknown/unverified destinations will be blocked.'
     )
+  }
+  summary = summary.addQuote(
+    'NOTE: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.'
+  )
+
+  summary = summary
     .addRaw(
       `
 <details open>
