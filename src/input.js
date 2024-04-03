@@ -124,6 +124,7 @@ function trustedGithubAccountsInput() {
       core.warning(`ℹ️ Using enpty list as trusted_github_accounts`)
       return []
     }
+    return trustedGithubAccounts
   } catch (error) {
     core.error(
       `Invalid YAML in trusted_github_accounts input: ${error.message}`
