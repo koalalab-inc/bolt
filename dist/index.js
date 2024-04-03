@@ -26594,7 +26594,7 @@ module.exports = { generateSummary }
 /***/ 9554:
 /***/ ((module) => {
 
-const releaseVersion = 'v1.3.0'
+const releaseVersion = 'v1.3.1-rc'
 
 module.exports = {
   releaseVersion
