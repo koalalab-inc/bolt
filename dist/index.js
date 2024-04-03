@@ -26015,13 +26015,11 @@ function init(platform, arch) {
       core.saveState('boltFailed', 'true')
       if (graceful) {
         core.error(
-          `❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}.`
-        )
-        core.error(
-          `⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.`
-        )
-        core.error(
-          `🛠️ To change this behavious, set graceful flag to false. It is true by default`
+          `
+          ❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}.
+          ⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.
+          🛠️ To change this behavious, set graceful flag to false. It is true by default
+          `
         )
       } else {
         core.setFailed(
