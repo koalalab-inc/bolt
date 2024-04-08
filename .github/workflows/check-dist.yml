@@ -32,7 +32,7 @@ jobs:
         uses: koalalab-inc/bolt@94e2eb518ebc35c98abf2d0bc96baa86a2b15d7c # koalalab-inc/bolt@v1.3.0 | main
       - name: Checkout
         id: checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # actions/checkout@v4 | 1567,v4.1.1
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # actions/checkout@v4 | 1567,v4.1.2
 
       - name: Setup Node.js
         id: setup-node
