@@ -97,10 +97,14 @@ async function generateSummary() {
   core.info(`Created bolt auditd log artifact with id: ${id} (bytes: ${size}`)
 
   await exec(
-    `${homeDir}/auparse -format=json -i -out bolt/audit.json /var/log/audit/audit.log `
+    `${homeDir}/auparse -format=json -i -out audit.json /var/log/audit/audit.log `
   )
 
-  await artifactClient.uploadArtifact('bolt-audit-json', ['audit.json'], 'bolt')
+  await artifactClient.uploadArtifact(
+    'bolt-audit-json',
+    ['audit.json'],
+    process.cwd()
+  )
 
   if (!outputFile || !boltUser || !homeDir) {
     core.info(`Invalid Bold run. Missing required state variables`)
