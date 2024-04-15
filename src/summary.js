@@ -84,7 +84,7 @@ async function generateSummary() {
   // Upload auditd log file to artifacts
   const artifactClient = new DefaultArtifactClient()
   const artifactName = 'bolt-auditd-log'
-  const files = ['audit.log']
+  const files = ['/var/log/audit/audit.log']
 
   const { id, size } = await artifactClient.uploadArtifact(
     artifactName,
