@@ -1,3 +1,4 @@
+const process = require('process')
 const core = require('@actions/core')
 const { exec } = require('@actions/exec')
 const { wait } = require('./wait')
@@ -12,12 +13,6 @@ const {
   getEgressRules,
   getTrustedGithubAccounts 
 } = require('./input')
-
-const mode = getMode()
-const allowHTTP = getAllowHTTP()
-const defaultPolicy = getDefaultPolicy()
-const egressRules = getEgressRules()
-const trustedGithubAccounts = getTrustedGithubAccounts()
 
 let startTime = Date.now()
 
@@ -38,6 +33,14 @@ async function run() {
     startTime = Date.now()
     core.info(`Start time: ${startTime}`)
 
+    // Set Debug mode
+    const isDebugMode = process.env.DEBUG === 'true' ? 'true' : 'false';
+
+    // pid of bolt nodejs process
+    const pid = process.pid; 
+    // pid of parent process - github runner process. This will spin up all other action steps
+    const ppid = process.ppid; 
+
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
     core.saveState('boltUser', boltUser)
@@ -48,15 +51,46 @@ async function run() {
     const homeDir = `/home/${boltUser}`
     core.saveState('homeDir', homeDir)
 
+    // Run following script before running this action
+    // npm run render_ejs
+    // audit script will install auditd and set up audit rules
+    const { auditScript } = require('./generated/audit.sh')
+    fs.writeFileSync('audit.sh', auditScript())
+
+    const { auditRulesTemplate } = require('./audit_rules')
+
+    // createBoltUserScript will create a new user for running bolt
+    const { createBoltUserScript } = require('./generated/create-bolt-user.sh')
+    fs.writeFileSync('create-bolt-user.sh', createBoltUserScript())
+
+    // iptablesScript will set up iptables rules
+    const { iptablesScript } = require('./generated/iptables.sh')
+    fs.writeFileSync('iptables.sh', iptablesScript())
+
+    const mode = getMode()
+    const allowHTTP = getAllowHTTP()
+    const defaultPolicy = getDefaultPolicy()
+    const egressRules = getEgressRules()
+    const trustedGithubAccounts = getTrustedGithubAccounts()
+
+    const workingDir = process.env.GITHUB_WORKSPACE; // e.g. /home/runner/work/bolt
     const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
     const repoOwner = repoName.split('/')[0]; // e.g. koalalab-inc
+    
+    benchmark('setup')
 
+    core.startGroup('setup-auditd')
+    core.info('Setting up auditd...')
+    const auditRules = await auditRulesTemplate({ homeDir, workingDir })
+    fs.writeFileSync('audit.rules', auditRules)
+    await exec(`sudo bash audit.sh ${isDebugMode}`)
+    core.info('Setting up auditd... done')
+
+    benchmark('setup-auditd')
 
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
-    await exec(`sudo useradd ${boltUser}`)
-    await exec(`sudo mkdir -p /home/${boltUser}`)
-    await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}`)
+    await exec(`sudo bash ./scripts/create-bolt-user.sh ${boltUser} ${isDebugMode}`)
     core.info('Creating bolt user... done')
     core.endGroup('create-bolt-user')
 
@@ -199,21 +233,9 @@ async function run() {
     benchmark('trust-bolt-certificate')
 
     core.startGroup('setup-iptables-redirection')
-    await exec('sudo sysctl -w net.ipv4.ip_forward=1')
-    await exec('sudo sysctl -w net.ipv6.conf.all.forwarding=1')
-    await exec('sudo sysctl -w net.ipv4.conf.all.send_redirects=0')
-    await exec(
-      `sudo iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 80 -j REDIRECT --to-port 8080`
-    )
-    await exec(
-      `sudo iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 443 -j REDIRECT --to-port 8080`
-    )
-    await exec(
-      `sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 80 -j REDIRECT --to-port 8080`
-    )
-    await exec(
-      `sudo ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner ${boltUser} --dport 443 -j REDIRECT --to-port 8080`
-    )
+    
+    await exec('./iptables.sh')
+
     core.endGroup('setup-iptables-redirection')
 
     benchmark('setup-iptables-redirection')

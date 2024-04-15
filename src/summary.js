@@ -1,4 +1,5 @@
 const core = require('@actions/core')
+const { DefaultArtifactClient } = require('@actions/artifact')
 const { exec } = require('@actions/exec')
 const fs = require('fs')
 const YAML = require('yaml')
@@ -79,6 +80,18 @@ async function generateSummary() {
   const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
   const egressRulesYAML = YAML.stringify(egressRules)
+
+  // Upload auditd log file to artifacts
+  const artifactClient = new DefaultArtifactClient()
+  const artifactName = 'bolt-auditd-log'
+  const files = ['audit.log']
+
+  const { id, size } = await artifactClient.uploadArtifact(
+    artifactName,
+    files,
+    '/var/log/audit'
+  )
+  core.info(`Created bolt auditd log artifact with id: ${id} (bytes: ${size}`)
 
   if (!outputFile || !boltUser || !homeDir) {
     core.info(`Invalid Bold run. Missing required state variables`)

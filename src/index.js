@@ -4,6 +4,7 @@
 const { run } = require('./main')
 const { generateSummary } = require('./summary')
 const core = require('@actions/core')
+const github = require('@actions/github')
 const os = require('os')
 const { releaseVersion } = require('./version')
 
@@ -27,6 +28,19 @@ function init(platform, arch) {
   } else {
     if (!isPost) {
       core.saveState('isPost', 'true')
+    }
+
+    const runnerName = process.env.RUNNER_NAME
+    core.info(`Runner Name: ${runnerName}`)
+
+    if (runnerName && !runnerName.startsWith('GitHub Actions')) {
+      core.saveState('boltFailed', 'true')
+      core.error(
+        `
+❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on self-hosted runners.
+⏭️ Bolt will exit gracefully. Your workflow will continue to run. This workflow run won't be monitored by Bolt.
+        `
+      )
     }
 
     // 'win32' | 'darwin' | 'linux' | 'freebsd' | 'openbsd' | 'android' | 'cygwin' | 'sunos'
