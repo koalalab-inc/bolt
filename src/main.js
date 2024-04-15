@@ -54,17 +54,17 @@ async function run() {
     // Run following script before running this action
     // npm run render_ejs
     // audit script will install auditd and set up audit rules
-    const { auditScript } = require('./generated/audit.sh')
+    const { auditScript } = require('./generated/audit-sh')
     fs.writeFileSync('audit.sh', auditScript())
 
     const { auditRulesTemplate } = require('./audit_rules')
 
     // createBoltUserScript will create a new user for running bolt
-    const { createBoltUserScript } = require('./generated/create-bolt-user.sh')
+    const { createBoltUserScript } = require('./generated/create-bolt-user-sh')
     fs.writeFileSync('create-bolt-user.sh', createBoltUserScript())
 
     // iptablesScript will set up iptables rules
-    const { iptablesScript } = require('./generated/iptables.sh')
+    const { iptablesScript } = require('./generated/iptables-sh')
     fs.writeFileSync('iptables.sh', iptablesScript())
 
     const mode = getMode()

@@ -10,7 +10,7 @@ const auditShData = {
 }
 
 fs.writeFileSync(
-  'src/generated/audit.sh.js',
+  'src/generated/audit-sh.js',
   ejs.render(wrapperTemplate, auditShData)
 )
 
@@ -21,7 +21,7 @@ const createBoltUserData = {
 }
 
 fs.writeFileSync(
-  'src/generated/create-bolt-user.sh.js',
+  'src/generated/create-bolt-user-sh.js',
   ejs.render(wrapperTemplate, createBoltUserData)
 )
 
@@ -32,6 +32,6 @@ const iptablesData = {
 }
 
 fs.writeFileSync(
-  'src/generated/iptables.sh.js',
+  'src/generated/iptables-sh.js',
   ejs.render(wrapperTemplate, iptablesData)
 )
