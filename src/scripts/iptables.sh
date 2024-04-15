@@ -2,7 +2,7 @@
 
 debug=$2
 
-if [[ $debug == "true" ]]; then
+if [[ "$debug" == "true" ]]; then
     set -x
 fi
 
