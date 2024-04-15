@@ -33,11 +33,13 @@ jobs:
       - name: Fetch MITM-Proxy
         run: |
           mkdir -p mitmproxy
+          wget https://github.com/koalalab-inc/go-libaudit/releases/download/v2.5.0/auparse-2.5.0-linux-amd64 --quiet
           wget https://downloads.mitmproxy.org/10.2.2/mitmproxy-10.2.2-${{ env.os }}-${{ env.arch }}.tar.gz --quiet
           tar -xzf mitmproxy-10.2.2-${{ env.os }}-${{ env.arch }}.tar.gz -C mitmproxy
           mkdir -p bolt
           cp mitmproxy/mitmdump bolt/mitmdump
           cp src/intercept.py bolt/intercept.py
+          cp auparse-2.5.0-linux-amd64 bolt/auparse
           tar -czf bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz bolt
           rm -rf mitmproxy bolt
           rm mitmproxy-10.2.2-linux-x86_64.tar.gz

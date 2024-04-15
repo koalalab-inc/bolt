@@ -79,6 +79,9 @@ async function generateSummary() {
   const outputFile = core.getState('outputFile')
   const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
+  const boltPID = core.getState('boltPID')
+  const githubRunnerPID = core.getState('githubRunnerPID')
+
   const egressRulesYAML = YAML.stringify(egressRules)
 
   // Upload auditd log file to artifacts
@@ -92,6 +95,13 @@ async function generateSummary() {
     '/var/log/audit'
   )
   core.info(`Created bolt auditd log artifact with id: ${id} (bytes: ${size}`)
+
+  await exec(`chmod +x bolt/auparse`)
+  await exec(
+    `./bolt/auparse -format=json -i -out bolt/audit.json /var/log/audit/audit.log `
+  )
+
+  await artifactClient.uploadArtifact('bolt-audit-json', ['audit.json'], 'bolt')
 
   if (!outputFile || !boltUser || !homeDir) {
     core.info(`Invalid Bold run. Missing required state variables`)

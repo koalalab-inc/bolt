@@ -37,9 +37,12 @@ async function run() {
     const isDebugMode = process.env.DEBUG === 'true' ? 'true' : 'false';
 
     // pid of bolt nodejs process
-    const pid = process.pid; 
+    const boltPID = process.pid; 
+    core.saveState('boltPID', boltPID)
+
     // pid of parent process - github runner process. This will spin up all other action steps
-    const ppid = process.ppid; 
+    const githubRunnerPID = process.ppid;
+    core.saveState('githubRunnerPID', githubRunnerPID)
 
     // Changing boltUser will require changes in bolt.service and intercept.py
     const boltUser = 'bolt'
