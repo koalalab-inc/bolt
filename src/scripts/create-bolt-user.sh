@@ -7,7 +7,7 @@ if [[ $debug == "true" ]]; then
 fi
 
 username=$1
-useradd $username
+useradd "$username"
 
-mkdir /home/$username
-chown $username:$username /home/$username
+mkdir /home/"$username"
+chown "$username":$username /home/"$username"
