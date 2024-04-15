@@ -76,11 +76,11 @@ function resultToRow(result) {
 }
 
 async function generateSummary() {
+  const workingDir = process.env.GITHUB_WORKSPACE
   const outputFile = core.getState('outputFile')
   const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
   const boltPID = core.getState('boltPID')
-  const boltCWD = core.getState('boltCWD')
   const githubRunnerPID = core.getState('githubRunnerPID')
 
   const egressRulesYAML = YAML.stringify(egressRules)
@@ -97,9 +97,8 @@ async function generateSummary() {
   )
   core.info(`Created bolt auditd log artifact with id: ${id} (bytes: ${size}`)
 
-  await exec(`chmod +x ${boltCWD}/bolt/auparse`)
   await exec(
-    `${boltCWD}/bolt/auparse -format=json -i -out bolt/audit.json /var/log/audit/audit.log `
+    `${workingDir}/auparse -format=json -i -out bolt/audit.json /var/log/audit/audit.log `
   )
 
   await artifactClient.uploadArtifact('bolt-audit-json', ['audit.json'], 'bolt')

@@ -77,6 +77,7 @@ async function run() {
     const trustedGithubAccounts = getTrustedGithubAccounts()
 
     const workingDir = process.env.GITHUB_WORKSPACE; // e.g. /home/runner/work/bolt
+    core.info(`Working directory: ${workingDir}`)
     const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
     const repoOwner = repoName.split('/')[0]; // e.g. koalalab-inc
     
@@ -131,6 +132,8 @@ async function run() {
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
     await exec(`sudo cp bolt/intercept.py /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
+    await exec(`cp bolt/auparse ${workingDir}/auparse`)
+    await exec(`chmod +x ${workingDir}/auparse`)
     const cwd = process.cwd()
     core.info(`Current working directory: ${cwd}`)
     core.saveState('boltCWD', cwd)
