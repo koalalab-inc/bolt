@@ -90,7 +90,7 @@ async function run() {
 
     core.startGroup('create-bolt-user')
     core.info('Creating bolt user...')
-    await exec(`sudo bash ./scripts/create-bolt-user.sh ${boltUser} ${isDebugMode}`)
+    await exec(`sudo bash create-bolt-user.sh ${boltUser} ${isDebugMode}`)
     core.info('Creating bolt user... done')
     core.endGroup('create-bolt-user')
 
@@ -234,7 +234,7 @@ async function run() {
 
     core.startGroup('setup-iptables-redirection')
     
-    await exec('./iptables.sh')
+    await exec(`sudo bash iptables.sh ${boltUser} ${isDebugMode}`)
 
     core.endGroup('setup-iptables-redirection')
 
