@@ -132,11 +132,10 @@ async function run() {
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
     await exec(`sudo cp bolt/intercept.py /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
-    await exec(`cp bolt/auparse ${workingDir}/auparse`)
-    await exec(`chmod +x ${workingDir}/auparse`)
-    const cwd = process.cwd()
-    core.info(`Current working directory: ${cwd}`)
-    core.saveState('boltCWD', cwd)
+    await exec(`cp bolt/auparse ${homeDir}/auparse`)
+    await exec(`chmod +x ${homeDir}/auparse`)
+
+    await exec(`ls -lah ${homeDir}/auparse`)
     core.endGroup('download-executable')
 
     benchmark('download-executable')
