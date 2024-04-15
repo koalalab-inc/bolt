@@ -131,6 +131,9 @@ async function run() {
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/mitmdump`)
     await exec(`sudo cp bolt/intercept.py /home/${boltUser}/`)
     await exec(`sudo chown ${boltUser}:${boltUser} /home/${boltUser}/intercept.py`)
+    const cwd = process.cwd()
+    core.info(`Current working directory: ${cwd}`)
+    core.saveState('boltCWD', cwd)
     core.endGroup('download-executable')
 
     benchmark('download-executable')
