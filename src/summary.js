@@ -97,7 +97,7 @@ async function generateSummary() {
   core.info(`Created bolt auditd log artifact with id: ${id} (bytes: ${size}`)
 
   await exec(
-    `${homeDir}/auparse -format=json -i -out audit.json /var/log/audit/audit.log `
+    `${homeDir}/auparse -format=json -i -out audit.json -in /var/log/audit/audit.log `
   )
 
   await artifactClient.uploadArtifact(
