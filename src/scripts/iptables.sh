@@ -3,7 +3,7 @@
 debug=$2
 
 if [[ "$debug" == "true" ]]; then
-    set -x
+	set -x
 fi
 
 boltUser=$1

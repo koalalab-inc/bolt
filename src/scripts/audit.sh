@@ -3,15 +3,15 @@
 debug=$1
 
 if [[ "$debug" == "true" ]]; then
-    set -x
-fi    
+	set -x
+fi
 
-if ! command -v auditd &> /dev/null; then
-    echo "Installing auditd..."
-    sudo apt-get install auditd -y  
-    echo "auditd installed successfully."
+if ! command -v auditd &>/dev/null; then
+	echo "Installing auditd..."
+	sudo apt-get install auditd -y
+	echo "auditd installed successfully."
 else
-    echo "auditd is already installed."
+	echo "auditd is already installed."
 fi
 
 # Script expects audit.rules file to be in the same directory
