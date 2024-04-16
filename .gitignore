@@ -103,3 +103,5 @@ __tests__/runner/*
 *.code-workspace
 
 bin/
+
+src/generated/

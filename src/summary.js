@@ -1,5 +1,7 @@
 const core = require('@actions/core')
+const { DefaultArtifactClient } = require('@actions/artifact')
 const { exec } = require('@actions/exec')
+const { getAuditSummary } = require('./audit_summary')
 const fs = require('fs')
 const YAML = require('yaml')
 const {
@@ -9,38 +11,17 @@ const {
   getEgressRules,
   getTrustedGithubAccounts
 } = require('./input')
+const {
+  generateTestResults,
+  getUniqueBy,
+  getRawCollapsible
+} = require('./summary_utils')
 
 const mode = getMode()
 const allowHTTP = getAllowHTTP()
 const defaultPolicy = getDefaultPolicy()
 const egressRules = getEgressRules()
 const trustedGithubAccounts = getTrustedGithubAccounts()
-
-async function generateTestResults(filePath) {
-  try {
-    // Read the entire file synchronously and split it into an array of lines
-    const fileContent = fs.readFileSync(filePath, 'utf-8')
-    const lines = fileContent.split('\n')
-
-    // Initialize an empty array to store JSON objects
-    const jsonArray = []
-
-    // Iterate through each line and parse it as JSON
-    for (const line of lines) {
-      try {
-        const jsonObject = JSON.parse(line)
-        jsonArray.push(jsonObject)
-      } catch (error) {
-        console.error(`Error parsing JSON on line: ${line}`)
-      }
-    }
-
-    return jsonArray
-  } catch (error) {
-    console.error(`Error reading file: ${error.message}`)
-    return []
-  }
-}
 
 function actionString(action) {
   switch (action) {
@@ -56,15 +37,6 @@ function actionString(action) {
   }
 }
 
-function getUniqueBy(arr, keys) {
-  const uniqueObj = arr.reduce((unique, o) => {
-    const key = keys.map(k => o[k]).join('|')
-    unique[key] = o
-    return unique
-  }, {})
-  return Object.values(uniqueObj)
-}
-
 function resultToRow(result) {
   return [
     result.destination,
@@ -75,10 +47,37 @@ function resultToRow(result) {
 }
 
 async function generateSummary() {
+  const isDebugMode = process.env.DEBUG === 'true' ? 'true' : 'false'
   const outputFile = core.getState('outputFile')
   const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
+
   const egressRulesYAML = YAML.stringify(egressRules)
+
+  const artifactClient = new DefaultArtifactClient()
+
+  if (isDebugMode === 'true') {
+    // Upload auditd log file to artifacts
+    const artifactName = 'bolt-auditd-log'
+    const files = ['/var/log/audit/audit.log']
+
+    const { id, size } = await artifactClient.uploadArtifact(
+      artifactName,
+      files,
+      '/var/log/audit'
+    )
+    core.info(`Created bolt auditd log artifact with id: ${id} (bytes: ${size}`)
+  }
+
+  await exec(
+    `${homeDir}/auparse -format=json -i -out audit.json -in /var/log/audit/audit.log `
+  )
+
+  await artifactClient.uploadArtifact(
+    'bolt-audit-json',
+    ['audit.json'],
+    process.cwd()
+  )
 
   if (!outputFile || !boltUser || !homeDir) {
     core.info(`Invalid Bold run. Missing required state variables`)
@@ -89,7 +88,7 @@ async function generateSummary() {
     return
   }
 
-  await exec(`sudo cp ${homeDir}/${outputFile} ${outputFile}`)
+  await exec(`cp ${homeDir}/${outputFile} ${outputFile}`)
 
   const results = await generateTestResults(outputFile)
 
@@ -214,6 +213,12 @@ async function generateSummary() {
     .stringify()
   core.summary.emptyBuffer()
 
+  const auditSummary = await getAuditSummary()
+
+  const auditSummaryRaw = auditSummary.zeroState
+    ? auditSummary.zeroState
+    : getRawCollapsible(auditSummary)
+
   let summary = core.summary
     .addSeparator()
     .addEOL()
@@ -278,6 +283,8 @@ ${configTableString}
         `)
     }
   }
+
+  summary = summary.addRaw(auditSummaryRaw)
 
   summary = summary.addHeading('Egress Traffic', 3)
 
