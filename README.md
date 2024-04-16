@@ -39,14 +39,16 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
     uses: koalalab-inc/bolt@v1
     with:
       mode: 'audit'
-      default_policy: 'block-all'
-      allow_http: 'false'
-      trusted_github_accounts: |
-        - 'akto-api-security'
       egress_rules: |
         - name: 'Allow GitHub subs'
           destination: '*.github.com'
           action: 'allow'
+      trusted_github_accounts: |
+        - 'akto-api-security'
+      disable_passwordless_sudo: 'false'
+      default_policy: 'block-all'
+      allow_http: 'false'
+      graceful: 'true'
 ```
 | Option | Description  |
 ---------------------------------|---------------------------------
