@@ -47,23 +47,27 @@ function resultToRow(result) {
 }
 
 async function generateSummary() {
+  const isDebugMode = process.env.DEBUG === 'true' ? 'true' : 'false'
   const outputFile = core.getState('outputFile')
   const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
 
   const egressRulesYAML = YAML.stringify(egressRules)
 
-  // Upload auditd log file to artifacts
   const artifactClient = new DefaultArtifactClient()
-  const artifactName = 'bolt-auditd-log'
-  const files = ['/var/log/audit/audit.log']
 
-  const { id, size } = await artifactClient.uploadArtifact(
-    artifactName,
-    files,
-    '/var/log/audit'
-  )
-  core.info(`Created bolt auditd log artifact with id: ${id} (bytes: ${size}`)
+  if (isDebugMode === 'true') {
+    // Upload auditd log file to artifacts
+    const artifactName = 'bolt-auditd-log'
+    const files = ['/var/log/audit/audit.log']
+
+    const { id, size } = await artifactClient.uploadArtifact(
+      artifactName,
+      files,
+      '/var/log/audit'
+    )
+    core.info(`Created bolt auditd log artifact with id: ${id} (bytes: ${size}`)
+  }
 
   await exec(
     `${homeDir}/auparse -format=json -i -out audit.json -in /var/log/audit/audit.log `
