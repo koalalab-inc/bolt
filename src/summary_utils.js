@@ -49,5 +49,6 @@ function getRawCollapsible({ body, header }) {
 
 module.exports = {
   generateTestResults,
-  getUniqueBy
+  getUniqueBy,
+  getRawCollapsible
 }
