@@ -253,7 +253,7 @@ async function run() {
     if (disablePasswordlessSudo) {
       core.startGroup('disable-passwordless-sudo')
       core.info('Disabling passwordless sudo...')
-      await exec(`sudo sed -i '/^runner/d' /etc/sudoers.d/runner`)
+      await exec(`sudo sed -i "/^runner/d" /etc/sudoers.d/runner`)
       core.info('Disabling passwordless sudo... done')
       core.endGroup('disable-passwordless-sudo')
     }
