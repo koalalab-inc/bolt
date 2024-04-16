@@ -1,6 +1,7 @@
 const core = require('@actions/core')
 const { DefaultArtifactClient } = require('@actions/artifact')
 const { exec } = require('@actions/exec')
+const { getAuditSummary } = require('./audit_summary')
 const fs = require('fs')
 const YAML = require('yaml')
 const {
@@ -10,38 +11,17 @@ const {
   getEgressRules,
   getTrustedGithubAccounts
 } = require('./input')
+const {
+  generateTestResults,
+  getUniqueBy,
+  getRawCollapsible
+} = require('./summary_utils')
 
 const mode = getMode()
 const allowHTTP = getAllowHTTP()
 const defaultPolicy = getDefaultPolicy()
 const egressRules = getEgressRules()
 const trustedGithubAccounts = getTrustedGithubAccounts()
-
-async function generateTestResults(filePath) {
-  try {
-    // Read the entire file synchronously and split it into an array of lines
-    const fileContent = fs.readFileSync(filePath, 'utf-8')
-    const lines = fileContent.split('\n')
-
-    // Initialize an empty array to store JSON objects
-    const jsonArray = []
-
-    // Iterate through each line and parse it as JSON
-    for (const line of lines) {
-      try {
-        const jsonObject = JSON.parse(line)
-        jsonArray.push(jsonObject)
-      } catch (error) {
-        console.error(`Error parsing JSON on line: ${line}`)
-      }
-    }
-
-    return jsonArray
-  } catch (error) {
-    console.error(`Error reading file: ${error.message}`)
-    return []
-  }
-}
 
 function actionString(action) {
   switch (action) {
@@ -57,15 +37,6 @@ function actionString(action) {
   }
 }
 
-function getUniqueBy(arr, keys) {
-  const uniqueObj = arr.reduce((unique, o) => {
-    const key = keys.map(k => o[k]).join('|')
-    unique[key] = o
-    return unique
-  }, {})
-  return Object.values(uniqueObj)
-}
-
 function resultToRow(result) {
   return [
     result.destination,
@@ -79,8 +50,6 @@ async function generateSummary() {
   const outputFile = core.getState('outputFile')
   const homeDir = core.getState('homeDir')
   const boltUser = core.getState('boltUser')
-  const boltPID = core.getState('boltPID')
-  const githubRunnerPID = core.getState('githubRunnerPID')
 
   const egressRulesYAML = YAML.stringify(egressRules)
 
@@ -240,6 +209,12 @@ async function generateSummary() {
     .stringify()
   core.summary.emptyBuffer()
 
+  const auditSummary = await getAuditSummary()
+
+  const auditSummaryRaw = auditSummary.zeroState
+    ? auditSummary.zeroState
+    : getRawCollapsible(auditSummary)
+
   let summary = core.summary
     .addSeparator()
     .addEOL()
@@ -304,6 +279,8 @@ ${configTableString}
         `)
     }
   }
+
+  summary = summary.addRaw(auditSummaryRaw)
 
   summary = summary.addHeading('Egress Traffic', 3)
 
