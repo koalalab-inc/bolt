@@ -53,10 +53,12 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
 | Option | Description  |
 ---------------------------------|---------------------------------
 | `mode` | Configure the mode of operation for the Bolt gateway. It can be `audit` or `active`. Default: `audit` |
-| `default_policy` | It can be either `block-all` or `allow-all`. Default: `block-all` |
-| `allow_http` | Whether to allow non-secure HTTP requests or not. Default: `false`
-| `trusted_github_accounts` | A list of trusted GitHub accounts.  Default: `[]`. The account in which workflow is running will always be trusted.
 | `egress_rules` | A list of custom egress rules to be applied. Default: `[]`.
+| `trusted_github_accounts` | A list of trusted GitHub accounts.  Default: `[]`. The account in which workflow is running will always be trusted.
+| `disable_passwordless_sudo` | Whether to disable passwordless sudo or not. Default: `false` |
+| `allow_http` | Whether to allow non-secure HTTP requests or not. Default: `false`
+| `default_policy` | It can be either `block-all` or `allow-all`. Default: `block-all` |
+| `graceful` | Whether to gracefully fail in case of unsupported platforms or not. Default: `true` |
 
 ## Custom Egress Policy
 You can define custom egress rules to control the egress traffic from your pipelines. Here is an example of how to define custom egress rules.
