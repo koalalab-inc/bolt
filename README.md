@@ -21,6 +21,10 @@ Complex CI/CD environments are under increasing threat due to increase in softwa
 
 GitHub hosted runners are a great way to run your CI/CD pipelines. However, they are not without their limitations. One of the most notable limitations is the lack of egress control. This means that any code running on a GitHub hosted runner can make requests to any external service. This can be a security risk, especially when running untrusted code.
 
+## How to use BOLT
+[![BOLT by KoalaLab](https://cdn.loom.com/sessions/thumbnails/bf53a52c9dd0421aa9db5beb682b5c34-with-play.gif)](https://www.loom.com/share/bf53a52c9dd0421aa9db5beb682b5c34 "BOLT by KoalaLab")
+
+
 ## Usage
 You can start using Bolt by adding the `koalalab-inc/bolt` action as the first step in the jobs you want to monitor. The action will install and start the Bolt service on the runner. Checkout the configuration options and defaults [here](#Configure).
 
