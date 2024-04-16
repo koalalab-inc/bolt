@@ -30,6 +30,10 @@ inputs:
     description: 'Egress rules'
     required: false
     default: '[]'
+  disable_passwordless_sudo:
+    description: 'Disable sudo without password'
+    required: false
+    default: false
 
 # Define your outputs here.
 outputs:

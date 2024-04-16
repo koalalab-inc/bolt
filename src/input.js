@@ -15,6 +15,21 @@ function getGraceful() {
   return true
 }
 
+function getDisablePasswordlessSudo() {
+  const disablePasswordlessSudoInput =
+    `${core.getInput('disable_passwordless_sudo')}`.toLowerCase()
+  if (disablePasswordlessSudoInput === 'true') {
+    return true
+  }
+  if (disablePasswordlessSudoInput === 'false') {
+    return false
+  }
+  core.warning(
+    `⚠️ Invalid disable_passwordless_sudo value: ${disablePasswordlessSudoInput}. Defaulting to false`
+  )
+  return false
+}
+
 function getMode() {
   const modeInput = `${core.getInput('mode')}`.toLowerCase()
   if (modeInput === 'audit') {
@@ -149,5 +164,6 @@ module.exports = {
   getAllowHTTP,
   getDefaultPolicy,
   getEgressRules,
-  getTrustedGithubAccounts
+  getTrustedGithubAccounts,
+  getDisablePasswordlessSudo
 }

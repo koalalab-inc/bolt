@@ -11,7 +11,8 @@ const {
   getAllowHTTP,
   getDefaultPolicy,
   getEgressRules,
-  getTrustedGithubAccounts 
+  getTrustedGithubAccounts,
+  getDisablePasswordlessSudo
 } = require('./input')
 
 let startTime = Date.now()
@@ -75,6 +76,7 @@ async function run() {
     const defaultPolicy = getDefaultPolicy()
     const egressRules = getEgressRules()
     const trustedGithubAccounts = getTrustedGithubAccounts()
+    const disablePasswordlessSudo = getDisablePasswordlessSudo()
 
     const workingDir = process.env.GITHUB_WORKSPACE; // e.g. /home/runner/work/bolt
     core.info(`Working directory: ${workingDir}`)
@@ -247,6 +249,14 @@ async function run() {
     core.endGroup('setup-iptables-redirection')
 
     benchmark('setup-iptables-redirection')
+    
+    if (disablePasswordlessSudo) {
+      core.startGroup('disable-passwordless-sudo')
+      core.info('Disabling passwordless sudo...')
+      await exec(`sudo sed -i '/^runner/d' /etc/sudoers.d/runner`)
+      core.info('Disabling passwordless sudo... done')
+      core.endGroup('disable-passwordless-sudo')
+    }
   } catch (error) {
     // Fail the workflow run if an error occurs
     core.saveState('boltFailed', 'true')

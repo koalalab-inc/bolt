@@ -5,6 +5,10 @@ const { generateTestResults, getUniqueBy } = require('./summary_utils')
 const boltPID = core.getState('boltPID')
 const githubRunnerPID = core.getState('githubRunnerPID')
 
+// For testing locally
+// const boltPID = "1479"
+// const githubRunnerPID = '1446'
+
 // function printNode(node, depth = 0) {
 //   if (depth === 0) {
 //     console.log(node.model.pid)
@@ -60,6 +64,10 @@ async function getSudoCallingActions() {
   const processExecAudit = audit.filter(
     a => a.process?.ppid && a.tags?.includes('bolt_monitored_process_exec')
   )
+  const actionsProcessExecAudit = processExecAudit.filter(
+    a => a.process?.ppid === githubRunnerPID
+  )
+
   const processMap = {}
   const processPIDLookup = {}
   for (const log of processExecAudit) {
@@ -111,6 +119,9 @@ async function getSudoCallingActions() {
           ?.split('/')
           .slice(5, 7)
           .join('/')
+      }
+      if (actionName.endsWith('.sh')) {
+        actionName = 'Shell Script'
       }
       return {
         actionName,

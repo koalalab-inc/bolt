@@ -88,7 +88,7 @@ async function generateSummary() {
     return
   }
 
-  await exec(`sudo cp ${homeDir}/${outputFile} ${outputFile}`)
+  await exec(`cp ${homeDir}/${outputFile} ${outputFile}`)
 
   const results = await generateTestResults(outputFile)
 
