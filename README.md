@@ -21,6 +21,11 @@ Complex CI/CD environments are under increasing threat due to increase in softwa
 
 GitHub hosted runners are a great way to run your CI/CD pipelines. However, they are not without their limitations. One of the most notable limitations is the lack of egress control. This means that any code running on a GitHub hosted runner can make requests to any external service. This can be a security risk, especially when running untrusted code.
 
+## How to use Bolt - Video Introduction
+
+https://github.com/koalalab-inc/bolt/assets/2908925/7bf51186-e673-4bed-9b56-ae15c7ab9154
+
+
 ## Usage
 You can start using Bolt by adding the `koalalab-inc/bolt` action as the first step in the jobs you want to monitor. The action will install and start the Bolt service on the runner. Checkout the configuration options and defaults [here](#Configure).
 
@@ -53,10 +58,12 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
 | Option | Description  |
 ---------------------------------|---------------------------------
 | `mode` | Configure the mode of operation for the Bolt gateway. It can be `audit` or `active`. Default: `audit` |
-| `default_policy` | It can be either `block-all` or `allow-all`. Default: `block-all` |
-| `allow_http` | Whether to allow non-secure HTTP requests or not. Default: `false`
-| `trusted_github_accounts` | A list of trusted GitHub accounts.  Default: `[]`. The account in which workflow is running will always be trusted.
 | `egress_rules` | A list of custom egress rules to be applied. Default: `[]`.
+| `trusted_github_accounts` | A list of trusted GitHub accounts.  Default: `[]`. The account in which workflow is running will always be trusted.
+| `disable_passwordless_sudo` | Whether to disable passwordless sudo or not. Default: `false` |
+| `allow_http` | Whether to allow non-secure HTTP requests or not. Default: `false`
+| `default_policy` | It can be either `block-all` or `allow-all`. Default: `block-all` |
+| `graceful` | Whether to gracefully fail in case of unsupported platforms or not. Default: `true` |
 
 ## Custom Egress Policy
 You can define custom egress rules to control the egress traffic from your pipelines. Here is an example of how to define custom egress rules.
