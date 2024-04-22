@@ -18,9 +18,9 @@ jobs:
       arch: x86_64
     steps:
       - name: Setup Bolt
-        uses: koalalab-inc/bolt@94e2eb518ebc35c98abf2d0bc96baa86a2b15d7c # koalalab-inc/bolt@v1.3.0 | main
+        uses: koalalab-inc/bolt@74cedb451d4847bfaedafdc196db4cadad70c803 # koalalab-inc/bolt@v1.3.0 | main
       - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # actions/checkout@v4 | 1567,v4.1.2
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # actions/checkout@v4 | 1567,v4.1.3
       - name: Get release version
         id: releaseVersion
         run: echo "releaseVersion=\"$(awk -F\' '/const releaseVersion/ { print $2 }' src/version.js)\"" >> "$GITHUB_ENV"
