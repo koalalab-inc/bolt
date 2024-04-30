@@ -56,9 +56,11 @@ async function generateSummary() {
 
   const artifactClient = new DefaultArtifactClient()
 
+  const jobName = process.env.GITHUB_JOB // e.g. build
+
   if (isDebugMode === 'true') {
     // Upload auditd log file to artifacts
-    const artifactName = 'bolt-auditd-log'
+    const artifactName = `${jobName}-bolt-auditd-log`
     const files = ['/var/log/audit/audit.log']
 
     const { id, size } = await artifactClient.uploadArtifact(
@@ -74,7 +76,7 @@ async function generateSummary() {
   )
 
   await artifactClient.uploadArtifact(
-    'bolt-audit-json',
+    `${jobName}-bolt-audit-json`,
     ['audit.json'],
     process.cwd()
   )
@@ -255,8 +257,11 @@ ${configTableString}
       .addCodeBlock(egressRulesYAML, 'yaml')
   } else {
     summary = summary
-      .addQuote(
-        'NOTE: You have not configured egress rules. Only deault policy will be applied. See [documentation](https://github.com/koalalab-inc/bolt/blob/main/README.md#custom-egress-policy) for more information.'
+      .addRaw(
+        `
+> [!NOTE]
+> You have not configured egress rules. Only deault policy will be applied. See [documentation](https://github.com/koalalab-inc/bolt/blob/main/README.md#custom-egress-policy) for more information.
+      `
       )
       .addEOL()
   }
