@@ -57,10 +57,12 @@ async function generateSummary() {
   const artifactClient = new DefaultArtifactClient()
 
   const jobName = process.env.GITHUB_JOB // e.g. build
+  const runId = process.env.GITHUB_RUN_ID // e.g. 1658821493
+  const runAttempt = process.env.GITHUB_RUN_ATTEMPT // e.g. 1
 
   if (isDebugMode === 'true') {
     // Upload auditd log file to artifacts
-    const artifactName = `${jobName}-bolt-auditd-log`
+    const artifactName = `${jobName}-${runId}-${runAttempt}-bolt-auditd-log`
     const files = ['/var/log/audit/audit.log']
 
     const { id, size } = await artifactClient.uploadArtifact(
@@ -76,7 +78,7 @@ async function generateSummary() {
   )
 
   await artifactClient.uploadArtifact(
-    `${jobName}-bolt-audit-json`,
+    `${jobName}-${runId}-${runAttempt}-bolt-audit-json`,
     ['audit.json'],
     process.cwd()
   )
