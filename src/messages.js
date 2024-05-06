@@ -6,9 +6,7 @@ const UNSUPPORTED_DOCKER_ENVIRONMENT_MESSAGE = `
 🛠️ To change this behavior, set graceful flag to false. It is true by default
 `
 
-const UNSUPPORTED_DOCKER_ENVIRONMENT_FAILURE_MESSAGE = `
-❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported in Docker environment.
-`
+const UNSUPPORTED_DOCKER_ENVIRONMENT_FAILURE_MESSAGE = `❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported in Docker environment.`
 
 const UNSUPPORTED_SELF_HOSTED_RUNNER_MESSAGE = `
 ❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on self-hosted runners.
@@ -16,9 +14,7 @@ const UNSUPPORTED_SELF_HOSTED_RUNNER_MESSAGE = `
 🛠️ To change this behavior, set graceful flag to false. It is true by default
 `
 
-const UNSUPPORTED_SELF_HOSTED_RUNNER_FAILURE_MESSAGE = `
-❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on self-hosted runners
-`
+const UNSUPPORTED_SELF_HOSTED_RUNNER_FAILURE_MESSAGE = `❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on self-hosted runners`
 
 const UNSUPPORTED_PLATFORM_MESSAGE = platform => `
 ❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}.
@@ -26,9 +22,8 @@ const UNSUPPORTED_PLATFORM_MESSAGE = platform => `
 🛠️ To change this behavior, set graceful flag to false. It is true by default
 `
 
-const UNSUPPORTED_PLATFORM_FAILURE_MESSAGE = platform => `
-❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}
-`
+const UNSUPPORTED_PLATFORM_FAILURE_MESSAGE = platform =>
+  `❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}`
 
 const UNSUPPORTED_ARCH_MESSAGE = arch => `
 ❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}.
@@ -36,9 +31,8 @@ const UNSUPPORTED_ARCH_MESSAGE = arch => `
 🛠️ To change this behavior, set graceful flag to false. It is true by default
 `
 
-const UNSUPPORTED_ARCH_FAILURE_MESSAGE = arch => `
-❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}
-`
+const UNSUPPORTED_ARCH_FAILURE_MESSAGE = arch =>
+  `❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}`
 
 module.exports = {
   UNSUPPORTED_DOCKER_ENVIRONMENT_MESSAGE,
