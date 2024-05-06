@@ -1,20 +1,23 @@
 {
-  "name": "javascript-action",
-  "description": "GitHub Actions JavaScript Template",
-  "version": "0.0.0",
-  "author": "",
+  "name": "bolt",
+  "description": "A GitHub Action to install and run Bolt",
+  "version": "1.4.2-rc",
+  "author": "Abhishek Anand",
   "private": true,
-  "homepage": "https://github.com/actions/javascript-action#readme",
+  "homepage": "https://github.com/koalalab-inc/bolt#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/javascript-action.git"
+    "url": "git+https://github.com/koalalab-inc/bolt.git"
   },
   "bugs": {
-    "url": "https://github.com/actions/javascript-action/issues"
+    "url": "https://github.com/koalalab-inc/bolt/issues"
   },
   "keywords": [
     "GitHub",
     "Actions",
+    "Egress Filtering",
+    "Github Action Security",
+    "Bolt",
     "JavaScript"
   ],
   "exports": {
@@ -74,9 +77,9 @@
     "yaml": "^2.4.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.24.4",
+    "@babel/core": "^7.24.5",
     "@babel/eslint-parser": "^7.24.1",
-    "@babel/preset-env": "^7.24.4",
+    "@babel/preset-env": "^7.24.5",
     "@vercel/ncc": "^0.38.1",
     "babel-preset-jest": "^29.6.3",
     "ejs": "^3.1.10",

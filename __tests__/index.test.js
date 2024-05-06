@@ -11,15 +11,21 @@ jest.mock('../src/main', () => ({
 
 describe('index', () => {
   it('calls run when imported on linux', async () => {
-    const { init } = require('../src/index')
-    init('linux', 'x64')
+    jest.mock('os', () => ({
+      platform: jest.fn().mockReturnValue('linux'),
+      arch: jest.fn().mockReturnValue('x64')
+    }))
+    require('../src/index')
 
     expect(run).toHaveBeenCalled()
   })
 
   it('fails when imported on platform other than linux', async () => {
-    const { init } = require('../src/index')
-    init('darwin', 'x64')
+    jest.mock('os', () => ({
+      platform: jest.fn().mockReturnValue('darwin'),
+      arch: jest.fn().mockReturnValue('x64')
+    }))
+    require('../src/index')
 
     expect(run).not.toHaveBeenCalled()
   })

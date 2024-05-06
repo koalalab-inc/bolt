@@ -1,4 +1,4 @@
-const releaseVersion = require('./version')
+const { releaseVersion } = require('./version')
 
 const UNSUPPORTED_DOCKER_ENVIRONMENT_MESSAGE = `
 ❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported in Docker environment.

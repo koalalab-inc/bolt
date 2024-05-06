@@ -4,22 +4,26 @@
 const { run } = require('./main')
 const { generateSummary } = require('./summary')
 const core = require('@actions/core')
-const github = require('@actions/github')
 const os = require('os')
-const { releaseVersion } = require('./version')
-const isDocker = require('is-docker')
 const messages = require('./messages')
+const { releaseVersion } = require('./version')
 const { getGraceful } = require('./input')
+const { isDocker } = require('./docker')
 
 const graceful = getGraceful()
+let boltFailedFlag = false
 
 function setFailedFlagInState() {
+  boltFailedFlag = true
   core.saveState('boltFailed', 'true')
 }
 
 function getFailedFlagFromState() {
   const boltFailed = core.getState('boltFailed')
-  return boltFailed === 'true'
+  if (boltFailed) {
+    return boltFailed === 'true'
+  }
+  return boltFailedFlag
 }
 
 function setPostFlagInState() {
@@ -35,9 +39,7 @@ function checkDocker() {
   if (isDocker()) {
     setFailedFlagInState()
     if (graceful) {
-      core.error(
-        messages.UNSUPPORTED_DOCKER_ENVIRONMENT_GRACEFUL_FAILURE_MESSAGE
-      )
+      core.error(messages.UNSUPPORTED_DOCKER_ENVIRONMENT_MESSAGE)
     } else {
       core.setFailed(messages.UNSUPPORTED_DOCKER_ENVIRONMENT_FAILURE_MESSAGE)
     }
@@ -75,7 +77,7 @@ function checkArch(arch) {
   // 'x64' | 'arm' | 'arm64' | 'ia32' | 'mips' | 'mipsel' | 'ppc' | 'ppc64' | 'riscv64' | 's390' | 's390x'
   const supportedArch = ['x64', 'arm64', 'arm']
   if (supportedArch.indexOf(arch) === -1) {
-    core.saveState('boltFailed', 'true')
+    setFailedFlagInState()
     if (graceful) {
       core.error(messages.UNSUPPORTED_ARCH_MESSAGE(arch))
     } else {
@@ -85,6 +87,10 @@ function checkArch(arch) {
 }
 
 function init(platform, arch) {
+  if (!platform || !arch) {
+    return
+  }
+
   if (getPostFlagFromState()) {
     if (getFailedFlagFromState()) {
       core.info('Skipping post action as bolt failed')
@@ -93,35 +99,31 @@ function init(platform, arch) {
 
     generateSummary()
     return
+  } else {
+    setPostFlagInState()
+
+    checkDocker()
+    if (getFailedFlagFromState()) {
+      return
+    }
+
+    checkSelfHostedRunner()
+    if (getFailedFlagFromState()) {
+      return
+    }
+
+    checkPlatform(platform)
+    if (getFailedFlagFromState()) {
+      return
+    }
+
+    checkArch(arch)
+    if (getFailedFlagFromState()) {
+      return
+    }
+
+    run()
   }
-
-  setPostFlagInState()
-
-  checkDocker()
-
-  if (getFailedFlagFromState()) {
-    return
-  }
-
-  checkSelfHostedRunner()
-
-  if (getFailedFlagFromState()) {
-    return
-  }
-
-  checkPlatform(platform)
-
-  if (getFailedFlagFromState()) {
-    return
-  }
-
-  checkArch(arch)
-
-  if (getFailedFlagFromState()) {
-    return
-  }
-
-  run()
 }
 
 const platform = os.platform()
