@@ -82,7 +82,7 @@ function getEgressRules() {
 ⚠️ Invalid egress rule: ${ruleJSON}.
 ⏭️ Skipping this egress rule
 ℹ️ Every egress rule should have keys: ['name', 'destination', 'action']
-          `
+`
         )
         return false
       }
@@ -93,11 +93,10 @@ function getEgressRules() {
       let ruleAction = rule.action?.toLowerCase()
       if (ruleAction !== 'allow' && ruleAction !== 'block') {
         core.warning(
-          `
-⚠️ Invalid action: ${rule.action} in egress rule: ${ruleJSON}.
+          `⚠️ Invalid action: ${rule.action} in egress rule: ${ruleJSON}.
 ⏭️ Skipping this egress rule
 ℹ️ Every egress rule should have action as 'allow' or 'block'
-          `
+`
         )
         ruleAction = 'allow'
       }
@@ -122,10 +121,9 @@ function getEgressRules() {
     return egressRules
   } catch (error) {
     core.error(
-      `
-⚠️ Invalid YAML in egress_rules input: ${error.message}
+      `⚠️ Invalid YAML in egress_rules input: ${error.message}
 ⏭️ Skipping all the egress rules
-      `
+`
     )
     return []
   }
@@ -137,22 +135,19 @@ function getTrustedGithubAccounts() {
     const trustedGithubAccounts = YAML.parse(trustedGithubAccountsYAML)
     if (!Array.isArray(trustedGithubAccounts)) {
       core.warning(
-        `
-⚠️ Invalid trusted_github_accounts value: ${trustedGithubAccounts}.
-ℹ️ trusted_github_accounts should be a list of github usernames
-ℹ️ Using enpty list as trusted_github_accounts
-        `
+        [
+          `⚠️ Invalid trusted_github_accounts value: ${trustedGithubAccounts}.``ℹ️ trusted_github_accounts should be a list of github usernames``ℹ️ Using empty list as trusted_github_accounts`
+        ].join('\n')
       )
       return []
     }
     return trustedGithubAccounts
   } catch (error) {
     core.error(
-      `
-❌ Invalid YAML in trusted_github_accounts input: ${error.message}
+      `❌ Invalid YAML in trusted_github_accounts input: ${error.message}
 ℹ️ trusted_github_accounts should be a list of github usernames
 ℹ️ Using enpty list as trusted_github_accounts
-      `
+`
     )
     return []
   }

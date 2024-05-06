@@ -30,7 +30,6 @@ function benchmark(featureName) {
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
-  console.log("YAHA AAYA")
   try {
     startTime = Date.now()
     core.info(`Start time: ${startTime}`)

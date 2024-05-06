@@ -2,8 +2,10 @@
  * Unit tests for the action's entrypoint, src/index.js
  */
 
+const { warn } = require('yaml/util')
 const { run } = require('../src/main')
 const { generateSummary } = require('../src/summary')
+const { warning } = require('@actions/core')
 
 // Mock the action's entrypoint
 jest.mock('../src/main', () => ({
@@ -41,6 +43,11 @@ describe('index', () => {
 
   it('should return an array', async () => {
     const { getTrustedGithubAccounts } = require('../src/input')
+
+    // jest.mock('@actions/core', () => ({
+    //   warning: (...args) => console.log(...args, '\n'),
+    //   error: (...args) => console.log(...args, '\n')
+    // }))
 
     const accounts = getTrustedGithubAccounts()
 

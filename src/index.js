@@ -6,7 +6,6 @@ const { generateSummary } = require('./summary')
 const core = require('@actions/core')
 const os = require('os')
 const messages = require('./messages')
-const { releaseVersion } = require('./version')
 const { getGraceful } = require('./input')
 const { isDocker } = require('./docker')
 
