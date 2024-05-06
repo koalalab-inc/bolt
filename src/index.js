@@ -4,81 +4,125 @@
 const { run } = require('./main')
 const { generateSummary } = require('./summary')
 const core = require('@actions/core')
-const github = require('@actions/github')
 const os = require('os')
-const { releaseVersion } = require('./version')
-
-const isPost = core.getState('isPost')
-const flag = isPost === 'true'
-const boltFailed = core.getState('boltFailed')
-const failedFlag = boltFailed === 'true'
-
+const messages = require('./messages')
 const { getGraceful } = require('./input')
+const { isDocker } = require('./docker')
 
 const graceful = getGraceful()
+let boltFailedFlag = false
+let isPostFlag = false
+
+function setFailedFlagInState() {
+  boltFailedFlag = true
+  core.saveState('boltFailed', 'true')
+}
+
+function getFailedFlagFromState() {
+  const boltFailed = core.getState('boltFailed')
+  if (boltFailed) {
+    return boltFailed === 'true'
+  }
+  return boltFailedFlag
+}
+
+function setPostFlagInState() {
+  isPostFlag = true
+  core.saveState('isPost', 'true')
+}
+
+function getPostFlagFromState() {
+  const isPost = core.getState('isPost')
+  if (isPost) {
+    return isPost === 'true'
+  }
+  return isPostFlag
+}
+
+function checkDocker() {
+  if (isDocker()) {
+    setFailedFlagInState()
+    if (graceful) {
+      core.error(messages.UNSUPPORTED_DOCKER_ENVIRONMENT_MESSAGE)
+    } else {
+      core.setFailed(messages.UNSUPPORTED_DOCKER_ENVIRONMENT_FAILURE_MESSAGE)
+    }
+  }
+}
+
+function checkSelfHostedRunner() {
+  const runnerName = process.env.RUNNER_NAME
+  if (runnerName && !runnerName.startsWith('GitHub Actions')) {
+    setFailedFlagInState()
+    if (graceful) {
+      core.error(messages.UNSUPPORTED_SELF_HOSTED_RUNNER_MESSAGE)
+    } else {
+      core.setFailed(messages.UNSUPPORTED_SELF_HOSTED_RUNNER_FAILURE_MESSAGE)
+    }
+  }
+}
+
+function checkPlatform(platform) {
+  // Possible Platforms
+  // 'win32' | 'darwin' | 'linux' | 'freebsd' | 'openbsd' | 'android' | 'cygwin' | 'sunos'
+  const supportedPlatforms = ['linux']
+  if (supportedPlatforms.indexOf(platform) === -1) {
+    setFailedFlagInState()
+    if (graceful) {
+      core.error(messages.UNSUPPORTED_PLATFORM_MESSAGE(platform))
+    } else {
+      core.setFailed(messages.UNSUPPORTED_PLATFORM_FAILURE_MESSAGE(platform))
+    }
+  }
+}
+
+function checkArch(arch) {
+  // Possible Archs
+  // 'x64' | 'arm' | 'arm64' | 'ia32' | 'mips' | 'mipsel' | 'ppc' | 'ppc64' | 'riscv64' | 's390' | 's390x'
+  const supportedArch = ['x64', 'arm64', 'arm']
+  if (supportedArch.indexOf(arch) === -1) {
+    setFailedFlagInState()
+    if (graceful) {
+      core.error(messages.UNSUPPORTED_ARCH_MESSAGE(arch))
+    } else {
+      core.setFailed(messages.UNSUPPORTED_ARCH_FAILURE_MESSAGE(arch))
+    }
+  }
+}
 
 function init(platform, arch) {
-  if (flag) {
-    if (failedFlag) {
+  if (!platform || !arch) {
+    return
+  }
+
+  if (getPostFlagFromState()) {
+    if (getFailedFlagFromState()) {
       core.info('Skipping post action as bolt failed')
       return
     }
-    // Post
+
     generateSummary()
+    return
   } else {
-    if (!isPost) {
-      core.saveState('isPost', 'true')
-    }
+    setPostFlagInState()
 
-    const runnerName = process.env.RUNNER_NAME
-    core.info(`Runner Name: ${runnerName}`)
-
-    if (runnerName && !runnerName.startsWith('GitHub Actions')) {
-      core.saveState('boltFailed', 'true')
-      core.error(
-        `
-❌ OSS version of Koalalab-inc/bolt@${releaseVersion} is not supported on self-hosted runners.
-⏭️ Bolt will exit gracefully. Your workflow will continue to run. This workflow run won't be monitored by Bolt.
-        `
-      )
-    }
-
-    // 'win32' | 'darwin' | 'linux' | 'freebsd' | 'openbsd' | 'android' | 'cygwin' | 'sunos'
-    if (['linux'].indexOf(platform) === -1) {
-      core.saveState('boltFailed', 'true')
-      if (graceful) {
-        core.error(
-          `
-❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}.
-⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.
-🛠️ To change this behavious, set graceful flag to false. It is true by default
-          `
-        )
-      } else {
-        core.setFailed(
-          `Koalalab-inc/bolt@${releaseVersion} is not supported on ${platform}`
-        )
-      }
+    checkDocker()
+    if (getFailedFlagFromState()) {
       return
     }
-    // Possible Archs
-    // 'x64' | 'arm' | 'arm64' | 'ia32' | 'mips' | 'mipsel' | 'ppc' | 'ppc64' | 'riscv64' | 's390' | 's390x'
-    const allowedArch = ['x64', 'arm64', 'arm']
-    if (allowedArch.indexOf(arch) === -1) {
-      core.saveState('boltFailed', 'true')
-      if (graceful) {
-        core.error(
-          `
-❌ Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}.
-⏭️ Skipping this step as Bolt is configured to fail gracefully on unsupported platforms.
-🛠️ To change this behavious, set graceful flag to false. It is true by default
-          `
-        )
-      } else {
-        core.setFailed(
-          `Koalalab-inc/bolt@${releaseVersion} is not supported on ${arch}`
-        )
-      }
+
+    checkSelfHostedRunner()
+    if (getFailedFlagFromState()) {
+      return
+    }
+
+    checkPlatform(platform)
+    if (getFailedFlagFromState()) {
+      return
+    }
+
+    checkArch(arch)
+    if (getFailedFlagFromState()) {
       return
     }
 

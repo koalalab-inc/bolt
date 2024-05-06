@@ -2,9 +2,6 @@ const core = require('@actions/core')
 
 const { generateTestResults, getUniqueBy } = require('./summary_utils')
 
-const boltPID = core.getState('boltPID')
-const githubRunnerPID = core.getState('githubRunnerPID')
-
 // For testing locally
 // const boltPID = "1479"
 // const githubRunnerPID = '1446'
@@ -28,6 +25,7 @@ function NewNode(pid) {
 }
 
 function createProcessTree(processTuples) {
+  const githubRunnerPID = core.getState('githubRunnerPID')
   const processMap = {}
 
   for (const [ppid, pid] of processTuples) {
@@ -59,6 +57,8 @@ function parentAction(node) {
 }
 
 async function getSudoCallingActions() {
+  const boltPID = core.getState('boltPID')
+  const githubRunnerPID = core.getState('githubRunnerPID')
   const audit = await generateTestResults('audit.json')
 
   const processExecAudit = audit.filter(
