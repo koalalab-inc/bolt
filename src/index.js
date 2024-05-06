@@ -12,6 +12,7 @@ const { isDocker } = require('./docker')
 
 const graceful = getGraceful()
 let boltFailedFlag = false
+let isPostFlag = false
 
 function setFailedFlagInState() {
   boltFailedFlag = true
@@ -27,12 +28,16 @@ function getFailedFlagFromState() {
 }
 
 function setPostFlagInState() {
+  isPostFlag = true
   core.saveState('isPost', 'true')
 }
 
 function getPostFlagFromState() {
   const isPost = core.getState('isPost')
-  return isPost === 'true'
+  if (isPost) {
+    return isPost === 'true'
+  }
+  return isPostFlag
 }
 
 function checkDocker() {

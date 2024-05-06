@@ -3,10 +3,15 @@
  */
 
 const { run } = require('../src/main')
+const { generateSummary } = require('../src/summary')
 
 // Mock the action's entrypoint
 jest.mock('../src/main', () => ({
   run: jest.fn()
+}))
+
+jest.mock('../src/summary', () => ({
+  generateSummary: jest.fn()
 }))
 
 describe('index', () => {
@@ -15,9 +20,13 @@ describe('index', () => {
       platform: jest.fn().mockReturnValue('linux'),
       arch: jest.fn().mockReturnValue('x64')
     }))
-    require('../src/index')
+    const { init } = require('../src/index')
 
     expect(run).toHaveBeenCalled()
+
+    init('linux', 'x64')
+
+    expect(generateSummary).toHaveBeenCalled()
   })
 
   it('fails when imported on platform other than linux', async () => {

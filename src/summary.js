@@ -47,6 +47,7 @@ function resultToRow(result) {
 }
 
 async function generateSummary() {
+  console.log('YAHA BHI AAYA')
   const isDebugMode = process.env.DEBUG === 'true' ? 'true' : 'false'
   const outputFile = core.getState('outputFile')
   const homeDir = core.getState('homeDir')
