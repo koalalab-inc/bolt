@@ -190,15 +190,15 @@ async function generateSummary() {
   const configTableString = core.summary.addTable(configTable).stringify()
   core.summary.emptyBuffer()
 
-  const trustedGithubAccountsHeaderString = core.summary
-    .addHeading('🔒 Trusted Github Accounts', 4)
-    .stringify()
-  core.summary.emptyBuffer()
+  // const trustedGithubAccountsHeaderString = core.summary
+  //   .addHeading('🔒 Trusted Github Accounts', 4)
+  //   .stringify()
+  // core.summary.emptyBuffer()
 
-  const trustedGithubAccountsTableString = core.summary
-    .addTable(trustedGithubAccountsData)
-    .stringify()
-  core.summary.emptyBuffer()
+  // const trustedGithubAccountsTableString = core.summary
+  //   .addTable(trustedGithubAccountsData)
+  //   .stringify()
+  // core.summary.emptyBuffer()
 
   const knownDestinationsHeaderString = core.summary
     .addHeading('✅ Known Destinations', 4)
@@ -241,20 +241,20 @@ ${configTableString}
     `
     )
 
-  if (trustedGithubAccounts.length > 0) {
-    summary = summary
-      .addRaw(
-        `
-<details open>
-  <summary>
-    ${trustedGithubAccountsHeaderString}
-  </summary>
-  ${trustedGithubAccountsTableString}
-</details>
-      `
-      )
-      .addQuote('NOTE: The account in which workflow runs is always trusted.')
-  }
+  //   if (trustedGithubAccounts.length > 0) {
+  //     summary = summary
+  //       .addRaw(
+  //         `
+  // <details open>
+  //   <summary>
+  //     ${trustedGithubAccountsHeaderString}
+  //   </summary>
+  //   ${trustedGithubAccountsTableString}
+  // </details>
+  //       `
+  //       )
+  //       .addQuote('NOTE: The account in which workflow runs is always trusted.')
+  //   }
 
   if (egressRules.length > 0) {
     summary = summary
@@ -271,28 +271,28 @@ ${configTableString}
       .addEOL()
   }
 
-  if (untrustedGithubAccounts.length > 0) {
-    summary = summary.addHeading(
-      '🚨 Requests to untrusted GitHub accounts found',
-      3
-    ).addRaw(`
-> [!CAUTION]
-> If you do not recognize these GitHub Accounts, you may want to investigate further. Add them to your trusted GitHub accounts if this is expected. See [Docs](https://github.com/koalalab-inc/bolt?tab=readme-ov-file#configure) for more information.
-      `)
+  //   if (untrustedGithubAccounts.length > 0) {
+  //     summary = summary.addHeading(
+  //       '🚨 Requests to untrusted GitHub accounts found',
+  //       3
+  //     ).addRaw(`
+  // > [!CAUTION]
+  // > If you do not recognize these GitHub Accounts, you may want to investigate further. Add them to your trusted GitHub accounts if this is expected. See [Docs](https://github.com/koalalab-inc/bolt?tab=readme-ov-file#configure) for more information.
+  //       `)
 
-    for (const account of untrustedGithubAccounts) {
-      summary = summary.addRaw(`
-<details open>
-  <summary>
-    ${account.name}
-  </summary>
-  <ul>
-    ${account.paths.map(({ method, path }) => `<li><b>[${method}]</b> ${path}</li>`).join('')}
-  </ul>
-</details>
-        `)
-    }
-  }
+  //     for (const account of untrustedGithubAccounts) {
+  //       summary = summary.addRaw(`
+  // <details open>
+  //   <summary>
+  //     ${account.name}
+  //   </summary>
+  //   <ul>
+  //     ${account.paths.map(({ method, path }) => `<li><b>[${method}]</b> ${path}</li>`).join('')}
+  //   </ul>
+  // </details>
+  //         `)
+  //     }
+  //   }
 
   summary = summary.addRaw(auditSummaryRaw)
 

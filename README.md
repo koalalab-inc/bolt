@@ -48,8 +48,6 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
         - name: 'Allow GitHub subs'
           destination: '*.github.com'
           action: 'allow'
-      trusted_github_accounts: |
-        - 'akto-api-security'
       disable_passwordless_sudo: 'false'
       default_policy: 'block-all'
       allow_http: 'false'
@@ -59,7 +57,6 @@ You can configuree the Bolt action using inputs. Here is an example of how to co
 ---------------------------------|---------------------------------
 | `mode` | Configure the mode of operation for the Bolt gateway. It can be `audit` or `active`. Default: `audit` |
 | `egress_rules` | A list of custom egress rules to be applied. Default: `[]`.
-| `trusted_github_accounts` | A list of trusted GitHub accounts.  Default: `[]`. The account in which workflow is running will always be trusted.
 | `disable_passwordless_sudo` | Whether to disable passwordless sudo or not. Default: `false` |
 | `allow_http` | Whether to allow non-secure HTTP requests or not. Default: `false`
 | `default_policy` | It can be either `block-all` or `allow-all`. Default: `block-all` |
@@ -115,15 +112,6 @@ Once the job is over, bolt will add a egress traffic report to the job summary. 
 
 </details>
     
-<details open>
-  <summary>
-    <h4>🔒 Trusted Github Accounts</h4>
-
-  </summary>
-  <table><tr><th>Github Account</th></tr><tr><td>akto-api-security</td></tr></table>
-
-</details>
-      <blockquote>NOTE: The account in which workflow runs is always trusted.</blockquote>
 <h3>📝 Egress rules</h3>
 <pre lang="yaml"><code>- destination: google.com
   action: block
@@ -131,20 +119,8 @@ Once the job is over, bolt will add a egress traffic report to the job summary. 
 - destination: ifconfig.me
   action: allow
   name: Allow ifconfig.me</code></pre>
-<h3>🚨 Requests to untrusted GitHub accounts found</h3>
 
-> [!CAUTION]
-> If you do not recognize these GitHub Accounts, you may want to investigate further. Add them to your trusted GitHub accounts if this is expected. See [Docs](https://github.com/koalalab-inc/bolt?tab=readme-ov-file#configure) for more information.
-      
-<details open>
-  <summary>
-    razorpay
-  </summary>
-  <ul>
-    <li>/orgs/razorpay/repos</li>
-  </ul>
-</details>
-        <h3>Egress Traffic</h3>
+<h3>Egress Traffic</h3>
 <blockquote>NOTE: Running in Audit mode. Unknown/unverified destinations will be blocked in Active mode.</blockquote>
 
 <details open>
@@ -168,3 +144,9 @@ Once the job is over, bolt will add a egress traffic report to the job summary. 
 <hr>
 
 This report was generated using this workflow file: [bolt-sample.yml](examples/bolt.yml)
+
+<hr>
+
+> [!NOTE]
+> 
+> We have removed SSL inspection features from Bolt. It had some compatibility issues with certain package managers. We will soon release a new version with improved SSL inspection capabilities.

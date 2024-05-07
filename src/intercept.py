@@ -212,13 +212,15 @@ class Interceptor:
 
         data.context.matched_rules = matched_rules
 
-        has_paths = len(matched_rules) > 0 and "paths" in matched_rules[0]
+        # Disabling path based rules for now as it requires SSL inspection
+        # has_paths = len(matched_rules) > 0 and "paths" in matched_rules[0]
 
-        if has_paths:
-            return
+        # if has_paths:
+        #     return
 
-        if destination in ["github.com", "api.github.com"]:
-            return
+        # Disabling SSL inspection for github.com and api.github.com
+        # if destination in ["github.com", "api.github.com"]:
+        # return
 
         applied_rule = matched_rules[0] if len(matched_rules) > 0 else None
         if applied_rule is not None:
@@ -263,7 +265,7 @@ class Interceptor:
         logging.info("tls_start_client")
         action = data.context.action
         if action == "block" and self.mode != "audit":
-            data.ssl_conn = SSL.Connection(SSL.Context(SSL.SSLv23_METHOD))
+            data.ssl_conn = SSL.Connection(SSL.Context(SSL.TLSv1_2_METHOD))
             data.conn.error = "TLS Handshake failed"
 
     # pylint: disable=too-many-branches,too-many-locals,too-many-statements
