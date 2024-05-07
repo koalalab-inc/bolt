@@ -144,3 +144,9 @@ Once the job is over, bolt will add a egress traffic report to the job summary. 
 <hr>
 
 This report was generated using this workflow file: [bolt-sample.yml](examples/bolt.yml)
+
+<hr>
+
+> [!NOTE]
+> 
+> We have removed SSL inspection features from Bolt. It had some compatibility issues with certain package managers. We will soon release a new version with improved SSL inspection capabilities.
