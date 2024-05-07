@@ -190,15 +190,15 @@ async function generateSummary() {
   const configTableString = core.summary.addTable(configTable).stringify()
   core.summary.emptyBuffer()
 
-  const trustedGithubAccountsHeaderString = core.summary
-    .addHeading('🔒 Trusted Github Accounts', 4)
-    .stringify()
-  core.summary.emptyBuffer()
+  // const trustedGithubAccountsHeaderString = core.summary
+  //   .addHeading('🔒 Trusted Github Accounts', 4)
+  //   .stringify()
+  // core.summary.emptyBuffer()
 
-  const trustedGithubAccountsTableString = core.summary
-    .addTable(trustedGithubAccountsData)
-    .stringify()
-  core.summary.emptyBuffer()
+  // const trustedGithubAccountsTableString = core.summary
+  //   .addTable(trustedGithubAccountsData)
+  //   .stringify()
+  // core.summary.emptyBuffer()
 
   const knownDestinationsHeaderString = core.summary
     .addHeading('✅ Known Destinations', 4)
@@ -241,20 +241,20 @@ ${configTableString}
     `
     )
 
-  if (trustedGithubAccounts.length > 0) {
-    summary = summary
-      .addRaw(
-        `
-<details open>
-  <summary>
-    ${trustedGithubAccountsHeaderString}
-  </summary>
-  ${trustedGithubAccountsTableString}
-</details>
-      `
-      )
-      .addQuote('NOTE: The account in which workflow runs is always trusted.')
-  }
+  //   if (trustedGithubAccounts.length > 0) {
+  //     summary = summary
+  //       .addRaw(
+  //         `
+  // <details open>
+  //   <summary>
+  //     ${trustedGithubAccountsHeaderString}
+  //   </summary>
+  //   ${trustedGithubAccountsTableString}
+  // </details>
+  //       `
+  //       )
+  //       .addQuote('NOTE: The account in which workflow runs is always trusted.')
+  //   }
 
   if (egressRules.length > 0) {
     summary = summary
