@@ -18,7 +18,7 @@ jobs:
       arch: x86_64
     steps:
       - name: Setup Bolt
-        uses: koalalab-inc/bolt@94e2eb518ebc35c98abf2d0bc96baa86a2b15d7c # koalalab-inc/bolt@v1.3.0 | main
+        uses: koalalab-inc/bolt@7bc45c5036a248828c82447f9bb3fea35fe27c93 # koalalab-inc/bolt@v1.3.0 | main
       - name: Checkout
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # actions/checkout@v4 | 1567,v4.1.2
       - name: Get release version
@@ -44,7 +44,7 @@ jobs:
           rm -rf mitmproxy bolt
           rm mitmproxy-10.2.2-linux-x86_64.tar.gz
       - name: Release
-        uses: softprops/action-gh-release@9d7c94cfd0a1f3ed45544c887983e9fa900f0564 # softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@69320dbe05506a9a39fc8ae11030b214ec2d1f87 # softprops/action-gh-release@v2
         with:
           files: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
           tag_name: ${{ env.tag }}
