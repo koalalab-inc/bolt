@@ -8,7 +8,7 @@ on:
 #   schedule:
     # - cron: '18 17 * * 6'
   push:
-    branches: [ "ossf" ]
+    branches: [ "main" ]
 
 # Declare default permissions as read only.
 permissions: read-all
