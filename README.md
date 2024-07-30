@@ -1,5 +1,5 @@
 ![Bolt](assets/imgs/bolt-header-dark.png)
-## Secure GitHub actions with 1 line of code
+## Secure GitHub Actions with 1 line of code
 Add this step to jobs in your GitHub workflow file(s) to secure your runner:
 ```yaml
   - name: Setup Bolt
