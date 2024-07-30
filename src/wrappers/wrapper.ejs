@@ -1,7 +1,7 @@
-const <%= name %> = () => {
-  return `<%- body.replace(/`/g, '\\`') %>`
+const <%= name %>Base64 = () => {
+  return '<%- Buffer.from(body).toString('base64') %>'
 }
 
 module.exports = {
-  <%= name %>
+  <%= name %>Base64
 }
