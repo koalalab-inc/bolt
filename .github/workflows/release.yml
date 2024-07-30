@@ -51,18 +51,16 @@ jobs:
       - name: Sign Release
         run: |
           cosign sign-blob \
-            --output-signature bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig \
-            --output-certificate bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.pem \
             --yes \
+            --bundle bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle \
             bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
-
+        
       - name: Release
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # softprops/action-gh-release@v2
         with:
           files: |
             bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
-            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
-            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.pem
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
           tag_name: ${{ env.tag }}
           name: ${{ env.tag }}
           generate_release_notes: true
