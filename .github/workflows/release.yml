@@ -8,14 +8,17 @@ on:
 permissions: read-all
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     env:
       tag: ${{ github.ref_name }}
       os: linux
       arch: x86_64
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - name: Setup Bolt
         uses: koalalab-inc/bolt@7bc45c5036a248828c82447f9bb3fea35fe27c93 # koalalab-inc/bolt@v1.3.0 | main
@@ -23,6 +26,7 @@ jobs:
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # actions/checkout@v4 | 1567,v4.1.2
       - name: Get release version
         id: releaseVersion
+        shell: bash
         run: echo "releaseVersion=\"$(awk -F\' '/const releaseVersion/ { print $2 }' src/version.js)\"" >> "$GITHUB_ENV"
       - name: Check if releaseVersion is same as tag
         run: |
@@ -31,6 +35,7 @@ jobs:
             exit 1
           fi
       - name: Fetch MITM-Proxy
+        shell: bash
         run: |
           mkdir -p mitmproxy
           wget https://github.com/koalalab-inc/go-libaudit/releases/download/v2.5.0/auparse-2.5.0-linux-amd64 --quiet
@@ -43,12 +48,129 @@ jobs:
           tar -czf bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz bolt
           rm -rf mitmproxy bolt
           rm mitmproxy-10.2.2-linux-x86_64.tar.gz
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # sigstore/cosign-installer@v3.5.0
+        with:
+          cosign-release: 'v2.2.4' # optional
+      - name: Sign Release
+        shell: bash
+        run: |
+          cosign sign-blob \
+            --yes \
+            --bundle bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle \
+            --output-signature bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig \
+            --output-certificate bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert \
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+
+      - name: Generate hashes
+        shell: bash
+        id: hash
+        run: |
+          # sha256sum generates sha256 hash for all artifacts.
+          # base64 -w0 encodes to base64 and outputs on a single line.
+          # sha256sum artifact1 artifact2 ... | base64 -w0
+          echo "hashes=$(sha256sum bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz \
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle \
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig \
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload tarball
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # actions/upload-artifact@v4 | main,v4.3.4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+          path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload signature
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # actions/upload-artifact@v4 | main,v4.3.4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
+          path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
+          if-no-files-found: error
+          retention-days: 5
+      
+      - name: Upload certificate
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # actions/upload-artifact@v4 | main,v4.3.4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
+          path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload verification bundle
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # actions/upload-artifact@v4 | main,v4.3.4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
+          path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
+          if-no-files-found: error
+          retention-days: 5
+
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@5a775b367a56d5bd118a224a811bba288150a563 # slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      # Upload provenance to a new release
+      upload-assets: true
+
+  release:
+    needs: [build, provenance]    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      tag: ${{ github.ref_name }}
+      os: linux
+      arch: x86_64
+    steps:
+      - name: Download tarball
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # actions/download-artifact@v4 | main,209,v4.1.8
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+
+      - name: Download signature
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # actions/download-artifact@v4 | main,209,v4.1.8
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
+
+      - name: Download certificate
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # actions/download-artifact@v4 | main,209,v4.1.8
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
+
+      - name: Download bundle
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # actions/download-artifact@v4 | main,209,v4.1.8
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
+  
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # sigstore/cosign-installer@v3.5.0
+        with:
+          cosign-release: 'v2.2.4' # optional
+
       - name: Release
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # softprops/action-gh-release@v2
         with:
-          files: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+          files: |
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
           tag_name: ${{ env.tag }}
           name: ${{ env.tag }}
           generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: ${{ endsWith(env.tag, 'rc') }}
+      
+      - name: Verify Release
+        run: |
+          cosign verify-blob \
+          --bundle bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle \
+          --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+          --certificate-identity "https://github.com/koalalab-inc/bolt/.github/workflows/release.yml@refs/tags/${{ env.tag }}" \
+          bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
