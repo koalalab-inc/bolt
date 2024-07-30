@@ -53,6 +53,7 @@ jobs:
           cosign sign-blob \
             --output-signature bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig \
             --output-certificate bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.pem \
+            --yes \
             bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
 
       - name: Release
