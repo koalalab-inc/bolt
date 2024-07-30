@@ -17,6 +17,8 @@ jobs:
       tag: ${{ github.ref_name }}
       os: linux
       arch: x86_64
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - name: Setup Bolt
         uses: koalalab-inc/bolt@7bc45c5036a248828c82447f9bb3fea35fe27c93 # koalalab-inc/bolt@v1.3.0 | main
