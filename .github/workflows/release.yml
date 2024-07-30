@@ -8,7 +8,7 @@ on:
 permissions: read-all
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # actions/checkout@v4 | 1567,v4.1.2
       - name: Get release version
         id: releaseVersion
+        shell: bash
         run: echo "releaseVersion=\"$(awk -F\' '/const releaseVersion/ { print $2 }' src/version.js)\"" >> "$GITHUB_ENV"
       - name: Check if releaseVersion is same as tag
         run: |
@@ -32,6 +33,7 @@ jobs:
             exit 1
           fi
       - name: Fetch MITM-Proxy
+        shell: bash
         run: |
           mkdir -p mitmproxy
           wget https://github.com/koalalab-inc/go-libaudit/releases/download/v2.5.0/auparse-2.5.0-linux-amd64 --quiet
@@ -49,6 +51,7 @@ jobs:
         with:
           cosign-release: 'v2.2.4' # optional
       - name: Sign Release
+        shell: bash
         run: |
           cosign sign-blob \
             --yes \
@@ -56,7 +59,93 @@ jobs:
             --output-signature bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig \
             --output-certificate bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert \
             bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
-        
+
+      - name: Generate hashes
+        shell: bash
+        id: hash
+        run: |
+          # sha256sum generates sha256 hash for all artifacts.
+          # base64 -w0 encodes to base64 and outputs on a single line.
+          # sha256sum artifact1 artifact2 ... | base64 -w0
+          echo "hashes=$(sha256sum bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz \
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle \
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig \
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+          path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload signature
+        uses: actions/upload-artifact@v4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
+          path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
+          if-no-files-found: error
+          retention-days: 5
+      
+      - name: Upload certificate
+        uses: actions/upload-artifact@v4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
+          path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload verification bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
+          path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
+          if-no-files-found: error
+          retention-days: 5
+
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      # Upload provenance to a new release
+      upload-assets: true
+
+  release:
+    needs: [build, provenance]    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      tag: ${{ github.ref_name }}
+      os: linux
+      arch: x86_64
+    steps:
+      - name: Download tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+
+      - name: Download signature
+        uses: actions/download-artifact@v4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
+
+      - name: Download certificate
+        uses: actions/download-artifact@v4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
+
+      - name: Download bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
+  
       - name: Release
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # softprops/action-gh-release@v2
         with:
