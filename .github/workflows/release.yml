@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     env:
       tag: ${{ github.ref_name }}
       os: linux
@@ -43,10 +44,19 @@ jobs:
           tar -czf bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz bolt
           rm -rf mitmproxy bolt
           rm mitmproxy-10.2.2-linux-x86_64.tar.gz
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # sigstore/cosign-installer@v3.5.0
+        with:
+          cosign-release: 'v2.2.4' # optional
+      - name: Sign Release
+        run: |
+          cosign sign bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
       - name: Release
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # softprops/action-gh-release@v2
         with:
-          files: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+          files: |
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
           tag_name: ${{ env.tag }}
           name: ${{ env.tag }}
           generate_release_notes: true

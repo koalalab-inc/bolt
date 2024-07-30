@@ -1,4 +1,7 @@
 ![Bolt](assets/imgs/bolt-header-dark.png)
+[![OSSF-Scorecard Score](https://img.shields.io/ossf-scorecard/github.com/koalalab-inc/bolt?label=openssf%20scorecard)](https://api.securityscorecards.dev/projects/github.com/koalalab-inc/bolt)
+![GitHub License](https://img.shields.io/github/license/koalalab-inc/bolt)
+
 ## Secure GitHub Actions with 1 line of code
 Add this step to jobs in your GitHub workflow file(s) to secure your runner:
 ```yaml
