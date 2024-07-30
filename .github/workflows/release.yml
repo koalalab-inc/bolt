@@ -53,6 +53,8 @@ jobs:
           cosign sign-blob \
             --yes \
             --bundle bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle \
+            --output-signature bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig \
+            --output-certificate bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert \
             bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
         
       - name: Release
@@ -61,8 +63,18 @@ jobs:
           files: |
             bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
             bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
+            bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
           tag_name: ${{ env.tag }}
           name: ${{ env.tag }}
           generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: ${{ endsWith(env.tag, 'rc') }}
+      
+      - name: Verify Release
+        run: |
+          cosign verify-blob \
+          --bundle bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle \
+          --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+          --certificate-identity "https://github.com/koalalab-inc/bolt/.github/workflows/release.yml@refs/tags/${{ env.tag }}" \
+          bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
