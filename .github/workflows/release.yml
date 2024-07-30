@@ -75,7 +75,7 @@ jobs:
             bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert | base64 -w0)" >> "$GITHUB_OUTPUT"
 
       - name: Upload tarball
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # actions/upload-artifact@v4 | main,v4.3.4
         with:
           name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
           path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
@@ -83,7 +83,7 @@ jobs:
           retention-days: 5
 
       - name: Upload signature
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # actions/upload-artifact@v4 | main,v4.3.4
         with:
           name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
           path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
@@ -91,7 +91,7 @@ jobs:
           retention-days: 5
       
       - name: Upload certificate
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # actions/upload-artifact@v4 | main,v4.3.4
         with:
           name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
           path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
@@ -99,7 +99,7 @@ jobs:
           retention-days: 5
 
       - name: Upload verification bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # actions/upload-artifact@v4 | main,v4.3.4
         with:
           name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
           path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
@@ -112,7 +112,7 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@5a775b367a56d5bd118a224a811bba288150a563 # slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
       base64-subjects: "${{ needs.build.outputs.hashes }}"
       # Upload provenance to a new release
@@ -129,22 +129,22 @@ jobs:
       arch: x86_64
     steps:
       - name: Download tarball
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # actions/download-artifact@v4 | main,209,v4.1.8
         with:
           name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz
 
       - name: Download signature
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # actions/download-artifact@v4 | main,209,v4.1.8
         with:
           name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
 
       - name: Download certificate
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # actions/download-artifact@v4 | main,209,v4.1.8
         with:
           name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.cert
 
       - name: Download bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # actions/download-artifact@v4 | main,209,v4.1.8
         with:
           name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
   
