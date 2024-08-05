@@ -169,4 +169,4 @@ This report was generated using this workflow file: [bolt-sample.yml](examples/b
 
 ## Usage and Limitations
 
-BOLT is available to use for private as well as public repository on Github hosted ubuntu runners. Contact us if you want to use BOLT on self-hosted runners.
+BOLT is available to use for private as well as public repository on GitHub hosted ubuntu runners. Contact us if you want to use BOLT on self-hosted runners.
