@@ -2,27 +2,39 @@
 [![OSSF-Scorecard Score](https://img.shields.io/ossf-scorecard/github.com/koalalab-inc/bolt?label=openssf%20scorecard)](https://api.securityscorecards.dev/projects/github.com/koalalab-inc/bolt)
 ![GitHub License](https://img.shields.io/github/license/koalalab-inc/bolt)
 
-## Secure GitHub Actions with 1 line of code
+# BOLT:Secure GitHub Actions Runtime with 1 line of code
+BOLT is an egress-filter and runtime security tool for your GitHub Actions environment.
+### Usage
 Add this step to jobs in your GitHub workflow file(s) to secure your runner:
 ```yaml
   - name: Setup Bolt
     uses: koalalab-inc/bolt@v1
 ```
 
-## Transparent Egress Gateway for GitHub hosted runners
-
-Bolt is a transparent egress gateway that can be used to control the egress traffic from GitHub hosted runners. It is packaged as a GitHub Action, which means you can easily add it to your workflows and start controlling the egress traffic from your pipelines.
+BOLT is packaged as a GitHub Action, which means you can easily add it to your workflows and start controlling the egress traffic from your pipelines.
 
 > [!NOTE]
 > 
 > Supports both public and private repositories
 
+## Why use BOLT?
+Ther aftermath of [Solarwinds breach](https://en.wikipedia.org/wiki/2020_United_States_federal_government_data_breach) has led to [an increase in software supply chain attacks](https://linuxfoundation.eu/newsroom/the-rising-threat-of-software-supply-chain-attacks-managing-dependencies-of-open-source-projects). 
 
-## Why?
+CI/CD pipelines are the infrastructure of which the software is built, they are the keys to the cloud kingdom, and are high-leverage attack surfaces.
 
-Complex CI/CD environments are under increasing threat due to increase in software supply chain attacks. Modern CI/CDs (GitHub CI) allow third-party code in highly privledged CI environment.
+[OWASP top 10 CI/CD](https://owasp.org/www-project-top-10-ci-cd-security-risks/) and [CISA+NSA's joint guidance on defending CI/CD](https://www.cisa.gov/news-events/alerts/2023/06/28/cisa-and-nsa-release-joint-guidance-defending-continuous-integrationcontinuous-delivery-cicd) are really great starting points to understand the threat vectors surrounding CI/CD. An adaption of the same for GitHub environment would look a little like:
 
-GitHub hosted runners are a great way to run your CI/CD pipelines. However, they are not without their limitations. One of the most notable limitations is the lack of egress control. This means that any code running on a GitHub hosted runner can make requests to any external service. This can be a security risk, especially when running untrusted code.
+![CI:CD Threat Vectors](https://github.com/user-attachments/assets/99ed2591-6f8f-45f0-b6be-5e8133c19f96)
+
+and specifically focussing on the CI runtime threat vectors(and their solution):
+
+![CI Runtime Threat Vectors](https://github.com/user-attachments/assets/c115b4d1-d42c-4e72-85a4-b61eeda83371)
+
+BOLT covers both the threat vectors by
+
+1. Transparent Egress filtering mechanism which allows traffic only to trusted domains
+2. Detection of actions with Sudo permissions to prevent against file-tampering during build time.
+
 
 ## How to use Bolt - Video Introduction
 
@@ -99,7 +111,7 @@ It is an ordered list of rules. The first rule that matches the destination will
           action: 'allow'
 ```
 
-## Report
+## Report in workflow logs
 Once the job is over, bolt will add a egress traffic report to the job summary. The report will show the egress traffic and the rules that were applied. A sample report is shown below.
 
 <hr>
@@ -153,3 +165,8 @@ This report was generated using this workflow file: [bolt-sample.yml](examples/b
 > [!NOTE]
 > 
 > We have removed SSL inspection features from Bolt. It had some compatibility issues with certain package managers. We will soon release a new version with improved SSL inspection capabilities.
+
+
+## Usage and Limitations
+
+BOLT is available to use for private as well as public repository on GitHub hosted ubuntu runners. Contact us if you want to use BOLT on self-hosted runners.
