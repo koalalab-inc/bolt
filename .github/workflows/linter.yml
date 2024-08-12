@@ -19,10 +19,10 @@ jobs:
 
     steps:
       - name: Setup Bolt
-        uses: koalalab-inc/bolt@7bc45c5036a248828c82447f9bb3fea35fe27c93 # koalalab-inc/bolt@v1.3.0 | main
+        uses: koalalab-inc/bolt@b7388cf6657068ee4d2b324a7a530a7ce203fd36 # koalalab-inc/bolt@v1.3.0 | main
       - name: Checkout
         id: checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # actions/checkout@v4 | 1567,v4.1.2
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # actions/checkout@v4 | 1567,v4.1.7
         with:
           fetch-depth: 0
 
@@ -39,7 +39,7 @@ jobs:
 
       - name: Lint Codebase
         id: super-linter
-        uses: super-linter/super-linter/slim@3fe03abab2eafb293ace16d4a3b07aeabcb3f1a0 # super-linter/super-linter/slim@v6
+        uses: super-linter/super-linter/slim@b4515bd4ad9d0aa4681960e053916ab991bdbe96 # super-linter/super-linter/slim@v6
         env:
           DEFAULT_BRANCH: main
           FILTER_REGEX_EXCLUDE: dist/**/*
