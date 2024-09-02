@@ -29,10 +29,10 @@ jobs:
 
     steps:
       - name: Setup Bolt
-        uses: koalalab-inc/bolt@7bc45c5036a248828c82447f9bb3fea35fe27c93 # koalalab-inc/bolt@v1.3.0 | main
+        uses: koalalab-inc/bolt@b7388cf6657068ee4d2b324a7a530a7ce203fd36 # koalalab-inc/bolt@v1.3.0 | main
       - name: Checkout
         id: checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # actions/checkout@v4 | 1567,v4.1.2
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # actions/checkout@v4 | 1567,v4.1.7
 
       - name: Setup Node.js
         id: setup-node
@@ -64,7 +64,7 @@ jobs:
       - if: ${{ failure() && steps.diff.outcome == 'failure' }}
         name: Upload Artifact
         id: upload
-        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # actions/upload-artifact@v4 | v4.3.4
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # actions/upload-artifact@v4 | v4.4.0
         with:
           name: dist
           path: dist/
