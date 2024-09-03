@@ -1,7 +1,7 @@
 {
   "name": "bolt",
   "description": "A GitHub Action to install and run Bolt",
-  "version": "1.4.2-rc",
+  "version": "v1.7.0-rc",
   "author": "Abhishek Anand",
   "private": true,
   "homepage": "https://github.com/koalalab-inc/bolt#readme",
