@@ -92,13 +92,13 @@ async function checkForBuildTampering() {
 
   for (const log of processChangingSourceFiles) {
     const pid = log.process?.pid
-    const cwd = log.process.cwd
-    const filePath = log.file.path
+    const cwd = log.process?.cwd
+    const filePath = log.file?.path
 
     console.log(filePath)
     console.log(log)
     // Check if the file path is already absolute
-    if (!filePath) {
+    if (!filePath || !cwd || !pid) {
       continue
     }
     const fullFilePath = path.isAbsolute(filePath)
