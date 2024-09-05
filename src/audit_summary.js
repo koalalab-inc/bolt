@@ -79,8 +79,8 @@ async function getBuildEnvironmentTamperingActions() {
 }
 
 async function checkForBuildTampering() {
-  const boltPID = core.getState('boltPID')
-  const githubRunnerPID = core.getState('githubRunnerPID')
+  // const boltPID = core.getState('boltPID')
+  // const githubRunnerPID = core.getState('githubRunnerPID')
   const audit = await generateTestResults('audit.json')
 
   const processChangingSourceFiles = audit.filter(a =>
@@ -109,7 +109,9 @@ async function checkForBuildTampering() {
       if (!filePIDMap[fullFilePath]) {
         filePIDMap[fullFilePath] = []
       }
-      filePIDMap[fullFilePath].push(pid)
+      if (!filePIDMap[fullFilePath].includes(pid)) {
+        filePIDMap[fullFilePath].push(pid)
+      }
     }
 
     for (const [file, pids] of Object.entries(filePIDMap)) {
