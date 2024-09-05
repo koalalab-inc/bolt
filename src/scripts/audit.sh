@@ -25,6 +25,3 @@ service auditd restart
 auditctl -w "$workingDir" -p wa -k bolt_monitored_wd_changes
 
 auditctl -e 2
-
-
-
