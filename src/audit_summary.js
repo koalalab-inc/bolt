@@ -98,6 +98,9 @@ async function checkForBuildTampering() {
     console.log(filePath)
     console.log(log)
     // Check if the file path is already absolute
+    if (!filePath) {
+      continue
+    }
     const fullFilePath = path.isAbsolute(filePath)
       ? filePath
       : path.join(cwd, filePath)
