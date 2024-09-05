@@ -10,11 +10,9 @@ async function auditRulesTemplate({ homeDir, workingDir }) {
 -a exit,always -S execve -k bolt_monitored_process_exec
 
 # logs file changes (writes, deletes, renames, etc.)
--a exit,always -F dir=%s -F perm=wa -S open,openat,creat,truncate,ftruncate -k file_change
+# -a exit,always -F dir=%s -F perm=wa -S open,openat,creat,truncate,ftruncate -k file_change
 
 -w ${homeDir} -p wa -k bolt_monitored_bolt_home_changes
-
--w ${workingDir} -p wa -k bolt_monitored_working_dir_changes
 
 -w /etc/passwd -p wa -k bolt_monitored_passwd_changes
 
