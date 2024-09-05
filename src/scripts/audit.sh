@@ -20,3 +20,10 @@ mv audit.rules /etc/audit/rules.d/
 
 # Restart auditd service to apply the new rules
 service auditd restart
+
+auditctl -w $2 -p wa -k bolt_monitored_wd_changes
+
+auditctl -e 2
+
+
+

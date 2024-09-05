@@ -57,6 +57,26 @@ function parentAction(node) {
   return null
 }
 
+async function getBuildEnvironmentTamperingActions() {
+  const boltPID = core.getState('boltPID')
+  const githubRunnerPID = core.getState('githubRunnerPID')
+  const audit = await generateTestResults('audit.json')
+
+  const buildEnvironmentTamperingEvents = [
+    'bolt_monitored_passwd_changes',
+    'bolt_monitored_shadow_changes',
+    'bolt_monitored_group_changes',
+    'bolt_monitored_sudoers_changes',
+    'bolt_monitored_docker_daemon_changes',
+    'bolt_monitored_audit_log_changes',
+    'bolt_monitored_bolt_home_changes'
+  ]
+
+  const processTamperingBuildEnv = audit.filter(a =>
+    a.tags?.some(tag => buildEnvironmentTamperingEvents.includes(tag))
+  )
+}
+
 async function getSudoCallingActions() {
   const boltPID = core.getState('boltPID')
   const githubRunnerPID = core.getState('githubRunnerPID')
