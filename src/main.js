@@ -92,7 +92,7 @@ async function run() {
     core.info('Setting up auditd...')
     const auditRules = await auditRulesTemplate({ homeDir, workingDir })
     fs.writeFileSync('audit.rules', auditRules)
-    await exec(`sudo bash audit.sh ${isDebugMode}`)
+    await exec(`sudo bash audit.sh ${workingDir} ${isDebugMode}`)
     core.info('Setting up auditd... done')
 
     benchmark('setup-auditd')
