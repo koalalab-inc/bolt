@@ -1,5 +1,5 @@
 const core = require('@actions/core')
-const path = require('path')
+const path = require('node:path')
 
 const { generateTestResults, getUniqueBy } = require('./summary_utils')
 
@@ -95,6 +95,8 @@ async function checkForBuildTampering() {
     const cwd = log.process.cwd
     const filePath = log.file.path
 
+    console.log(filePath)
+    console.log(log)
     // Check if the file path is already absolute
     const fullFilePath = path.isAbsolute(filePath)
       ? filePath
