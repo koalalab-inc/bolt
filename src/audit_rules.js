@@ -27,8 +27,6 @@ async function auditRulesTemplate({ homeDir, workingDir }) {
 -w /etc/docker/daemon.json -p wa -k bolt_monitored_docker_daemon_changes
 
 -w /var/log/audit/audit.log -p wa -k bolt_monitored_audit_log_changes
-
--e 2
 `
 }
 
