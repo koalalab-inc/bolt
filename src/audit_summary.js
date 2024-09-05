@@ -48,7 +48,8 @@ function createProcessTree(processTuples) {
 
 function parentAction(node) {
   if (node?.isAction) {
-    return node
+    // return node
+    return parentAction(node.parent) || node
   }
   if (node?.parent) {
     return parentAction(node.parent)
