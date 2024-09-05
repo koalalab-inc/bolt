@@ -1,7 +1,7 @@
 const core = require('@actions/core')
 const { DefaultArtifactClient } = require('@actions/artifact')
 const { exec } = require('@actions/exec')
-const { getAuditSummary } = require('./audit_summary')
+const { getAuditSummary, checkForBuildTampering } = require('./audit_summary')
 const fs = require('fs')
 const YAML = require('yaml')
 const {
@@ -249,6 +249,13 @@ async function generateSummary() {
 
   const auditSummary = await getAuditSummary()
 
+  const tamperedFiles = await checkForBuildTampering()
+
+  const tamperedFilesData = [
+    [{ data: 'Tampered Files', header: true }],
+    ...tamperedFiles.map(file => [file])
+  ]
+
   const auditSummaryRaw = auditSummary.zeroState
     ? auditSummary.zeroState
     : getRawCollapsible(auditSummary)
@@ -321,6 +328,15 @@ ${configTableString}
     }
   }
 
+  if (tamperedFiles.length > 0) {
+    summary = summary.addHeading('🚨 File tampering detected', 3).addRaw(`
+  > [!CAUTION]
+  > Source files were edited after being fetched from the repository. This may be a security risk. Investigate further.
+        `)
+
+    summary = summary.addTable(tamperedFilesData)
+  }
+
   summary = summary.addRaw(auditSummaryRaw)
 
   summary = summary.addHeading('Egress Traffic', 3)
@@ -347,7 +363,7 @@ ${unknownDestinationsTableString}
     )
     .addRaw(
       `
-<details>
+<details open>
   <summary>
 ${knownDestinationsHeaderString}
   </summary>

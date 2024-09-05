@@ -1,4 +1,5 @@
 const core = require('@actions/core')
+const path = require('path')
 
 const { generateTestResults, getUniqueBy } = require('./summary_utils')
 
@@ -75,6 +76,45 @@ async function getBuildEnvironmentTamperingActions() {
   const processTamperingBuildEnv = audit.filter(a =>
     a.tags?.some(tag => buildEnvironmentTamperingEvents.includes(tag))
   )
+}
+
+async function checkForBuildTampering() {
+  const boltPID = core.getState('boltPID')
+  const githubRunnerPID = core.getState('githubRunnerPID')
+  const audit = await generateTestResults('audit.json')
+
+  const processChangingSourceFiles = audit.filter(a =>
+    a.tags?.includes('bolt_monitored_wd_changes')
+  )
+
+  const filePIDMap = {}
+  const tamperedFiles = []
+
+  for (const log of processChangingSourceFiles) {
+    const pid = log.process?.pid
+    const cwd = log.process.cwd
+    const filePath = log.file.path
+
+    // Check if the file path is already absolute
+    const fullFilePath = path.isAbsolute(filePath)
+      ? filePath
+      : path.join(cwd, filePath)
+
+    if (pid && fullFilePath) {
+      if (!filePIDMap[fullFilePath]) {
+        filePIDMap[fullFilePath] = []
+      }
+      filePIDMap[fullFilePath].push(pid)
+    }
+
+    for (const [file, pids] of Object.entries(filePIDMap)) {
+      if (pids.length > 1) {
+        tamperedFiles.push(file)
+      }
+    }
+  }
+
+  return tamperedFiles
 }
 
 async function getSudoCallingActions() {
@@ -191,5 +231,6 @@ async function getAuditSummary() {
 }
 
 module.exports = {
-  getAuditSummary
+  getAuditSummary,
+  checkForBuildTampering
 }
