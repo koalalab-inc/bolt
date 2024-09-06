@@ -22,8 +22,6 @@ mv audit.rules /etc/audit/rules.d/
 # Restart auditd service to apply the new rules
 service auditd restart
 
-auditctl -a never,exit -F "dir=$workingDir/.git"
-
 auditctl -w "$workingDir" -p wa -k bolt_monitored_wd_changes
 
-# auditctl -e 2
+auditctl -e 2
