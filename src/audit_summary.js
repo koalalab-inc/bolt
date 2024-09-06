@@ -79,16 +79,15 @@ async function getBuildEnvironmentTamperingActions() {
 }
 
 async function checkForBuildTampering() {
-  // const boltPID = core.getState('boltPID')
-  // const githubRunnerPID = core.getState('githubRunnerPID')
   const audit = await generateTestResults('audit.json')
 
-  const processChangingSourceFiles = audit.filter(a =>
-    a.tags?.includes('bolt_monitored_wd_changes')
+  const processChangingSourceFiles = audit.filter(
+    a =>
+      a.tags?.includes('bolt_monitored_wd_changes') &&
+      a.summary?.action === 'opened-file'
   )
 
   const filePIDMap = {}
-  const tamperedFiles = []
 
   for (const log of processChangingSourceFiles) {
     const pid = log.process?.pid
@@ -97,10 +96,12 @@ async function checkForBuildTampering() {
 
     console.log(filePath)
     console.log(log)
-    // Check if the file path is already absolute
+
     if (!filePath || !cwd || !pid) {
       continue
     }
+
+    // Check if the file path is already absolute
     const fullFilePath = path.isAbsolute(filePath)
       ? filePath
       : path.join(cwd, filePath)
@@ -113,11 +114,13 @@ async function checkForBuildTampering() {
         filePIDMap[fullFilePath].push(pid)
       }
     }
+  }
 
-    for (const [file, pids] of Object.entries(filePIDMap)) {
-      if (pids.length > 1) {
-        tamperedFiles.push(file)
-      }
+  const tamperedFiles = []
+
+  for (const [file, pids] of Object.entries(filePIDMap)) {
+    if (pids.length > 1) {
+      tamperedFiles.push(file)
     }
   }
 
