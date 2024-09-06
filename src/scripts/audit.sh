@@ -26,4 +26,4 @@ auditctl -a never,exit -F "dir=$workingDir/.git"
 
 auditctl -w "$workingDir" -p wa -k bolt_monitored_wd_changes
 
-auditctl -e 2
+# auditctl -e 2
