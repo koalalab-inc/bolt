@@ -79,12 +79,15 @@ async function getBuildEnvironmentTamperingActions() {
 }
 
 async function checkForBuildTampering() {
+  const workingDir = process.env.GITHUB_WORKSPACE
+  const gitDir = path.join(workingDir, '.git')
+  const absPathGitDir = path.resolve(gitDir)
   const audit = await generateTestResults('audit.json')
 
   const processChangingSourceFiles = audit.filter(
     a =>
       a.tags?.includes('bolt_monitored_wd_changes') &&
-      a.summary?.action === 'opened-file'
+      (a.summary?.action === 'opened-file' || a.summary?.action === 'renamed')
   )
 
   const filePIDMap = {}
@@ -94,9 +97,6 @@ async function checkForBuildTampering() {
     const cwd = log.process?.cwd
     const filePath = log.file?.path
 
-    console.log(filePath)
-    console.log(log)
-
     if (!filePath || !cwd || !pid) {
       continue
     }
@@ -105,6 +105,12 @@ async function checkForBuildTampering() {
     const fullFilePath = path.isAbsolute(filePath)
       ? filePath
       : path.join(cwd, filePath)
+
+    const absPath = path.resolve(fullFilePath)
+
+    if (absPath.startsWith(absPathGitDir)) {
+      continue
+    }
 
     if (pid && fullFilePath) {
       if (!filePIDMap[fullFilePath]) {
