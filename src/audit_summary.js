@@ -7,15 +7,6 @@ const { generateTestResults, getUniqueBy } = require('./summary_utils')
 // const boltPID = "1479"
 // const githubRunnerPID = '1446'
 
-// function printNode(node, depth = 0) {
-//   if (depth === 0) {
-//     console.log(node.model.pid)
-//   } else {
-//     console.log(`${'  '.repeat(depth - 1)}- ${node.model.pid}`)
-//   }
-//   node.children.forEach(c => printNode(c, depth + 1))
-// }
-
 function NewNode(pid) {
   return {
     pid,
@@ -180,7 +171,6 @@ async function getSudoCallingActions() {
   const nonActionSudoCalls = sudoCalls.filter(
     a => parentAction(processTree[a.process.pid]) === null
   )
-  // console.log(nonActionSudoCalls.map(a => a.process));
 
   const sudoCallingActions = getUniqueBy(
     actionSudoCalls.map(a => {

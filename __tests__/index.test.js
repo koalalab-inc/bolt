@@ -44,11 +44,6 @@ describe('index', () => {
   it('should return an array', async () => {
     const { getTrustedGithubAccounts } = require('../src/input')
 
-    // jest.mock('@actions/core', () => ({
-    //   warning: (...args) => console.log(...args, '\n'),
-    //   error: (...args) => console.log(...args, '\n')
-    // }))
-
     const accounts = getTrustedGithubAccounts()
 
     expect(accounts).toBeInstanceOf(Array)
