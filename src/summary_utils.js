@@ -27,6 +27,30 @@ async function generateTestResults(filePath) {
   }
 }
 
+function getGithubCalls(githubCallsFilename) {
+  try {
+    const githubCallsFileContent = fs.readFileSync(githubCallsFilename, 'utf-8')
+    const lines = githubCallsFileContent.split('\n')
+
+    const githubCalls = []
+
+    for (const line of lines) {
+      if (line.length === 0) continue
+      try {
+        const githubCall = JSON.parse(line)
+        githubCalls.push(githubCall)
+      } catch (error) {
+        console.error(`Error parsing JSON on line: ${line}`)
+      }
+    }
+
+    return githubCalls
+  } catch (error) {
+    console.error(`Error reading file: ${error.message}`)
+    return []
+  }
+}
+
 function getUniqueBy(arr, keys) {
   const uniqueObj = arr.reduce((unique, o) => {
     const key = keys.map(k => o[k]).join('|')
@@ -49,6 +73,7 @@ function getRawCollapsible({ body, header }) {
 
 module.exports = {
   generateTestResults,
+  getGithubCalls,
   getUniqueBy,
   getRawCollapsible
 }

@@ -1,6 +1,7 @@
 #! /bin/bash
 
-debug=$1
+workingDir=$1
+debug=$2
 
 if [[ "$debug" == "true" ]]; then
 	set -x
@@ -20,3 +21,7 @@ mv audit.rules /etc/audit/rules.d/
 
 # Restart auditd service to apply the new rules
 service auditd restart
+
+auditctl -w "$workingDir" -p wa -k bolt_monitored_wd_changes
+
+auditctl -e 2

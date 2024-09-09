@@ -1,19 +1,11 @@
 const core = require('@actions/core')
+const path = require('node:path')
 
 const { generateTestResults, getUniqueBy } = require('./summary_utils')
 
 // For testing locally
 // const boltPID = "1479"
 // const githubRunnerPID = '1446'
-
-// function printNode(node, depth = 0) {
-//   if (depth === 0) {
-//     console.log(node.model.pid)
-//   } else {
-//     console.log(`${'  '.repeat(depth - 1)}- ${node.model.pid}`)
-//   }
-//   node.children.forEach(c => printNode(c, depth + 1))
-// }
 
 function NewNode(pid) {
   return {
@@ -48,12 +40,88 @@ function createProcessTree(processTuples) {
 
 function parentAction(node) {
   if (node?.isAction) {
-    return node
+    // return node
+    return parentAction(node.parent) || node
   }
   if (node?.parent) {
     return parentAction(node.parent)
   }
   return null
+}
+
+async function getBuildEnvironmentTamperingActions() {
+  const boltPID = core.getState('boltPID')
+  const githubRunnerPID = core.getState('githubRunnerPID')
+  const audit = await generateTestResults('audit.json')
+
+  const buildEnvironmentTamperingEvents = [
+    'bolt_monitored_passwd_changes',
+    'bolt_monitored_shadow_changes',
+    'bolt_monitored_group_changes',
+    'bolt_monitored_sudoers_changes',
+    'bolt_monitored_docker_daemon_changes',
+    'bolt_monitored_audit_log_changes',
+    'bolt_monitored_bolt_home_changes'
+  ]
+
+  const processTamperingBuildEnv = audit.filter(a =>
+    a.tags?.some(tag => buildEnvironmentTamperingEvents.includes(tag))
+  )
+}
+
+async function checkForBuildTampering() {
+  const workingDir = process.env.GITHUB_WORKSPACE
+  const gitDir = path.join(workingDir, '.git')
+  const absPathGitDir = path.resolve(gitDir)
+  const audit = await generateTestResults('audit.json')
+
+  const processChangingSourceFiles = audit.filter(
+    a =>
+      a.tags?.includes('bolt_monitored_wd_changes') &&
+      (a.summary?.action === 'opened-file' || a.summary?.action === 'renamed')
+  )
+
+  const filePIDMap = {}
+
+  for (const log of processChangingSourceFiles) {
+    const pid = log.process?.pid
+    const cwd = log.process?.cwd
+    const filePath = log.file?.path
+
+    if (!filePath || !cwd || !pid) {
+      continue
+    }
+
+    // Check if the file path is already absolute
+    const fullFilePath = path.isAbsolute(filePath)
+      ? filePath
+      : path.join(cwd, filePath)
+
+    const absPath = path.resolve(fullFilePath)
+
+    if (absPath.startsWith(absPathGitDir)) {
+      continue
+    }
+
+    if (pid && fullFilePath) {
+      if (!filePIDMap[fullFilePath]) {
+        filePIDMap[fullFilePath] = []
+      }
+      if (!filePIDMap[fullFilePath].includes(pid)) {
+        filePIDMap[fullFilePath].push(pid)
+      }
+    }
+  }
+
+  const tamperedFiles = []
+
+  for (const [file, pids] of Object.entries(filePIDMap)) {
+    if (pids.length > 1) {
+      tamperedFiles.push(file)
+    }
+  }
+
+  return tamperedFiles
 }
 
 async function getSudoCallingActions() {
@@ -103,7 +171,6 @@ async function getSudoCallingActions() {
   const nonActionSudoCalls = sudoCalls.filter(
     a => parentAction(processTree[a.process.pid]) === null
   )
-  // console.log(nonActionSudoCalls.map(a => a.process));
 
   const sudoCallingActions = getUniqueBy(
     actionSudoCalls.map(a => {
@@ -170,5 +237,6 @@ async function getAuditSummary() {
 }
 
 module.exports = {
-  getAuditSummary
+  getAuditSummary,
+  checkForBuildTampering
 }

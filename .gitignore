@@ -106,4 +106,4 @@ bin/
 
 src/generated/
 
-audit.json
+audit*.json

@@ -1,7 +1,7 @@
 const core = require('@actions/core')
 const { DefaultArtifactClient } = require('@actions/artifact')
 const { exec } = require('@actions/exec')
-const { getAuditSummary } = require('./audit_summary')
+const { getAuditSummary, checkForBuildTampering } = require('./audit_summary')
 const fs = require('fs')
 const YAML = require('yaml')
 const {
@@ -13,6 +13,7 @@ const {
 } = require('./input')
 const {
   generateTestResults,
+  getGithubCalls,
   getUniqueBy,
   getRawCollapsible
 } = require('./summary_utils')
@@ -22,6 +23,8 @@ const allowHTTP = getAllowHTTP()
 const defaultPolicy = getDefaultPolicy()
 const egressRules = getEgressRules()
 const trustedGithubAccounts = getTrustedGithubAccounts()
+const repoName = process.env.GITHUB_REPOSITORY // e.g. koalalab-inc/bolt
+const repoOwner = repoName.split('/')[0] // e.g. koalalab-inc
 
 function actionString(action) {
   switch (action) {
@@ -63,6 +66,8 @@ async function generateSummary() {
   const randomString = Math.random().toString(36).substring(7)
   const jobName = `${jobID}-${runId}-${runAttempt}-${runNumber}-${randomString}`
 
+  const githubCallsFilename = `${homeDir}/github_calls.json`
+
   if (isDebugMode === 'true') {
     // Upload auditd log file to artifacts
     const artifactName = `${jobName}-bolt-auditd-log`
@@ -98,19 +103,41 @@ async function generateSummary() {
   await exec(`cp ${homeDir}/${outputFile} ${outputFile}`)
 
   const results = await generateTestResults(outputFile)
+  const githubCalls = getGithubCalls(githubCallsFilename)
 
   const uniqueResults = getUniqueBy(results, ['destination', 'scheme'])
   // const uniqueResultRows = uniqueResults.map(resultToRow)
 
-  const githubAccountCalls = results.filter(result => {
-    return result.trusted_github_account_flag !== undefined
-  })
+  // const githubAccountCalls = results.filter(result => {
+  //   return result.trusted_github_account_flag !== undefined
+  // })
 
-  const githubAccounts = githubAccountCalls.reduce((accounts, call) => {
-    const path = call.request_path
-    const method = call.request_method
-    const name = call.github_account_name
-    const trusted_flag = call.trusted_github_account_flag
+  // const githubAccounts = githubAccountCalls.reduce((accounts, call) => {
+  //   const path = call.request_path
+  //   const method = call.request_method
+  //   const name = call.github_account_name
+  //   const trusted_flag = call.trusted_github_account_flag
+  //   accounts[name] = accounts[name] || {}
+  //   accounts[name]['name'] = name
+  //   accounts[name]['trusted'] = trusted_flag
+  //   const paths = accounts[name]['paths'] || []
+  //   if (!paths.some(p => p.path === path)) {
+  //     accounts[name]['paths'] = [...paths, { path, method }]
+  //   }
+  //   return accounts
+  // }, [])
+
+  const githubAccounts = githubCalls.reduce((accounts, call) => {
+    const path = call.path
+    const method = call.method
+    let name = ''
+    if (path.startsWith('/orgs/') || path.startsWith('/repos/')) {
+      const parts = path.split('/')
+      name = parts[2]
+    }
+
+    const trusted_flag =
+      trustedGithubAccounts.includes(name) || name === repoOwner
     accounts[name] = accounts[name] || {}
     accounts[name]['name'] = name
     accounts[name]['trusted'] = trusted_flag
@@ -190,15 +217,15 @@ async function generateSummary() {
   const configTableString = core.summary.addTable(configTable).stringify()
   core.summary.emptyBuffer()
 
-  // const trustedGithubAccountsHeaderString = core.summary
-  //   .addHeading('🔒 Trusted Github Accounts', 4)
-  //   .stringify()
-  // core.summary.emptyBuffer()
+  const trustedGithubAccountsHeaderString = core.summary
+    .addHeading('🔒 Trusted Github Accounts', 4)
+    .stringify()
+  core.summary.emptyBuffer()
 
-  // const trustedGithubAccountsTableString = core.summary
-  //   .addTable(trustedGithubAccountsData)
-  //   .stringify()
-  // core.summary.emptyBuffer()
+  const trustedGithubAccountsTableString = core.summary
+    .addTable(trustedGithubAccountsData)
+    .stringify()
+  core.summary.emptyBuffer()
 
   const knownDestinationsHeaderString = core.summary
     .addHeading('✅ Known Destinations', 4)
@@ -222,6 +249,13 @@ async function generateSummary() {
 
   const auditSummary = await getAuditSummary()
 
+  const tamperedFiles = await checkForBuildTampering()
+
+  const tamperedFilesData = [
+    [{ data: 'Tampered Files', header: true }],
+    ...tamperedFiles.map(file => [file])
+  ]
+
   const auditSummaryRaw = auditSummary.zeroState
     ? auditSummary.zeroState
     : getRawCollapsible(auditSummary)
@@ -241,20 +275,20 @@ ${configTableString}
     `
     )
 
-  //   if (trustedGithubAccounts.length > 0) {
-  //     summary = summary
-  //       .addRaw(
-  //         `
-  // <details open>
-  //   <summary>
-  //     ${trustedGithubAccountsHeaderString}
-  //   </summary>
-  //   ${trustedGithubAccountsTableString}
-  // </details>
-  //       `
-  //       )
-  //       .addQuote('NOTE: The account in which workflow runs is always trusted.')
-  //   }
+  if (trustedGithubAccounts.length > 0) {
+    summary = summary
+      .addRaw(
+        `
+<details open>
+  <summary>
+    ${trustedGithubAccountsHeaderString}
+  </summary>
+  ${trustedGithubAccountsTableString}
+</details>
+        `
+      )
+      .addQuote('NOTE: The account in which workflow runs is always trusted.')
+  }
 
   if (egressRules.length > 0) {
     summary = summary
@@ -271,28 +305,37 @@ ${configTableString}
       .addEOL()
   }
 
-  //   if (untrustedGithubAccounts.length > 0) {
-  //     summary = summary.addHeading(
-  //       '🚨 Requests to untrusted GitHub accounts found',
-  //       3
-  //     ).addRaw(`
-  // > [!CAUTION]
-  // > If you do not recognize these GitHub Accounts, you may want to investigate further. Add them to your trusted GitHub accounts if this is expected. See [Docs](https://github.com/koalalab-inc/bolt?tab=readme-ov-file#configure) for more information.
-  //       `)
+  if (untrustedGithubAccounts.length > 0) {
+    summary = summary.addHeading(
+      '🚨 Requests to untrusted GitHub accounts found',
+      3
+    ).addRaw(`
+  > [!CAUTION]
+  > If you do not recognize these GitHub Accounts, you may want to investigate further. Add them to your trusted GitHub accounts if this is expected. See [Docs](https://github.com/koalalab-inc/bolt?tab=readme-ov-file#configure) for more information.
+        `)
 
-  //     for (const account of untrustedGithubAccounts) {
-  //       summary = summary.addRaw(`
-  // <details open>
-  //   <summary>
-  //     ${account.name}
-  //   </summary>
-  //   <ul>
-  //     ${account.paths.map(({ method, path }) => `<li><b>[${method}]</b> ${path}</li>`).join('')}
-  //   </ul>
-  // </details>
-  //         `)
-  //     }
-  //   }
+    for (const account of untrustedGithubAccounts) {
+      summary = summary.addRaw(`
+  <details open>
+    <summary>
+      ${account.name}
+    </summary>
+    <ul>
+      ${account.paths.map(({ method, path }) => `<li><b>[${method}]</b> ${path}</li>`).join('')}
+    </ul>
+  </details>
+          `)
+    }
+  }
+
+  if (tamperedFiles.length > 0) {
+    summary = summary.addHeading('🚨 File tampering detected', 3).addRaw(`
+  > [!CAUTION]
+  > Source files were edited after being fetched from the repository. This may be a security risk. Investigate further.
+        `)
+
+    summary = summary.addTable(tamperedFilesData)
+  }
 
   summary = summary.addRaw(auditSummaryRaw)
 
@@ -320,7 +363,7 @@ ${unknownDestinationsTableString}
     )
     .addRaw(
       `
-<details>
+<details open>
   <summary>
 ${knownDestinationsHeaderString}
   </summary>
