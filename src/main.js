@@ -17,7 +17,7 @@ const {
 
 let startTime = Date.now()
 
-function benchmark(featureName) {
+function benchmark (featureName) {
   const endTime = Date.now()
   core.info(
     `Time Elapsed in ${featureName}: ${Math.ceil((endTime - startTime) / 1000)}s`
@@ -29,20 +29,20 @@ function benchmark(featureName) {
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
-async function run() {
+async function run () {
   try {
     startTime = Date.now()
     core.info(`Start time: ${startTime}`)
 
     // Set Debug mode
-    const isDebugMode = process.env.DEBUG === 'true' ? 'true' : 'false';
+    const isDebugMode = process.env.DEBUG === 'true' ? 'true' : 'false'
 
     // pid of bolt nodejs process
-    const boltPID = process.pid; 
+    const boltPID = process.pid
     core.saveState('boltPID', boltPID)
 
     // pid of parent process - github runner process. This will spin up all other action steps
-    const githubRunnerPID = process.ppid;
+    const githubRunnerPID = process.ppid
     core.saveState('githubRunnerPID', githubRunnerPID)
 
     // Changing boltUser will require changes in bolt.service and intercept.py
@@ -81,11 +81,11 @@ async function run() {
     const trustedGithubAccounts = getTrustedGithubAccounts()
     const disablePasswordlessSudo = getDisablePasswordlessSudo()
 
-    const workingDir = process.env.GITHUB_WORKSPACE; // e.g. /home/runner/work/bolt
+    const workingDir = process.env.GITHUB_WORKSPACE // e.g. /home/runner/work/bolt
     core.info(`Working directory: ${workingDir}`)
-    const repoName = process.env.GITHUB_REPOSITORY; // e.g. koalalab-inc/bolt
-    const repoOwner = repoName.split('/')[0]; // e.g. koalalab-inc
-    
+    const repoName = process.env.GITHUB_REPOSITORY // e.g. koalalab-inc/bolt
+    const repoOwner = repoName.split('/')[0] // e.g. koalalab-inc
+
     benchmark('setup')
 
     core.startGroup('setup-auditd')
@@ -116,8 +116,8 @@ async function run() {
     // Sample Backup URL :: https://github.com/koalalab-inc/bolt/releases/download/v0.7.0/bolt-v0.7.0-linux-x86_64.tar.gz
     let referrer = ''
     try {
-      const workflowName = process.env.GITHUB_WORKFLOW.replace(/\//g, "|"); // e.g. CI
-      const jobName = process.env.GITHUB_JOB; // e.g. build
+      const workflowName = process.env.GITHUB_WORKFLOW.replace(/\//g, '|') // e.g. CI
+      const jobName = process.env.GITHUB_JOB // e.g. build
       referrer = `github.com/${repoName}/${workflowName}/${jobName}`
     } catch (error) {
       core.info('Error getting referrer')
@@ -235,28 +235,27 @@ async function run() {
         core.exportVariable('NODE_EXTRA_CA_CERTS', boltCertPath)
         await exec('sudo update-ca-certificates')
         break
-      }
-      catch (error) {
+      } catch (error) {
         core.info(`waiting for bolt to start, retrying in ${ms}ms...`)
       }
     }
     core.info('Trust bolt certificate... done')
     core.endGroup('trust-bolt-certificate')
-    
+
     benchmark('trust-bolt-certificate')
 
     core.startGroup('setup-iptables-redirection')
-    
+
     await exec(`sudo bash iptables.sh ${boltUser} ${isDebugMode}`)
 
     core.endGroup('setup-iptables-redirection')
 
     benchmark('setup-iptables-redirection')
-    
+
     if (disablePasswordlessSudo) {
       core.startGroup('disable-passwordless-sudo')
       core.info('Disabling passwordless sudo...')
-      await exec(`sudo sed -i "/^runner/d" /etc/sudoers.d/runner`)
+      await exec('sudo sed -i "/^runner/d" /etc/sudoers.d/runner')
       core.info('Disabling passwordless sudo... done')
       core.endGroup('disable-passwordless-sudo')
     }

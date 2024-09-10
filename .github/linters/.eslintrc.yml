@@ -48,5 +48,5 @@ rules:
     'prettier/prettier': 'error',
     'semi': 'off',
     'space-before-function-paren': 0,
-    "filenames/match-regex": 'off'
+    'filenames/match-regex': 'off'
   }

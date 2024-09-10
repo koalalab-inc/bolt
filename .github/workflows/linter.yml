@@ -39,13 +39,12 @@ jobs:
 
       - name: Lint Codebase
         id: super-linter
-        uses: super-linter/super-linter/slim@3fe03abab2eafb293ace16d4a3b07aeabcb3f1a0 # super-linter/super-linter/slim@v6
+        uses: super-linter/super-linter/slim@b92721f792f381cedc002ecdbb9847a15ece5bb8 # super-linter/super-linter/slim@v6
         env:
           DEFAULT_BRANCH: main
           FILTER_REGEX_EXCLUDE: dist/**/*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          JAVASCRIPT_DEFAULT_STYLE: prettier
           VALIDATE_ALL_CODEBASE: true
-          VALIDATE_MARKDOWN: false
+          VALIDATE_JAVASCRIPT_STANDARD: false
           VALIDATE_JSCPD: false
-          
+          VALIDATE_MARKDOWN: false

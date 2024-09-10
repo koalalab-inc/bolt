@@ -8,7 +8,7 @@ on:
   schedule:
     - cron: '18 17 * * 6'
   push:
-    branches: [ "main" ]
+    branches: ['main']
 
 # Declare default permissions as read only.
 permissions: read-all
@@ -27,12 +27,12 @@ jobs:
       # actions: read
 
     steps:
-      - name: "Checkout code"
+      - name: 'Checkout code'
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           persist-credentials: false
 
-      - name: "Run analysis"
+      - name: 'Run analysis'
         uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46 # v2.4.0
         with:
           results_file: results.sarif
@@ -54,7 +54,7 @@ jobs:
 
       # Upload the results as artifacts (optional). Commenting out will disable uploads of run results in SARIF
       # format to the repository Actions tab.
-      - name: "Upload artifact"
+      - name: 'Upload artifact'
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # actions/upload-artifact@v4 | main,v4.4.0
         with:
           name: SARIF file

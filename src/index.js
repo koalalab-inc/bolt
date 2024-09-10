@@ -102,7 +102,6 @@ function init(platform, arch) {
     }
 
     generateSummary()
-    return
   } else {
     setPostFlagInState()
 
