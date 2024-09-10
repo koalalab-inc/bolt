@@ -29,7 +29,9 @@ jobs:
       - name: Get release version
         id: releaseVersion
         shell: bash
-        run: echo "releaseVersion=\"$(awk -F\' '/const releaseVersion/ { print $2 }' src/version.js)\"" >> "$GITHUB_ENV"
+        run:
+          echo "releaseVersion=\"$(awk -F\' '/const releaseVersion/ { print $2
+          }' src/version.js)\"" >> "$GITHUB_ENV"
       - name: Check if releaseVersion is same as tag
         run: |
           if [ "${{ env.tag }}" != "${{ env.releaseVersion }}" ]; then
@@ -91,7 +93,7 @@ jobs:
           path: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.sig
           if-no-files-found: error
           retention-days: 5
-      
+
       - name: Upload certificate
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # actions/upload-artifact@v4 | main,v4.4.0
         with:
@@ -110,18 +112,20 @@ jobs:
 
   provenance:
     needs: [build]
-    if: ${{ !endsWith(github.ref_name, 'rc') && !contains(github.ref_name, 'rc.') }}
+    if:
+      ${{ !endsWith(github.ref_name, 'rc') && !contains(github.ref_name, 'rc.')
+      }}
     permissions:
       actions: read
       id-token: write
       contents: write
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
-      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      base64-subjects: '${{ needs.build.outputs.hashes }}'
       upload-assets: true
 
   release:
-    needs: [build]    
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -148,7 +152,7 @@ jobs:
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # actions/download-artifact@v4 | main,209,v4.1.8
         with:
           name: bolt-${{ env.tag }}-${{ env.os }}-${{ env.arch }}.tar.gz.bundle
-  
+
       - name: Install Cosign
         uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 # sigstore/cosign-installer@v3.6.0
         with:
@@ -167,7 +171,7 @@ jobs:
           generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: ${{ endsWith(env.tag, 'rc') || contains(env.tag, 'rc.') }}
-      
+
       - name: Verify Release
         run: |
           cosign verify-blob \

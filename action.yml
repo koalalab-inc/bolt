@@ -6,7 +6,7 @@ branding:
   icon: 'zap'
 # Define your inputs here.
 inputs:
-  graceful: 
+  graceful:
     description: 'Failure behaviour on unsupported platforms - true or false'
     required: false
     default: true
@@ -18,7 +18,7 @@ inputs:
     description: 'Allow HTTP traffic'
     required: false
     default: false
-  default_policy:  
+  default_policy:
     description: 'Default policy for egress traffic - allow-all or block-all'
     required: false
     default: 'block-all'

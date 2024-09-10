@@ -92,11 +92,11 @@ async function generateSummary() {
   )
 
   if (!outputFile || !boltUser || !homeDir) {
-    core.info(`Invalid Bold run. Missing required state variables`)
+    core.info('Invalid Bold run. Missing required state variables')
     return
   }
   if (!fs.existsSync(`${homeDir}/${outputFile}`)) {
-    core.info(`Bolt output file not found`)
+    core.info('Bolt output file not found')
     return
   }
 
@@ -139,18 +139,18 @@ async function generateSummary() {
     const trusted_flag =
       trustedGithubAccounts.includes(name) || name === repoOwner
     accounts[name] = accounts[name] || {}
-    accounts[name]['name'] = name
-    accounts[name]['trusted'] = trusted_flag
-    const paths = accounts[name]['paths'] || []
+    accounts[name].name = name
+    accounts[name].trusted = trusted_flag
+    const paths = accounts[name].paths || []
     if (!paths.some(p => p.path === path)) {
-      accounts[name]['paths'] = [...paths, { path, method }]
+      accounts[name].paths = [...paths, { path, method }]
     }
     return accounts
   }, [])
 
   const untrustedGithubAccounts = Object.values(githubAccounts).filter(
     account => {
-      return account['trusted'] === false
+      return account.trusted === false
     }
   )
 
